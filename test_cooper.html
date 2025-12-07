@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test de Cooper - Cronómetro Digital (Tablet)</title>
+    <style>
+        /* ================================================= */
+        /* CSS: LAYOUT RÍGIDO PARA TABLET (1098x686) */
+        /* ================================================= */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #383a3d;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .app-container {
+            width: 1098px;
+            height: 686px;
+            border: 2px solid #333;
+            box-shadow: 0 0 30px rgba(0,0,0,0.8);
+            background-color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Gestión de Vistas (Pantallas) */
+        .screen {
+            display: none;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        /* Estilos de Botones de Navegación */
+        .nav-button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.2s;
+        }
+        .nav-button:hover {
+             background-color: #0056b3;
+        }
+
+        /* ================================================= */
+        /* PANTALLA DE CARRERA (CRONÓMETRO) */
+        /* ================================================= */
+        #carrera-screen {
+            background-color: #fff;
+        }
+        .timer-header {
+            background-color: #333;
+            color: white;
+            padding: 10px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 120px;
+            flex-shrink: 0;
+        }
+        #countdown-timer {
+            font-size: 72px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #4CAF50;
+            min-width: 250px;
+            text-align: center;
+        }
+        .timer-controls button {
+            padding: 15px 25px;
+            font-size: 18px;
+            margin: 0 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+        }
+        #start-btn { background-color: #4CAF50; color: white; }
+        #pause-btn { background-color: #ff9800; color: white; }
+        #reset-btn { background-color: #f44336; color: white; }
+
+        /* Contenedor de Botones de Corredores: Ocupa el resto del espacio */
+        #runners-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); 
+            grid-template-rows: repeat(4, 1fr);
+            flex-grow: 1; 
+            gap: 5px;
+            padding: 5px;
+            max-height: calc(686px - 120px);
+        }
+        .runner-button {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #e0e0e0;
+            border: 2px solid #555;
+            border-radius: 5px;
+            user-select: none;
+            transition: background-color 0.1s, transform 0.1s;
+        }
+        .runner-button:active {
+            background-color: #64dd17; 
+            color: black;
+            transform: scale(0.98);
+        }
+        .runner-button .name {
+            font-size: 20px;
+            margin-bottom: 5px;
+        }
+        .runner-button .lap-info {
+            font-size: 14px;
+            color: #444;
+        }
+
+        /* ================================================= */
+        /* PANTALLA DE CONFIGURACIÓN Y RESULTADOS */
+        /* ================================================= */
+        #config-screen, #results-screen {
+            padding: 20px;
+            overflow-y: auto;
+        }
+        #config-screen h2, #results-screen h2 {
+            text-align: center;
+            color: #333;
+        }
+        #config-form label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #config-form input[type="number"], #config-form input[type="text"], #config-form select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #runners-config-area {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+        }
+        .runner-input-group {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding: 5px;
+            border-bottom: 1px dashed #eee;
+        }
+        #results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        #results-table th, #results-table td {
+            border: 1px solid #ddd;
+            padding: 8px 4px;
+            text-align: center;
+            font-size: 12px;
+        }
+        #results-table th {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 14px;
+        }
+        .distancia-final-input {
+            width: 70px;
+            padding: 3px;
+            text-align: center;
+            font-size: 13px;
+        }
+        .calificacion-final {
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    
+    <div id="config-screen" class="screen active">
+        <h2>⚙️ Configuración del Test de Cooper</h2>
+        <form id="config-form">
+            <label for="lap-distance">Distancia de cada vuelta (metros):</label>
+            <input type="number" id="lap-distance" value="400" min="50" required>
+            
+            <label for="num-runners">Cantidad de Corredores (1 a 20):</label>
+            <input type="number" id="num-runners" value="1" min="1" max="20" required onchange="generateRunnerInputs()">
+
+            <div id="runners-config-area">
+                <p>Ingrese la información de los corredores:</p>
+                </div>
+            
+            <button type="button" class="nav-button" style="width: 100%; margin-top: 20px;" onclick="saveConfiguration()">GUARDAR E INICIAR TEST</button>
+            
+            <button type="button" class="nav-button" style="width: 100%; margin-top: 10px; background-color: #555;" onclick="toggleFullscreen()">
+                Activar/Desactivar Pantalla Completa
+            </button>
+        </form>
+    </div>
+
+    <div id="carrera-screen" class="screen">
+        <div class="timer-header">
+            <button class="nav-button" onclick="changeScreen('config-screen'); pauseTimer(true)">Ajustes</button>
+            <div id="countdown-timer">12:00</div>
+            <div class="timer-controls">
+                <button id="start-btn" onclick="startTimer()">INICIAR</button>
+                <button id="pause-btn" onclick="pauseTimer(false)" disabled>PAUSAR</button>
+                <button id="reset-btn" onclick="resetTimer()" disabled>RESET</button>
+                <button class="nav-button" onclick="finalizeTest()">Resultados</button>
+            </div>
+        </div>
+        
+        <div id="runners-grid">
+            </div>
+    </div>
+
+    <div id="results-screen" class="screen">
+        <h2>🏆 Resultados y Calificación del Test de Cooper (12 Min)</h2>
+        <div style="overflow-x: auto; flex-grow: 1;">
+            <table id="results-table">
+                <thead>
+                    <tr>
+                        <th>Corredor</th>
+                        <th>Vueltas</th>
+                        <th>Dist. Prov. (m)</th>
+                        <th>T. Prom. Vuelta (min)</th>
+                        <th>Proyección (m)</th>
+                        <th>Calif. Inicial</th>
+                        <th>**Dist. Final (m)**</th>
+                        <th>**Calif. Final**</th>
+                    </tr>
+                </thead>
+                <tbody id="results-tbody">
+                    </tbody>
+            </table>
+        </div>
+        
+        <button type="button" class="nav-button" style="width: 100%; margin-top: 10px; background-color: #f44336;" onclick="saveResultsToTxt()">
+            💾 Grabar Resultados en .TXT
+        </button>
+
+        <button class="nav-button" style="width: 100%; margin-top: 10px; flex-shrink: 0;" onclick="changeScreen('config-screen')">Volver a Configuración</button>
+    </div>
+
+</div>
+
+<script>
+    // =================================================
+    // JAVASCRIPT: LÓGICA DE LA APLICACIÓN Y BAREMOS
+    // =================================================
+
+    const COOPER_TIME_MS = 12 * 60 * 1000; // 12 minutos
+    let timerInterval;
+    let timeRemaining = COOPER_TIME_MS;
+    let isRunning = false;
+    
+    let lapDistance = 400; 
+    let runners = []; 
+
+    // --- FUNCIONES DE UTILIDAD (FULLSCREEN) ---
+    function toggleFullscreen() {
+        const appContainer = document.querySelector('.app-container');
+        if (!document.fullscreenElement) {
+            if (appContainer.requestFullscreen) {
+                appContainer.requestFullscreen();
+            } else if (appContainer.mozRequestFullScreen) {
+                appContainer.mozRequestFullScreen();
+            } else if (appContainer.webkitRequestFullscreen) {
+                appContainer.webkitRequestFullscreen();
+            } else if (appContainer.msRequestFullscreen) {
+                appContainer.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+
+
+    // --- FUNCIONES DE NAVEGACIÓN ---
+
+    function changeScreen(screenId) {
+        if (screenId === 'config-screen') {
+            document.getElementById('results-tbody').innerHTML = '';
+        }
+        
+        document.querySelectorAll('.screen').forEach(screen => {
+            screen.classList.remove('active');
+        });
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    // --- FUNCIONES DE CONFIGURACIÓN ---
+
+    function generateRunnerInputs() {
+        const numRunnersInput = document.getElementById('num-runners');
+        let numRunners = parseInt(numRunnersInput.value);
+        
+        if (isNaN(numRunners) || numRunners < 1) numRunners = 1;
+        if (numRunners > 20) numRunners = 20;
+        numRunnersInput.value = numRunners;
+
+        const configArea = document.getElementById('runners-config-area');
+        configArea.innerHTML = `
+            <div class="runner-input-group" style="font-weight: bold; padding: 5px 0;">
+                <span>Nombre</span>
+                <span>Sexo</span>
+                <span>Edad</span>
+            </div>
+        `;
+        
+        for (let i = 1; i <= numRunners; i++) {
+            configArea.innerHTML += `
+                <div class="runner-input-group">
+                    <input type="text" id="name-${i}" placeholder="Corredor ${i}" value="C${i}" required>
+                    <select id="sex-${i}" required>
+                        <option value="H">H</option>
+                        <option value="M">M</option>
+                    </select>
+                    <input type="number" id="age-${i}" value="${(i%10)+15}" min="10" max="80" required>
+                </div>
+            `;
+        }
+    }
+
+    function saveConfiguration() {
+        resetTimer(true); // Reset sin advertencia
+        
+        lapDistance = parseFloat(document.getElementById('lap-distance').value);
+        const numRunners = parseInt(document.getElementById('num-runners').value);
+        runners = [];
+
+        for (let i = 1; i <= numRunners; i++) {
+            const name = document.getElementById(`name-${i}`).value || `C${i}`;
+            runners.push({
+                id: i,
+                name: name.length > 5 ? name.substring(0, 5) + '.' : name,
+                age: parseInt(document.getElementById(`age-${i}`).value),
+                sex: document.getElementById(`sex-${i}`).value,
+                laps: 0,
+                lapTimes: [],
+                lapDistance: lapDistance
+            });
+        }
+        
+        renderRunnerButtons();
+        changeScreen('carrera-screen');
+    }
+
+    function renderRunnerButtons() {
+        const grid = document.getElementById('runners-grid');
+        grid.innerHTML = ''; 
+        
+        runners.forEach(runner => {
+            const button = document.createElement('div');
+            button.className = 'runner-button';
+            button.id = `runner-btn-${runner.id}`;
+            button.onclick = () => recordLap(runner.id);
+            
+            button.innerHTML = `
+                <span class="name">${runner.name}</span>
+                <span class="lap-info" id="laps-${runner.id}">V: ${runner.laps}</span>
+                <span class="lap-info" id="time-${runner.id}">T. Vta: 00:00</span>
+                <span class="lap-info" id="pace-${runner.id}">Ritmo: --:--/km</span> 
+            `;
+            grid.appendChild(button);
+        });
+    }
+
+    // ACEPTA EL NUEVO RITMO
+    function updateRunnerButton(runnerId, lastLapTimeMs, paceMinPerKm) {
+        const runner = runners.find(r => r.id === runnerId);
+        if (!runner) return;
+        
+        const timeInfo = formatTime(lastLapTimeMs);
+
+        document.getElementById(`laps-${runner.id}`).textContent = `V: ${runner.laps}`;
+        document.getElementById(`time-${runner.id}`).textContent = `T. Vta: ${timeInfo}`;
+        document.getElementById(`pace-${runner.id}`).textContent = `Ritmo: ${paceMinPerKm}/km`; 
+        
+        const button = document.getElementById(`runner-btn-${runner.id}`);
+        button.style.backgroundColor = '#8bc34a';
+        setTimeout(() => {
+            button.style.backgroundColor = '#e0e0e0';
+        }, 100);
+    }
+
+    // --- FUNCIONES DE CRONOMETRAJE Y RITMO ---
+    
+    function formatTime(ms) {
+        if (ms < 0) ms = 0;
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+    
+    // NUEVA FUNCIÓN PARA CALCULAR Y DAR FORMATO AL RITMO (MINUTOS:SEGUNDOS / KM)
+    function formatPace(lapTimeMs, lapDistanceM) {
+        if (lapTimeMs <= 0 || lapDistanceM <= 0) return "--:--";
+
+        // 1. Calcular el ritmo en minutos/kilómetro (decimal)
+        const time_minutes = lapTimeMs / 60000;
+        const distance_km = lapDistanceM / 1000;
+        const pace_decimal_minutes = time_minutes / distance_km;
+
+        // 2. Convertir minutos decimales a formato M:SS
+        const total_seconds = Math.round(pace_decimal_minutes * 60);
+        const minutes = Math.floor(total_seconds / 60);
+        const seconds = total_seconds % 60;
+
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    function updateTimerDisplay() {
+        document.getElementById('countdown-timer').textContent = formatTime(timeRemaining);
+    }
+
+    function startTimer() {
+        if (isRunning) return;
+        isRunning = true;
+        document.getElementById('start-btn').disabled = true;
+        document.getElementById('pause-btn').disabled = false;
+        document.getElementById('reset-btn').disabled = false;
+
+        const startTime = Date.now() - (COOPER_TIME_MS - timeRemaining);
+
+        timerInterval = setInterval(() => {
+            const elapsedTime = Date.now() - startTime;
+            timeRemaining = COOPER_TIME_MS - elapsedTime;
+
+            if (timeRemaining <= 0) {
+                timeRemaining = 0;
+                clearInterval(timerInterval);
+                isRunning = false;
+                document.getElementById('countdown-timer').textContent = "00:00 ¡FIN!";
+                document.getElementById('pause-btn').disabled = true;
+                document.getElementById('start-btn').disabled = true;
+                document.getElementById('reset-btn').disabled = false;
+            }
+            updateTimerDisplay();
+        }, 100);
+    }
+
+    // LA FUNCIÓN DE PAUSA AHORA RECIBE UN ARGUMENTO (avoidWarning)
+    function pauseTimer(avoidWarning) {
+        if (!isRunning) return;
+        
+        if (!avoidWarning) {
+            if (!confirm("¿Está seguro de que desea PAUSAR el cronómetro?")) {
+                return;
+            }
+        }
+        
+        clearInterval(timerInterval);
+        isRunning = false;
+        document.getElementById('start-btn').disabled = false;
+        document.getElementById('pause-btn').disabled = true;
+        document.getElementById('reset-btn').disabled = false;
+    }
+
+    // LA FUNCIÓN DE RESET AHORA RECIBE UN ARGUMENTO (avoidWarning)
+    function resetTimer(avoidWarning) {
+        if (!avoidWarning) {
+            if (!confirm("⚠️ ADVERTENCIA: ¿Está seguro de que desea REINICIAR el test? Se perderán todos los datos de vueltas y el tiempo actual.")) {
+                return;
+            }
+        }
+        
+        clearInterval(timerInterval);
+        isRunning = false;
+        timeRemaining = COOPER_TIME_MS;
+        updateTimerDisplay();
+        
+        document.getElementById('start-btn').disabled = false;
+        document.getElementById('pause-btn').disabled = true;
+        document.getElementById('reset-btn').disabled = true; 
+        
+        runners.forEach(r => {
+            r.laps = 0;
+            r.lapTimes = [];
+        });
+        
+        renderRunnerButtons();
+    }
+    
+    // --- FUNCIÓN DE TOMA DE VUELTAS ---
+
+    function recordLap(runnerId) {
+        if (!isRunning && timeRemaining > 0) {
+            alert("¡Inicie el cronómetro primero!");
+            return;
+        }
+        if (timeRemaining <= 0) {
+            alert("El tiempo del test ha terminado.");
+            return;
+        }
+        
+        const runner = runners.find(r => r.id === runnerId);
+        if (!runner) return;
+
+        const timeElapsed = COOPER_TIME_MS - timeRemaining;
+        
+        const lastTime = runner.lapTimes.length > 0 ? runner.lapTimes[runner.lapTimes.length - 1] : 0;
+        const lapTime = timeElapsed - lastTime;
+
+        runner.laps += 1;
+        runner.lapTimes.push(timeElapsed);
+        
+        // CALCULAR EL RITMO POR KM
+        const pace = formatPace(lapTime, runner.lapDistance);
+        
+        // ACTUALIZAR BOTÓN CON EL RITMO
+        updateRunnerButton(runnerId, lapTime, pace);
+    }
+
+    // --- FUNCIONES DE RESULTADOS Y CÁLCULO ---
+
+    function getCooperRating(distance, age, sex) {
+        const d = distance;
+        
+        // Baremos para Varones (H)
+        if (sex === 'H') {
+            if (age >= 13 && age <= 19) {
+                if (d < 2100) return 'Muy Mal';
+                if (d < 2200) return 'Mal';
+                if (d < 2500) return 'Aceptable';
+                if (d < 2750) return 'Bueno';
+                if (d <= 3000) return 'Muy Bueno'; 
+                return 'Excelente';
+            } else if (age >= 20 && age <= 29) {
+                if (d < 1950) return 'Muy Mal';
+                if (d <= 2100) return 'Mal';
+                if (d <= 2400) return 'Aceptable';
+                if (d <= 2650) return 'Bueno';
+                if (d <= 2850) return 'Muy Bueno';
+                return 'Excelente';
+            } else if (age >= 30 && age <= 39) {
+                if (d < 1900) return 'Muy Mal';
+                if (d <= 2099) return 'Mal';
+                if (d <= 2349) return 'Aceptable';
+                if (d <= 2499) return 'Bueno';
+                if (d <= 2699) return 'Muy Bueno';
+                return 'Excelente';
+            } else if (age >= 40 && age <= 49) {
+                if (d < 1850) return 'Muy Mal';
+                if (d <= 1999) return 'Mal';
+                if (d <= 2249) return 'Aceptable';
+                if (d <= 2499) return 'Bueno';
+                if (d <= 2649) return 'Muy Bueno';
+                return 'Excelente';
+            } else if (age >= 50 && age <= 59) {
+                if (d < 1650) return 'Muy Mal';
+                if (d <= 1849) return 'Mal';
+                if (d <= 2099) return 'Aceptable';
+                if (d <= 2299) return 'Bueno';
+                if (d <= 2549) return 'Muy Bueno';
+                return 'Excelente';
+            } else if (age >= 60) {
+                if (d < 1400) return 'Muy Mal';
+                if (d <= 1649) return 'Mal';
+                if (d <= 1949) return 'Aceptable';
+                if (d <= 2149) return 'Bueno';
+                if (d <= 2499) return 'Muy Bueno';
+                return 'Excelente';
+            }
+        } 
+        
+        // Baremos para Damas (M)
+        else if (sex === 'M') {
+            if (age >= 13 && age <= 19) {
+                if (d < 1600) return 'Muy Mal';
+                if (d < 1900) return 'Mal';
+                if (d < 2100) return 'Aceptable';
+                if (d < 2300) return 'Bueno';
+                if (d < 2450) return 'Muy Bueno'; 
+                return 'Excelente';
+            } else if (age >= 20 && age <= 29) {
+                if (d < 1550) return 'Muy Mal';
+                if (d <= 1800) return 'Mal';
+                if (d <= 1950) return 'Aceptable';
+                if (d <= 2150) return 'Bueno';
+                if (d <= 2350) return 'Muy Bueno';
+                return 'Excelente';
+            } else if (age >= 30 && age <= 39) {
+                if (d < 1500) return 'Muy Mal';
+                if (d <= 1699) return 'Mal';
+                if (d <= 1899) return 'Aceptable';
+                if (d <= 2099) return 'Bueno';
+                if (d <= 2249) return 'Muy Bueno';
+                return 'Excelente';
+            } else if (age >= 40 && age <= 49) {
+                if (d < 1400) return 'Muy Mal';
+                if (d <= 1599) return 'Mal';
+                if (d <= 1799) return 'Aceptable';
+                if (d <= 1999) return 'Bueno';
+                if (d <= 2149) return 'Muy Bueno';
+                return 'Excelente';
+            } else if (age >= 50 && age <= 59) {
+                if (d < 1350) return 'Muy Mal';
+                if (d <= 1499) return 'Mal';
+                if (d <= 1699) return 'Aceptable';
+                if (d <= 1899) return 'Bueno';
+                if (d <= 2099) return 'Muy Bueno';
+                return 'Excelente';
+            } else if (age >= 60) {
+                if (d < 1250) return 'Muy Mal';
+                if (d <= 1399) return 'Mal';
+                if (d <= 1599) return 'Aceptable';
+                if (d <= 1649) return 'Bueno';
+                if (d <= 1899) return 'Muy Bueno';
+                return 'Excelente';
+            }
+        }
+        
+        return 'Rango de edad no definido';
+    }
+
+    function calculateAverageLapTime(runner) {
+        if (runner.laps === 0) return 0;
+        return runner.lapTimes[runner.lapTimes.length - 1] / runner.laps; 
+    }
+
+    function calculateProjection(runner, avgTimeMs) {
+        if (avgTimeMs === 0) return 0;
+        return (COOPER_TIME_MS / avgTimeMs) * runner.lapDistance;
+    }
+
+    function finalizeTest() {
+        pauseTimer(true); // Pausa sin advertencia antes de mostrar resultados
+        renderResults();
+        changeScreen('results-screen');
+    }
+
+    function renderResults() {
+        const tbody = document.getElementById('results-tbody');
+        tbody.innerHTML = '';
+        
+        runners.forEach(runner => {
+            const row = tbody.insertRow();
+            const totalDistanceProvisional = runner.laps * runner.lapDistance;
+            const avgLapTimeMs = calculateAverageLapTime(runner);
+            const projectionDistance = calculateProjection(runner, avgLapTimeMs);
+            const initialRating = getCooperRating(totalDistanceProvisional, runner.age, runner.sex);
+            
+            const finalDistanceCell = document.createElement('td');
+            finalDistanceCell.innerHTML = `<input type="number" class="distancia-final-input" id="final-dist-${runner.id}" value="${totalDistanceProvisional.toFixed(0)}" onchange="updateFinalRating(${runner.id})" min="0">`;
+            
+            const finalRatingCell = document.createElement('td');
+            finalRatingCell.id = `final-rating-${runner.id}`;
+            finalRatingCell.className = 'calificacion-final';
+            finalRatingCell.textContent = initialRating;
+
+            row.insertCell().textContent = `${runner.name} (${runner.sex}, ${runner.age})`;
+            row.insertCell().textContent = runner.laps;
+            row.insertCell().textContent = totalDistanceProvisional.toFixed(0);
+            row.insertCell().textContent = avgLapTimeMs > 0 ? formatTime(avgLapTimeMs) : 'N/A';
+            row.insertCell().textContent = projectionDistance.toFixed(0);
+            row.insertCell().textContent = initialRating;
+            row.appendChild(finalDistanceCell);
+            row.appendChild(finalRatingCell);
+        });
+    }
+
+    function updateFinalRating(runnerId) {
+        const finalDistanceInput = document.getElementById(`final-dist-${runnerId}`);
+        const finalRatingCell = document.getElementById(`final-rating-${runnerId}`);
+        const runner = runners.find(r => r.id === runnerId);
+        
+        if (finalDistanceInput && finalRatingCell && runner) {
+            const finalDistance = parseFloat(finalDistanceInput.value);
+            const finalRating = getCooperRating(finalDistance, runner.age, runner.sex);
+            finalRatingCell.textContent = finalRating;
+        }
+    }
+    
+    // --- FUNCIONES PARA GRABAR ARCHIVO (.TXT) ---
+    
+    function saveResultsToTxt() {
+        if (runners.length === 0 || document.getElementById('results-tbody').rows.length === 0) {
+            alert("No hay resultados para guardar. Finalice el test primero.");
+            return;
+        }
+
+        let fileContent = "=== Resultados del Test de Cooper (12 Min) ===\n";
+        fileContent += "Fecha y Hora: " + new Date().toLocaleString() + "\n";
+        fileContent += "Distancia de Vuelta Configuracion: " + lapDistance + " metros\n\n";
+        
+        fileContent += "---------------------------------------------------------------------------------------------------------------------------------\n";
+        fileContent += "  Corredor  | Edad | Sexo | Vueltas | Dist. Final (m) | Calif. Final | T. Prom. Vuelta (min) | Proyección (m)\n";
+        fileContent += "---------------------------------------------------------------------------------------------------------------------------------\n";
+
+        runners.forEach(runner => {
+            const row = document.getElementById(`final-dist-${runner.id}`).closest('tr');
+            
+            const finalDistance = document.getElementById(`final-dist-${runner.id}`).value;
+            const finalRating = document.getElementById(`final-rating-${runner.id}`).textContent;
+            const laps = runner.laps;
+            
+            const avgTimeCell = row.cells[4].textContent;
+            const projectionCell = row.cells[5].textContent;
+
+            const line = 
+                runner.name.padEnd(10) + " | " + 
+                String(runner.age).padEnd(4) + " | " + 
+                runner.sex.padEnd(4) + " | " + 
+                String(laps).padEnd(7) + " | " + 
+                String(finalDistance).padEnd(15) + " | " + 
+                finalRating.padEnd(12) + " | " + 
+                avgTimeCell.padEnd(20) + " | " +
+                projectionCell + "\n";
+                
+            fileContent += line;
+        });
+
+        fileContent += "----------------------------------------------------------------------------------------------------------------------------------\n";
+
+        const blob = new Blob([fileContent], { type: 'text/plain;charset=utf-8' });
+        const a = document.createElement('a');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+        a.download = `Cooper_Test_Resultados_${timestamp}.txt`;
+        a.href = window.URL.createObjectURL(blob);
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+
+    // --- INICIALIZACIÓN ---
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        generateRunnerInputs();
+        updateTimerDisplay();
+        changeScreen('config-screen');
+    });
+
+</script>
+</body>
+</html>

@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cronómetro de Vueltas (Laps) y Stats</title>
+    <style>
+        /* --- Estilos Generales --- */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #121212;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Vistas (Main / Stats / Config) --- */
+        .view {
+            width: 100%;
+            max-width: 600px;
+            padding: 20px;
+            box-sizing: border-box;
+            display: none;
+            min-height: 100vh; 
+            position: relative; 
+            padding-bottom: 90px;
+        }
+
+        /* --- Cronómetro Principal --- */
+        #time-display { 
+            font-size: 5rem; 
+            font-weight: bold; 
+            text-align: center; 
+            margin: 20px 0 0; 
+            color: #00ff99; 
+            line-height: 1.1; 
+        }
+        /* Lap Time debajo del cronómetro principal */
+        #lap-time-display { 
+            font-size: 1.8rem; 
+            font-weight: bold; 
+            text-align: center; 
+            margin-bottom: 20px;
+            color: #FFC107; /* Amarillo */
+        }
+        
+        #gps-info { font-size: 0.8rem; text-align: center; color: #aaa; margin-bottom: 5px; }
+        
+        /* NUEVO ESTILO: Para resaltar los números en la línea del GPS */
+        .highlight-gps {
+            font-size: 1.1rem; /* Aumenta el tamaño de la fuente */
+            font-weight: bold;
+            color: #00ff99; /* Color de resaltado */
+        }
+
+
+        /* --- Botón Principal y GPS --- */
+        #main-button { width: 90%; height: 150px; margin: 10px auto; border-radius: 20px; font-size: 2.5rem; }
+        #main-button.start { background-color: #4CAF50; color: white; }
+        #main-button.lap { background-color: #2196F3; }
+        #main-button.stop { background-color: #F44336; color: white; }
+        
+        /* Botón de GPS */
+        #gps-button {
+            width: 90%;
+            padding: 15px;
+            margin: 10px auto;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            background-color: #555;
+            color: white;
+            border: 1px solid #777;
+            cursor: pointer;
+            touch-action: manipulation;
+            display: block; 
+        }
+        #gps-button.active {
+            background-color: #3f51b5; 
+            border-color: #4CAF50;
+        }
+
+        /* --- Controles Inferiores y Tabla --- */
+        .stats-controls { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            width: 90%; 
+            margin: 10px auto; 
+            padding: 5px 0; 
+            border-bottom: 1px solid #333; 
+        }
+        
+        /* Contenedor de botones (REINICIAR y STOP) */
+        .action-buttons-group {
+            display: flex;
+            gap: 5px;
+            max-width: 180px;
+        }
+        
+        #reset-button, #stop-button { 
+            padding: 10px 10px; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 1.1rem; 
+            cursor: pointer; 
+            color: #ffffff; 
+            flex-grow: 1;
+            touch-action: manipulation; 
+        }
+
+        #reset-button { 
+            background-color: #555; 
+            max-width: 120px; 
+            font-size: 0.95rem; 
+        }
+        
+        /* Botón STOP pequeño */
+        #stop-button {
+            background-color: #F44336; /* Rojo */
+            width: 60px; /* Tamaño fijo */
+            font-size: 0.95rem;
+            display: block;
+        }
+
+        .lap-stats-item { display: flex; flex-direction: column; text-align: center; padding: 0 5px; flex-grow: 1; }
+        .lap-stats-label { font-size: 0.75rem; color: #aaa; margin-bottom: 2px; }
+        .lap-stats-value { font-size: 1.2rem; font-weight: bold; color: #00ff99; }
+        #total-distance-value { color: #FFC107; }
+
+        #lap-table-container { width: 95%; margin: 20px auto 0; max-height: 35vh; overflow-y: auto; border: 1px solid #444; border-radius: 8px; }
+        #lap-table { width: 100%; border-collapse: collapse; }
+        #lap-table th, #lap-table td { border: 1px solid #444; padding: 8px; text-align: center; font-size: 0.9rem; }
+        #lap-table th { background-color: #333; color: #00ff99; position: sticky; top: 0; z-index: 10; }
+        #lap-table td { background-color: #222; }
+
+        /* Aumentar el tamaño de los botones inferiores (GUARDAR/PANTALLA 2/CONFIGURA) */
+        .actions {
+            width: 90%;
+            margin: 15px auto 0;
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .action-button {
+            padding: 12px 5px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem; /* Un poco más pequeño para caber 3, pero más grande que antes */
+            cursor: pointer;
+            background-color: #555;
+            color: #ffffff;
+            flex-grow: 1;
+            touch-action: manipulation;
+        }
+        
+        /* Estilos para el botón LAP en Pantalla 2 */
+        #lap-button-stats {
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            background-color: #2196F3; /* Azul de Lap */
+            color: #ffffff;
+            width: 90%;
+            margin: 15px auto 10px; 
+            display: block;
+            touch-action: manipulation;
+        }
+        #lap-button-stats:disabled {
+            background-color: #555;
+            color: #ccc;
+        }
+
+        /* Botón de regresar de Pantalla 2/Configura */
+        .actions-single .action-button {
+            width: 90%;
+            font-size: 1.1rem;
+            padding: 15px;
+            margin: 10px auto;
+            display: block;
+        }
+
+        /* --- Estilos de CONFIGURA --- */
+        .config-item { background-color: #2a2a2a; padding: 15px; border-radius: 8px; margin-bottom: 15px; border-left: 5px solid #00ff99; }
+        .config-item input[type="number"] { width: 100%; padding: 8px; margin-bottom: 10px; border-radius: 5px; border: none; background-color: #3f3f3f; color: white; box-sizing: border-box; }
+
+        /* --- ESTILOS ESPECÍFICOS PARA PANTALLA 2 (STATS) --- */
+        #stats-time-display { font-size: 4rem; font-weight: bold; text-align: center; margin: 10px 0 20px; color: #00ff99; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        
+        /* Estilo para el tiempo de lap en Pantalla 2 */
+        #stats-lap-display { 
+            font-size: 2.5rem; /* Un tamaño destacado */
+            font-weight: bold; 
+            text-align: center; 
+            margin: 10px 0;
+            color: #FFC107; /* Amarillo para diferenciar */
+        }
+        
+        /* Rejilla 3x3 para las métricas */
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .stat-box { background-color: #2a2a2a; padding: 10px; border-radius: 10px; text-align: center; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); position: relative; }
+        .stat-label { font-size: 0.65rem; color: #aaa; margin-bottom: 3px; text-transform: uppercase; line-height: 1.1; }
+        
+        /* Tamaño de fuente del valor principal */
+        .stat-value { font-size: 1.8rem; font-weight: bold; line-height: 1.1;} 
+        .stat-value.current { color: #FF9800; } 
+        .stat-value.avg { color: #2196F3; } 
+        .stat-value.default { color: #00ff99; } 
+        .stat-unit { font-size: 0.7rem; color: #aaa; display: block; margin-top: 3px; }
+
+        #next-km-box { grid-column: 1 / 4; background-color: #333; padding: 15px; margin-top: 10px; }
+        #next-km-value-label { font-size: 2.2rem; font-weight: bold; display: block; color: #00ff99; }
+        #next-km-value-suffix { font-size: 1.2rem; margin-top: 5px; }
+
+        .stat-value.altitude { color: #00BFFF; } 
+        .stat-value.ascent { color: #FF00FF; } 
+        .stat-value.descent { color: #FFFF00; } 
+        .stat-value.lapdist { color: #FFC107; } /* Color para la distancia de lap */
+
+    </style>
+</head>
+<body>
+
+    <div id="main-view" class="view">
+
+        <div id="time-display">0:00:00:00</div>
+        <div id="lap-time-display">LAP: 0:00:00:00</div>
+        
+        <p id="gps-info">Ubicación: Cargando...</p>
+
+        <div class="controls">
+            <button id="gps-button" onclick="requestGeolocationPermission()">ACTIVAR GPS</button>
+            
+            <button id="main-button" class="start" onclick="startLap()">START</button>
+        </div>
+        
+        <div class="stats-controls">
+            
+            <div class="action-buttons-group">
+                <button id="reset-button" onclick="resetTimer()">REINICIAR</button>
+                <button id="stop-button" onclick="stopTimer()">STOP</button> 
+            </div>
+
+            <div class="lap-stats-item">
+                <span class="lap-stats-label">LAP ACTUAL</span>
+                <span id="current-lap-value" class="lap-stats-value">0</span>
+            </div>
+            
+            <div class="lap-stats-item">
+                <span class="lap-stats-label">DISTANCIA TOTAL</span>
+                <span id="total-distance-value" class="lap-stats-value">0.00 m</span>
+            </div>
+
+        </div>
+
+        <div id="lap-table-container">
+            <table id="lap-table">
+                <thead>
+                    <tr>
+                        <th># LAP</th>
+                        <th>Tiempo Acumulado</th>
+                        <th>Tiempo de Lap</th>
+                        <th>Distancia (m)</th>
+                        <th>(km/h)</th> </tr>
+                    </tr>
+                </thead>
+                <tbody id="lap-data"></tbody>
+            </table>
+        </div>
+
+        <div class="actions">
+            <button class="action-button" onclick="saveData()">GUARDAR (.txt)</button>
+            <button class="action-button" onclick="switchView('stats-view')">PANTALLA 2</button>
+            <button class="action-button" onclick="switchView('config-view')">CONFIGURA</button>
+        </div>
+
+    </div>
+    
+    <div id="stats-view" class="view">
+        <h2 style="text-align: center; color: #00ff99;">Métricas de Rendimiento</h2>
+
+        <div id="gps-status-box" style="display: flex; justify-content: space-around; background-color: #222; padding: 10px; border-radius: 8px; margin-bottom: 15px;">
+            <div class="status-item" style="text-align: center;">
+                <span class="status-label" style="font-size: 0.7rem; color: #aaa;">Precisión:</span> 
+                <span id="gps-accuracy-display" class="status-value status-warning" style="font-size: 1.1rem; color: #FF9800;">-- m</span>
+            </div>
+            <div class="status-item" style="text-align: center;">
+                <span class="status-label" style="font-size: 0.7rem; color: #aaa;">Dirección:</span> 
+                <span id="gps-heading-display" class="status-value status-good" style="font-size: 1.1rem; color: #00ff99;">--</span>
+            </div>
+            <div class="status-item" style="text-align: center;">
+                <span class="status-label" style="font-size: 0.7rem; color: #aaa;">Confiab.:</span> 
+                <span id="data-reliability-status" class="status-value status-warning" style="font-size: 1.1rem; color: #FF9800;">INSUF.</span>
+            </div>
+        </div>
+        
+        <div id="stats-time-display">0:00:00:00</div>
+
+        <div class="stats-grid">
+            
+            <div class="stat-box">
+                <span class="stat-label">Altitud:</span>
+                <span id="current-altitude-value" class="stat-value altitude">0</span>
+                <span class="stat-unit">m.s.n.m.</span>
+            </div>
+
+            <div class="stat-box">
+                <span class="stat-label">Ascenso:</span>
+                <span id="total-ascent-value" class="stat-value ascent">0</span>
+                <span class="stat-unit">metros</span>
+            </div>
+            
+            <div class="stat-box">
+                <span class="stat-label">Descenso:</span>
+                <span id="total-descent-value" class="stat-value descent">0</span>
+                <span class="stat-unit">metros</span>
+            </div>
+
+            <div class="stat-box">
+                <span class="stat-label">Act:</span>
+                <span id="current-speed-value" class="stat-value current">0.0</span>
+                <span class="stat-unit">km/h</span>
+            </div>
+            
+            <div class="stat-box">
+                <span class="stat-label">Ritmo:</span>
+                <span id="current-pace-value" class="stat-value current">0:00</span>
+                <span class="stat-unit">min/km</span>
+            </div>
+
+            <div class="stat-box">
+                <span class="stat-label">Lap:</span>
+                <span id="lap-distance-value" class="stat-value lapdist">0.00</span>
+                <span class="stat-unit">metros</span>
+            </div>
+            
+            <div class="stat-box">
+                <span class="stat-label">Promedio:</span>
+                <span id="avg-speed-value" class="stat-value avg">0.0</span>
+                <span class="stat-unit">km/h</span>
+            </div>
+            
+            <div class="stat-box">
+                <span class="stat-label">Promedio:</span>
+                <span id="avg-pace-value" class="stat-value avg">0:00</span>
+                <span class="stat-unit">min/km</span>
+            </div>
+            
+            <div class="stat-box">
+                <span class="stat-label">Total:</span>
+                <span id="total-km-value" class="stat-value default">0.00</span>
+                <span class="stat-unit">km</span>
+            </div>
+
+            <div id="stats-lap-display" style="grid-column: 1 / 4;">LAP: 0:00:00:00</div>
+
+            <div id="next-km-box" class="stat-box">
+                <span class="stat-label">Falta:</span>
+                <span id="next-km-value-label" class="stat-value default">RESTA: 1000 m.</span> 
+                <span id="next-km-value-suffix" class="stat-unit" style="font-size: 1.2rem; margin-top: 5px;">PARA 1000 m.</span>
+            </div>
+
+        </div>
+        
+        <button id="lap-button-stats" onclick="startLap()">LAP:</button>
+
+
+        <div class="actions actions-single" style="position: static; transform: none; padding-top: 15px; border-top: none;">
+            <button class="action-button" onclick="switchView('main-view')">REGRESAR AL CRONÓMETRO</button>
+        </div>
+    </div>
+    <div id="config-view" class="view">
+        <h2 style="text-align: center;">Configuración del Cronómetro</h2>
+
+        <div class="config-item">
+            <label for="smoothingSamples">Muestra de Estabilización (N lecturas)</label>
+            <input type="number" id="smoothingSamples" value="5" min="1" onchange="updateConfig()">
+            <p style="font-size: 0.8rem; color: #888;">Controla la fluctuación de Velocidad/Ritmo Actual. Más grande = más estable, pero tarda más en actualizar.</p>
+        </div>
+        
+        <div class="config-item">
+            <label for="distanceGoal">Distancia Objetivo (metros)</label>
+            <input type="number" id="distanceGoal" value="1000" min="1" onchange="updateConfig()">
+            <p style="font-size: 0.8rem; color: #888;">Distancia que se usa para la métrica "RESTANTE" en Pantalla 2.</p>
+        </div>
+
+        <div class="config-item">
+            <label for="countdownTime">Cuenta Regresiva Antes de Iniciar (seg.)</label>
+            <input type="number" id="countdownTime" value="0" min="0" onchange="updateConfig()">
+            <p style="font-size: 0.8rem; color: #888;">Tiempo que se muestra en el cronómetro principal antes de que la actividad comience realmente (útil para que el GPS se fije).</p>
+        </div>
+
+        <div class="config-item">
+            <label for="maxLaps">Total de Laps (0 = Ilimitado):</label>
+            <input type="number" id="maxLaps" value="0" min="0" onchange="updateConfig()">
+            <p style="font-size: 0.8rem; color: #888;">El botón START se convierte en LAP después del Lap N.</p>
+        </div>
+        
+        <div class="config-item">
+            <label>Avisos Auditivos (Parcial):</label>
+            <label for="beepInterval">Pitido cada (segundos):</label>
+            <input type="number" id="beepInterval" value="17" min="1" onchange="updateConfig()">
+            <label for="beepEnabled">Activar Pitido Parcial:</label>
+            <input type="checkbox" id="beepEnabled" checked onchange="updateConfig()">
+        </div>
+
+        <div class="config-item">
+            <label>Sonido de INICIO/LAP:</label>
+            <label for="startHz">Frecuencia (Hz):</label>
+            <input type="number" id="startHz" value="840" min="20">
+            <label for="startDuration">Duración (ms):</label>
+            <input type="number" id="startDuration" value="500" min="50">
+            <label for="startVolume">Volumen (0.8 a 1.0):</label>
+            <input type="number" id="startVolume" value="0.8" step="0.1" min="0.0" max="1.0">
+        </div>
+
+
+        <div class="actions actions-single" style="position: static; transform: none; padding-top: 15px; border-top: none;">
+            <button class="action-button" onclick="switchView('main-view')">REGRESAR AL CRONÓMETRO</button>
+        </div>
+    </div>
+
+    <script>
+        // Variables de Estado del Cronómetro
+        let startTime = 0;
+        let elapsedTime = 0;
+        let lapTime = 0; 
+        let timerInterval;
+        let isRunning = false;
+        let lapCount = 0;
+        let lastLapTime = 0;
+        let totalDistanceAccumulated = 0;
+        let distanceSinceLastLap = 0; 
+        
+        let countdownInterval = null; 
+        let countdownRemaining = 0; 
+
+        // Variables de Geoposicionamiento y rendimiento
+        let watchID = null;
+        let gpsActive = false; 
+        let lastCoords = null;
+        let currentAccuracy = Infinity; 
+        let currentHeading = 'N/A'; 
+        let currentAltitude = 0.0;
+        let totalAscent = 0.0; 
+        let totalDescent = 0.0; 
+
+        // Historial para el suavizado de velocidad/ritmo
+        let speedHistory = []; // Almacena objetos { speed: km/h, reliable: boolean }
+
+        const ACCURACY_THRESHOLD = 15; // Precisión mínima aceptable (metros)
+        const ALTITUDE_SMOOTHING_THRESHOLD = 2.0; // Mínimo cambio de altitud para registrar (metros)
+        
+
+        let currentLatitude = 'N/A';
+        let currentLongitude = 'N/A';
+
+        // Configuración
+        let config = { 
+            maxLaps: 0, 
+            beepInterval: 17, 
+            beepEnabled: true, 
+            startHz: 840, 
+            startDuration: 500, 
+            startVolume: 0.8,
+            distanceGoal: 1000,
+            countdownTime: 0,
+            smoothingSamples: 5 
+        };
+
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null; 
+        let lastBeepTime = 0;
+        
+        function initializeAudioContext() {
+            if (!audioCtx) {
+                try {
+                    audioCtx = new AudioContext();
+                    if (audioCtx.state === 'suspended') {
+                        audioCtx.resume();
+                    }
+                } catch (e) {
+                    console.warn("AudioContext no disponible. Los sonidos no funcionarán.", e);
+                    audioCtx = null; 
+                }
+            }
+        }
+
+
+        // --- FUNCIONES DE UTILIDAD Y CÁLCULO DE MÉTRICAS ---
+        
+        function formatTime(ms) {
+            const totalSeconds = Math.floor(ms / 1000);
+    
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+            const seconds = String(totalSeconds % 60).padStart(2, '0');
+            const decimas = String(Math.floor((ms % 1000) / 10)).padStart(2, '0');
+    
+            // Si la duración es menor a 1 hora, se muestra MM:SS:dd
+            if (hours === 0) {
+                return `${minutes}:${seconds}:${decimas}`;
+            } 
+            // Si es igual o mayor a 1 hora, se muestra HH:MM:SS:dd
+            else {
+                const formattedHours = String(hours).padStart(1, '0');
+                return `${formattedHours}:${minutes}:${seconds}:${decimas}`;
+            }
+            
+        }
+        
+        function formatPace(secondsPerKm) {
+            if (secondsPerKm === Infinity || isNaN(secondsPerKm) || secondsPerKm <= 0) {
+                return "0:00";
+            }
+            const minutes = Math.floor(secondsPerKm / 60);
+            const seconds = Math.round(secondsPerKm % 60);
+            return `${minutes}:${String(seconds).padStart(2, '0')}`;
+        }
+
+        function getTotalDistanceMeters() {
+            return totalDistanceAccumulated + distanceSinceLastLap;
+        }
+        
+        function isDataReliable() {
+            return currentAccuracy <= ACCURACY_THRESHOLD;
+        }
+        
+        function getSmoothedSpeedAndPace() {
+            const history = speedHistory;
+            const size = Math.min(history.length, config.smoothingSamples);
+            
+            if (size === 0) {
+                return { speed: 0.0, pace: Infinity };
+            }
+            
+            // Filtrar y sumar solo las lecturas que se consideran fiables (o todas si no hay ninguna fiable)
+            let reliableSamples = history.slice(-size).filter(sample => sample.reliable);
+            
+            // Si no hay suficientes muestras fiables, usar todas las muestras disponibles
+            if (reliableSamples.length < Math.floor(size / 2) && history.length > 0) {
+                reliableSamples = history.slice(-size);
+            }
+            
+            if (reliableSamples.length === 0) {
+                return { speed: 0.0, pace: Infinity };
+            }
+            
+            const totalSpeed = reliableSamples.reduce((sum, sample) => sum + sample.speed, 0);
+            const avgSpeed = totalSpeed / reliableSamples.length;
+            
+            let avgPace = Infinity;
+            if (avgSpeed > 0) {
+                // Conversión de km/h a segundos/km
+                avgPace = 3600 / avgSpeed;
+            }
+
+            return { speed: avgSpeed, pace: avgPace };
+        }
+
+
+        // --- FUNCIONES DE RENDERING DE STATS Y GPS ---
+
+        function updatePerformanceStats() {
+            const totalDistanceM = getTotalDistanceMeters();
+            const totalDistanceKM = totalDistanceM / 1000;
+            const totalSeconds = elapsedTime / 1000;
+            
+            let avgSpeed = 0.0;
+            let avgPace = Infinity;
+            
+            const smoothedMetrics = getSmoothedSpeedAndPace();
+            let currentSpeedDisplay = smoothedMetrics.speed;
+            let currentPaceDisplay = smoothedMetrics.pace;
+            
+            const isReliable = isDataReliable();
+
+            if (totalSeconds > 0 && totalDistanceM > 0) {
+                avgSpeed = (totalDistanceKM / (totalSeconds / 3600));
+                avgPace = totalSeconds / totalDistanceKM;
+            }
+            
+            if (!isRunning || currentSpeedDisplay <= 0.1) {
+                currentSpeedDisplay = avgSpeed;
+                currentPaceDisplay = avgPace;
+            }
+            
+            // Distancia restante para el objetivo
+            const distanceGoal = config.distanceGoal;
+            const distanceIntoGoal = totalDistanceM % distanceGoal;
+            let nextGoalRemaining = distanceGoal - distanceIntoGoal;
+            nextGoalRemaining = Math.max(0, nextGoalRemaining);
+
+            // Renderizado en la vista de STATS
+            document.getElementById('stats-time-display').textContent = formatTime(elapsedTime);
+            
+            // ACTUALIZACIÓN: Tiempo de Lap Actual en Pantalla 2
+            document.getElementById('stats-lap-display').textContent = `LAP: ${formatTime(lapTime)}`; 
+            
+            document.getElementById('total-km-value').textContent = totalDistanceKM.toFixed(2);
+            
+            document.getElementById('avg-speed-value').textContent = avgSpeed.toFixed(1);
+            document.getElementById('avg-pace-value').textContent = formatPace(avgPace);
+            
+            // Distancia del Lap Actual
+            document.getElementById('lap-distance-value').textContent = distanceSinceLastLap.toFixed(2); 
+
+            // Renderizado de la Distancia Objetivo
+            document.getElementById('next-km-value-label').textContent = `RESTA: ${Math.round(nextGoalRemaining)} m.`;
+            document.getElementById('next-km-value-suffix').textContent = `PARA ${distanceGoal} m.`;
+
+            document.getElementById('current-speed-value').textContent = currentSpeedDisplay.toFixed(1);
+            document.getElementById('current-pace-value').textContent = formatPace(currentPaceDisplay);
+            
+            // Renderizado de Altitud y Desnivel
+            document.getElementById('current-altitude-value').textContent = currentAltitude.toFixed(0);
+            document.getElementById('total-ascent-value').textContent = totalAscent.toFixed(0);
+            document.getElementById('total-descent-value').textContent = totalDescent.toFixed(0);
+            
+            // Renderizado del Estatus del GPS
+            const reliabilityElement = document.getElementById('data-reliability-status');
+            const accuracyElement = document.getElementById('gps-accuracy-display');
+            const headingElement = document.getElementById('gps-heading-display');
+
+            accuracyElement.textContent = `${currentAccuracy === Infinity ? '--' : currentAccuracy.toFixed(1)} m`;
+            headingElement.textContent = currentHeading === null || isNaN(currentHeading) ? 'N/A' : `${currentHeading.toFixed(0)}°`;
+
+            const isReliableNow = isDataReliable();
+            if (gpsActive && isReliableNow) {
+                reliabilityElement.textContent = 'CONFIABLE';
+                reliabilityElement.style.color = '#00ff99';
+            } else if (gpsActive) {
+                reliabilityElement.textContent = 'INSUF.';
+                reliabilityElement.style.color = '#FF9800';
+            } else {
+                reliabilityElement.textContent = 'INACTIVO';
+                reliabilityElement.style.color = '#F44336';
+            }
+            
+            // Deshabilitar botón LAP de Pantalla 2 si no está corriendo o está en cuenta regresiva
+            const lapButtonStats = document.getElementById('lap-button-stats');
+            lapButtonStats.disabled = !isRunning || countdownInterval !== null;
+        }
+
+        function updateStatsDisplay() {
+            // Actualizar la duración del lap actual
+            if (isRunning) {
+                lapTime = elapsedTime - lastLapTime;
+                document.getElementById('lap-time-display').textContent = `LAP: ${formatTime(lapTime)}`;
+            } else {
+                document.getElementById('lap-time-display').textContent = `LAP: ${formatTime(lapTime)}`;
+            }
+
+
+            const displayDistance = getTotalDistanceMeters();
+            let unit = 'm';
+            let formattedDistance = displayDistance.toFixed(2);
+
+            if (displayDistance >= 1000) {
+                formattedDistance = (displayDistance / 1000).toFixed(2);
+                unit = 'km';
+            }
+
+            document.getElementById('total-distance-value').textContent = `${formattedDistance} ${unit}`;
+            document.getElementById('current-lap-value').textContent = lapCount > 0 ? lapCount : 0;
+            
+            // CAMBIO PARA MOSTRAR VELOCIDAD Y RITMO EN LA LÍNEA DEL GPS
+            const smoothedMetrics = getSmoothedSpeedAndPace();
+            const currentSpeedDisplay = smoothedMetrics.speed;
+            const currentPaceDisplay = smoothedMetrics.pace;
+            const formattedPace = formatPace(currentPaceDisplay);
+            
+            if (gpsActive) {
+                const speedKmH = currentSpeedDisplay.toFixed(1);
+                const accuracy = currentAccuracy === Infinity ? '--' : currentAccuracy.toFixed(1);
+            
+                // Usamos innerHTML y agregamos una clase CSS 'highlight-gps' para hacer los números más grandes
+                document.getElementById('gps-info').innerHTML = 
+                    `GPS ACTIVO: ${accuracy}m | <span class="highlight-gps">${speedKmH}</span> Km/h | <span class="highlight-gps">${formattedPace}</span> min/km`;
+            } else {
+                document.getElementById('gps-info').textContent = "Ubicación: Inactiva";
+            }
+            
+            // Fin del cambio GPS Info
+
+            if (isRunning || document.getElementById('stats-view').style.display === 'block') {
+                updatePerformanceStats();
+            }
+        }
+
+        function updateDisplay() {
+            elapsedTime = Date.now() - startTime;
+            document.getElementById('time-display').textContent = formatTime(elapsedTime);
+            updateStatsDisplay();
+
+            if (config.beepEnabled && isRunning && audioCtx) {
+                const totalSeconds = Math.floor(elapsedTime / 1000);
+                if (totalSeconds > lastBeepTime && totalSeconds % config.beepInterval === 0) {
+                    // Volumen aumentado a 1.0 para que se escuche mejor
+                    playSound(400, 50, 1.0); 
+                    lastBeepTime = totalSeconds;
+                }
+            }
+        }
+
+        // --- LÓGICA DE CRONÓMETRO Y CUENTA REGRESIVA ---
+        
+        function startTimer() {
+            if (isRunning) return;
+
+            initializeAudioContext();
+            
+            if (config.countdownTime > 0 && startTime === 0 && countdownInterval === null) {
+                startCountdown();
+                return; 
+            }
+            
+            if (startTime === 0) {
+                startTime = Date.now();
+                lastLapTime = 0;
+                lastBeepTime = 0;
+            } else {
+                startTime = Date.now() - elapsedTime; 
+            }
+            
+            isRunning = true;
+            timerInterval = setInterval(updateDisplay, 10);
+            
+            document.getElementById('main-button').textContent = "LAP";
+            document.getElementById('main-button').className = 'lap';
+            document.getElementById('stop-button').style.display = 'block'; 
+            
+            // Asegurarse de que el botón LAP de Pantalla 2 esté habilitado
+            const lapButtonStats = document.getElementById('lap-button-stats');
+            if (lapButtonStats) lapButtonStats.disabled = false;
+        }
+        
+        function startCountdown() {
+            if (!gpsActive) {
+                alert("Por favor, activa el GPS antes de comenzar la cuenta regresiva.");
+                return;
+            }
+            
+            const button = document.getElementById('main-button');
+            button.textContent = `READY (${config.countdownTime})`;
+            button.className = 'stop'; 
+            button.onclick = null; 
+            document.getElementById('stop-button').style.display = 'none';
+
+            countdownRemaining = config.countdownTime;
+            
+            elapsedTime = countdownRemaining * 1000;
+            document.getElementById('time-display').textContent = `${countdownRemaining}`;
+            
+            // Deshabilitar el botón LAP de Pantalla 2 durante la cuenta regresiva
+            const lapButtonStats = document.getElementById('lap-button-stats');
+            if (lapButtonStats) lapButtonStats.disabled = true;
+
+            playSound(300, 200, 0.8);
+
+            countdownInterval = setInterval(() => {
+                countdownRemaining--;
+                
+                if (countdownRemaining >= 0) {
+                    document.getElementById('time-display').textContent = `${countdownRemaining}`;
+                    button.textContent = `READY (${countdownRemaining})`;
+                    if (countdownRemaining > 0 && countdownRemaining <= 3) {
+                         playSound(500, 100, 0.9);
+                    }
+                } 
+                
+                if (countdownRemaining < 0) {
+                    clearInterval(countdownInterval);
+                    
+                    startTime = Date.now(); 
+                    elapsedTime = 0; 
+                    lastLapTime = 0; 
+                    countdownInterval = null; 
+                    
+                    document.getElementById('time-display').textContent = formatTime(0);
+                    button.textContent = 'LAP';
+                    button.className = 'lap';
+                    button.onclick = startLap; 
+                    document.getElementById('stop-button').style.display = 'block';
+                    
+                    // Habilitar el botón LAP de Pantalla 2 al finalizar la cuenta regresiva
+                    if (lapButtonStats) lapButtonStats.disabled = false;
+
+                    playSound(config.startHz, config.startDuration, config.startVolume); 
+                    
+                    startTimer(); 
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                
+                const button = document.getElementById('main-button');
+                button.textContent = "START";
+                button.className = 'start';
+                
+                // Deshabilitar el botón LAP de Pantalla 2 al detener el cronómetro
+                const lapButtonStats = document.getElementById('lap-button-stats');
+                if (lapButtonStats) lapButtonStats.disabled = true;
+            }
+        }
+        
+        function startLap() {
+            if (countdownInterval) return; 
+
+            initializeAudioContext();
+            
+            if (!isRunning) {
+                // START
+                startTimer();
+                if (config.countdownTime === 0 || startTime > 0) { 
+                    playSound(config.startHz, config.startDuration, config.startVolume);
+                }
+            } else {
+                // LAP
+                lapCount++;
+                recordLap(); 
+                playSound(config.startHz, config.startDuration, config.startVolume);
+            }
+            
+            if (config.maxLaps > 0 && lapCount >= config.maxLaps) {
+                stopTimer();
+            }
+        }
+
+        function resetTimer() {
+            if (countdownInterval) clearInterval(countdownInterval);
+            countdownInterval = null;
+            
+            stopTimer();
+            stopGeolocation(); 
+            
+            startTime = 0;
+            elapsedTime = 0;
+            lapTime = 0;
+            lastLapTime = 0;
+            lapCount = 0;
+            totalDistanceAccumulated = 0;
+            distanceSinceLastLap = 0;
+            
+            currentAltitude = 0.0; 
+            totalAscent = 0.0; 
+            totalDescent = 0.0; 
+            lastCoords = null; 
+            speedHistory = []; 
+
+            currentAccuracy = Infinity;
+            currentHeading = 'N/A';
+
+            document.getElementById('time-display').textContent = "0:00:00:00";
+            document.getElementById('lap-time-display').textContent = "LAP: 0:00:00:00";
+            
+            document.getElementById('main-button').textContent = "START";
+            document.getElementById('main-button').className = 'start';
+            document.getElementById('main-button').onclick = startLap; 
+            document.getElementById('stop-button').style.display = 'block';
+            
+            document.getElementById('gps-button').style.display = 'block';
+            document.getElementById('gps-button').className = '';
+            document.getElementById('gps-button').textContent = "ACTIVAR GPS";
+
+            // Deshabilitar el botón LAP de Pantalla 2
+            const lapButtonStats = document.getElementById('lap-button-stats');
+            if (lapButtonStats) lapButtonStats.disabled = true;
+
+            updateStatsDisplay(); 
+            
+            document.getElementById('gps-info').textContent = "Ubicación: Inactiva";
+            document.getElementById('lap-data').innerHTML = ''; 
+        }
+
+        // --- LÓGICA DE GEOPOSICIONAMIENTO ---
+
+        function getDistance(lat1, lon1, lat2, lon2) {
+            const R = 6371e3; 
+            const φ1 = lat1 * Math.PI / 180;
+            const φ2 = lat2 * Math.PI / 180;
+            const Δφ = (lat2 - lat1) * Math.PI / 180;
+            const Δλ = (lon2 - lon1) * Math.PI / 180;
+            const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                      Math.cos(φ1) * Math.cos(φ2) *
+                      Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            return R * c; 
+        }
+
+        function handlePosition(position) {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const alt = position.coords.altitude !== null ? position.coords.altitude : currentAltitude;
+            const currentTime = Date.now();
+            
+            currentAccuracy = position.coords.accuracy || Infinity;
+            currentHeading = position.coords.heading !== null && !isNaN(position.coords.heading) ? position.coords.heading : 'N/A';
+            currentAltitude = alt; 
+
+            currentLatitude = lat.toFixed(6);
+            currentLongitude = lon.toFixed(6);
+            
+            const gpsButton = document.getElementById('gps-button');
+            gpsButton.textContent = `GPS ACTIVO (${currentAccuracy.toFixed(1)}m)`;
+            gpsButton.className = 'active';
+            
+            let currentInstantSpeed = 0.0;
+            let timeDelta = 0;
+
+            if (lastCoords) {
+                const distance = getDistance(lastCoords.latitude, lastCoords.longitude, lat, lon);
+                timeDelta = currentTime - lastCoords.time;
+                
+                // CÁLCULO DE ASCENSO Y DESCENSO
+                if (lastCoords.altitude !== null && alt !== null) {
+                    const altitudeChange = alt - lastCoords.altitude;
+                    
+                    if (isRunning && isDataReliable()) {
+                        if (altitudeChange > ALTITUDE_SMOOTHING_THRESHOLD) {
+                            totalAscent += altitudeChange;
+                        } else if (altitudeChange < -ALTITUDE_SMOOTHING_THRESHOLD) {
+                            totalDescent += Math.abs(altitudeChange);
+                        }
+                    }
+                }
+
+                if (isRunning) {
+                    if (isDataReliable()) {
+                        distanceSinceLastLap += distance;
+                        
+                        // CÁLCULO DE VELOCIDAD INSTANTÁNEA
+                        if (timeDelta > 0 && distance > 0) {
+                            const distanceKM = distance / 1000;
+                            const timeDeltaHours = timeDelta / (1000 * 60 * 60);
+                            currentInstantSpeed = distanceKM / timeDeltaHours; // km/h
+                        }
+                    }
+                }
+            }
+            
+            // Actualizar historial de velocidad SÓLO si el cronómetro está corriendo
+            if (isRunning) {
+                const isReliableNow = isDataReliable();
+                
+                speedHistory.push({
+                    speed: currentInstantSpeed, // km/h
+                    reliable: isReliableNow
+                });
+
+                // Mantener el historial al tamaño configurado para el suavizado
+                if (speedHistory.length > config.smoothingSamples) {
+                    speedHistory.shift();
+                }
+            }
+            
+            // Almacenar las coordenadas y altitud para el próximo cálculo
+            lastCoords = {
+                latitude: lat,
+                longitude: lon,
+                altitude: alt,
+                time: currentTime
+            };
+        }
+
+        function requestGeolocationPermission() {
+            initializeAudioContext(); 
+
+            if (gpsActive) return;
+
+             if ("geolocation" in navigator) {
+                startGeolocation();
+             } else {
+                document.getElementById('gps-info').textContent = "Ubicación: Geolocation no soportada.";
+                alert("Tu dispositivo no soporta geolocalización.");
+                currentAccuracy = Infinity; 
+             }
+        }
+        
+        function startGeolocation() {
+            if (watchID !== null) return;
+            
+            const options = { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 };
+            
+            watchID = navigator.geolocation.watchPosition(handlePosition, (error) => {
+                console.error('Error GPS: ', error.message);
+                document.getElementById('gps-info').textContent = "Ubicación: Error o Permiso denegado.";
+                document.getElementById('gps-button').textContent = `GPS DESACTIVADO`;
+                document.getElementById('gps-button').className = '';
+                currentAccuracy = Infinity; 
+                gpsActive = false;
+            }, options);
+            
+            gpsActive = true;
+        }
+        
+        function stopGeolocation() {
+            if (watchID !== null) {
+                navigator.geolocation.clearWatch(watchID);
+                watchID = null;
+                currentAccuracy = Infinity;
+                currentHeading = 'N/A';
+                gpsActive = false;
+            }
+        }
+        
+        // --- Otras funciones ---
+        
+        function recordLap() {
+            const currentTotalTime = elapsedTime;
+            const lapTimeRecord = currentTotalTime - lastLapTime; 
+            const distanceCovered = distanceSinceLastLap.toFixed(2);
+            
+            // Cálculo de Velocidad Media del LAP
+            let lapSpeed = 0.0;
+            const lapTimeHours = lapTimeRecord / (1000 * 60 * 60);
+            const distanceCoveredKM = distanceSinceLastLap / 1000;
+            
+            if (lapTimeHours > 0 && distanceCoveredKM > 0) {
+                lapSpeed = distanceCoveredKM / lapTimeHours; // km/h
+            }
+            const lapSpeedDisplay = lapSpeed.toFixed(1);
+
+            totalDistanceAccumulated += distanceSinceLastLap;
+
+            lastLapTime = currentTotalTime;
+
+            const tableBody = document.getElementById('lap-data');
+            const newRow = tableBody.insertRow(0); 
+
+            newRow.insertCell(0).textContent = lapCount;
+            newRow.insertCell(1).textContent = formatTime(currentTotalTime);
+            newRow.insertCell(2).textContent = formatTime(lapTimeRecord);
+            newRow.insertCell(3).textContent = distanceCovered;
+
+            // NUEVA CELDDA: Velocidad Media del Lap
+            newRow.insertCell(4).textContent = lapSpeedDisplay; // km/h
+
+            distanceSinceLastLap = 0; 
+            updateStatsDisplay();
+        }
+
+        function playSound(frequency, durationMs, volume) {
+            if (!audioCtx) {
+                 console.warn("AudioContext no inicializado. No se puede reproducir el sonido.");
+                 return;
+            }
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(frequency, audioCtx.currentTime);
+            gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + durationMs / 1000);
+        }
+
+        function updateConfig() {
+            config.maxLaps = parseInt(document.getElementById('maxLaps').value) || 0;
+            config.beepInterval = parseInt(document.getElementById('beepInterval').value) || 1;
+            config.beepEnabled = document.getElementById('beepEnabled').checked;
+            config.startHz = parseFloat(document.getElementById('startHz').value);
+            config.startDuration = parseFloat(document.getElementById('startDuration').value);
+            config.startVolume = parseFloat(document.getElementById('startVolume').value);
+            config.distanceGoal = parseInt(document.getElementById('distanceGoal').value) || 1000;
+            config.countdownTime = parseInt(document.getElementById('countdownTime').value) || 0; 
+            config.smoothingSamples = parseInt(document.getElementById('smoothingSamples').value) || 1; 
+
+            if (config.countdownTime < 0) config.countdownTime = 0;
+            if (config.smoothingSamples < 1) config.smoothingSamples = 1;
+        }
+
+        function switchView(viewId) {
+            document.getElementById('main-view').style.display = 'none';
+            document.getElementById('config-view').style.display = 'none';
+            document.getElementById('stats-view').style.display = 'none';
+
+            if (viewId === 'main-view') {
+                document.getElementById('main-view').style.display = 'block';
+            } else if (viewId === 'config-view') {
+                document.getElementById('config-view').style.display = 'block';
+                updateConfig();
+            } else if (viewId === 'stats-view') {
+                document.getElementById('stats-view').style.display = 'block';
+                updatePerformanceStats();
+            }
+        }
+
+        // FUNCIÓN COMPLETA DE GUARDAR DATOS
+        function saveData() {
+            const tableBody = document.getElementById('lap-data');
+            if (tableBody.rows.length === 0) {
+                alert("No hay laps registrados para guardar.");
+                return;
+            }
+
+            const now = new Date();
+            const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+            const timeStr = now.toTimeString().slice(0, 8).replace(/:/g, '');
+            const filename = `${dateStr}_${timeStr}.txt`;
+
+            let data = `--- Registro de Tiempos ---\n`;
+            data += `Fecha y Hora de Guardado: ${now.toLocaleString()}\n`;
+            data += `Ubicación al Guardar: Lat ${currentLatitude}, Lon ${currentLongitude}\n`;
+            data += `Altitud al Guardar: ${currentAltitude.toFixed(0)} m.s.n.m.\n`;
+            data += `Ascenso Total: ${totalAscent.toFixed(1)} m\n`;
+            data += `Descenso Total: ${totalDescent.toFixed(1)} m\n`;
+            data += `Muestra de Estabilización: ${config.smoothingSamples} lecturas\n`;
+            data += `Distancia Objetivo: ${config.distanceGoal}m\n`; 
+            data += `Cuenta Regresiva: ${config.countdownTime}s\n`; 
+            data += `----------------------------\n`;
+            data += `| # Lap | Tiempo Acumulado | Tiempo de Lap | Distancia (m) | Km/h\n`;
+            data += `----------------------------\n`;
+
+            for (let i = 0; i < tableBody.rows.length; i++) {
+                const row = tableBody.rows[i];
+                const lapNum = row.cells[0].textContent.padEnd(5, ' ');
+                const total = row.cells[1].textContent.padEnd(16, ' ');
+                const lap = row.cells[2].textContent.padEnd(13, ' ');
+                const dist = row.cells[3].textContent.padEnd(13, ' ');
+                data += `| ${lapNum} | ${total} | ${lap} | ${dist} |\n`;
+            }
+
+            const blob = new Blob([data], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateConfig();
+            switchView('main-view');
+
+            document.getElementById('main-button').className = 'start';
+            document.getElementById('main-button').textContent = 'START';
+            updateStatsDisplay();
+            
+            document.getElementById('stop-button').style.display = 'block';
+            
+            // Inicialmente deshabilitar el botón LAP de Pantalla 2
+            const lapButtonStats = document.getElementById('lap-button-stats');
+            if (lapButtonStats) lapButtonStats.disabled = true;
+        });
+    </script>
+</body>
+</html>

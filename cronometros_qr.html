@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cronómetro QR de Carreras</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f9; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); }
+        h1 { color: #333; text-align: center; margin-bottom: 20px; }
+        #reader { width: 100%; border: 2px solid #ddd; border-radius: 4px; overflow: hidden; }
+        #result { margin-top: 15px; padding: 10px; background-color: #e0f7fa; border-left: 5px solid #00bcd4; }
+        .controls { display: flex; justify-content: space-around; margin-top: 20px; }
+        .controls button { padding: 10px 15px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; transition: background-color 0.3s; }
+        #startScan { background-color: #4CAF50; color: white; }
+        #startScan:hover { background-color: #45a049; }
+        #exportBtn { background-color: #2196F3; color: white; }
+        #exportBtn:hover { background-color: #1e88e5; }
+        #log { margin-top: 20px; border: 1px solid #ccc; max-height: 200px; overflow-y: scroll; padding: 10px; background-color: #fff; }
+        .log-entry { padding: 5px 0; border-bottom: 1px dotted #eee; }
+        .log-entry:last-child { border-bottom: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>⏱️ Cronómetro de Tiempos Parciales QR</h1>
+        
+        <div class="controls">
+            <button id="startScan">Iniciar Cronometraje</button>
+
+            <button id="zoomOutBtn" disabled>Zoom -</button>
+            <button id="zoomInBtn" disabled>Zoom +</button>
+
+            <button id="exportBtn" disabled>Exportar Tiempos (.txt)</button>
+        </div>
+        
+        <div id="reader"></div>
+        
+        <p id="result">Estado: Inactivo. Presione 'Iniciar Cronometraje'.</p>
+
+        <h2>📊 Registros de Parciales</h2>
+        <div id="log"></div>
+    </div>
+
+    <script>
+        const resultElement = document.getElementById('result');
+        const logElement = document.getElementById('log');
+        const startScanBtn = document.getElementById('startScan');
+        const exportBtn = document.getElementById('exportBtn');
+        const zoomInBtn = document.getElementById('zoomInBtn'); // Nuevo
+        const zoomOutBtn = document.getElementById('zoomOutBtn'); // Nuevo
+        const html5Qrcode = new Html5Qrcode("reader");
+
+        // --- Variables de Zoom ---
+        let videoTrack = null;
+        let zoomCapabilities = {};
+        const ZOOM_STEP = 0.5; // Incremento de zoom por clic
+
+        // --- Configuración de Control de Duplicados ---
+        // Este objeto almacenará los IDs de corredor y la hora del último registro válido.
+        // La clave es el ID del corredor y el valor es el timestamp (milisegundos) del último registro.
+        let registeredRunners = {};
+        // Intervalo de tiempo (en milisegundos) para ignorar registros duplicados del mismo corredor.
+        // 5 minutos = 5 * 60 * 1000 = 300000 ms (ajusta según la distancia del parcial)
+        const DUPLICATE_COOLDOWN_MS = 5 * 60 * 1000; 
+
+        // Base de datos de registros
+        let timeRecords = [];
+
+        /**
+         * Función principal de éxito de escaneo de QR.
+         * Se llama cada vez que un QR es detectado.
+         */
+        function onScanSuccess(decodedText, decodedResult) {
+            const runnerId = decodedText.trim();
+            const currentTime = Date.now();
+            const logTime = new Date(currentTime).toLocaleTimeString('es-ES', {hour12: false});
+            
+            // 1. Verificar si el corredor ya fue registrado recientemente.
+            if (registeredRunners[runnerId] && (currentTime - registeredRunners[runnerId] < DUPLICATE_COOLDOWN_MS)) {
+                // Registro duplicado dentro del tiempo de enfriamiento. Se ignora.
+                resultElement.innerHTML = `⚠️ Corredor ${runnerId} **Duplicado** (Ignorado). Hora: ${logTime}`;
+                return;
+            }
+
+            // 2. Es un registro nuevo o ha pasado el tiempo de enfriamiento.
+            
+            // Actualizar la base de datos de control de duplicados
+            registeredRunners[runnerId] = currentTime;
+            
+            // Registrar el tiempo parcial
+            const partialRecord = {
+                id: runnerId,
+                timestamp: currentTime,
+                timeFormatted: logTime
+            };
+            timeRecords.push(partialRecord);
+            
+            // Actualizar la interfaz
+            resultElement.innerHTML = `✅ **Parcial Registrado:** Corredor **${runnerId}**. Hora: ${logTime}`;
+            
+            // Agregar al log de la pantalla
+            const logEntry = document.createElement('div');
+            logEntry.classList.add('log-entry');
+            logEntry.innerHTML = `**${logTime}** - ID: ${runnerId}`;
+            logElement.prepend(logEntry); // Mostrar los más recientes primero
+
+            exportBtn.disabled = false; // Habilitar la exportación
+
+            // Opcional: Detener la lectura por un breve instante para evitar spam visual.
+            // Es mejor mantenerlo corriendo para escanear al siguiente corredor.
+        }
+
+        function onScanError(errorMessage) {
+            // Manejar errores de escaneo (p. ej., QR fuera de foco, oscuro).
+            // Lo ignoramos para no saturar el log de la interfaz.
+        }
+
+        /**
+        * Intenta obtener las capacidades de zoom y habilita los botones si es posible.
+         */
+        async function initializeZoomControls() {
+            if (!html5Qrcode.isScanning) return;
+
+            try {
+                // Obtener el track de video de la cámara activa
+                videoTrack = html5Qrcode.getVideoElement().srcObject.getVideoTracks()[0];
+                const capabilities = videoTrack.getCapabilities();
+                const settings = videoTrack.getSettings();
+
+                if (capabilities.zoom) {
+                    // La cámara soporta zoom
+                    zoomCapabilities = {
+                        min: capabilities.zoom.min || 1, // Mínimo de zoom, usualmente 1x
+                        max: capabilities.zoom.max || 10, // Máximo de zoom
+                        current: settings.zoom || 1 // Zoom actual
+                    };
+
+                    zoomInBtn.disabled = false;
+                    zoomOutBtn.disabled = false;
+                    resultElement.innerHTML += `<br>Zoom soportado: ${zoomCapabilities.current.toFixed(1)}x (Min: ${zoomCapabilities.min}, Max: ${zoomCapabilities.max}).`;
+                } else {
+                    resultElement.innerHTML += "<br>Zoom **NO** soportado por este dispositivo/navegador.";
+                    zoomInBtn.disabled = true;
+                    zoomOutBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error("Error al inicializar el control de zoom:", error);
+            }
+        }
+
+        /**
+        * Aplica el nuevo nivel de zoom a la cámara.
+        */
+        async function applyZoom(newZoom) {
+            if (!videoTrack || !zoomCapabilities.max) return;
+
+            // Asegurarse de que el nuevo zoom esté dentro de los límites
+            let safeZoom = Math.min(Math.max(newZoom, zoomCapabilities.min), zoomCapabilities.max);
+        
+            try {
+                const constraints = { advanced: [{ zoom: safeZoom }] };
+                await videoTrack.applyConstraints(constraints);
+                zoomCapabilities.current = safeZoom;
+            
+                // Actualizar la interfaz
+                resultElement.innerHTML = resultElement.innerHTML.split('<br>')[0] + `<br>Zoom actual: **${safeZoom.toFixed(1)}x**.`;
+            } catch (error) {
+                console.error("Error al aplicar zoom:", error);
+                resultElement.innerHTML = resultElement.innerHTML.split('<br>')[0] + `<br>❌ Fallo al aplicar zoom.`;
+            }
+        }
+        /**
+         * Inicia el proceso de escaneo de la cámara.
+         */
+        startScanBtn.addEventListener('click', () => {
+            if (html5Qrcode.isScanning) {
+                // Detener escaneo si ya está activo (botón de stop)
+                html5Qrcode.stop().then(() => {
+                    startScanBtn.textContent = 'Iniciar Cronometraje';
+                    resultElement.innerHTML = "Estado: Detenido. Presione 'Iniciar Cronometraje'.";
+                    zoomInBtn.disabled = true;
+                    zoomOutBtn.disabled = true;
+                    videoTrack = null;
+                }).catch(err => {
+                    console.error("Fallo al detener el escaneo", err);
+                });
+                return;
+            }
+
+            // Iniciar escaneo
+            // Se le da un objeto de configuración para la cámara
+            const config = { 
+                fps: 10, // Fotogramas por segundo. Ajusta esto para rendimiento o precisión.
+                qrbox: { width: 250, height: 250 }, // Define el área de detección
+                supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
+            };
+
+            html5Qrcode.start(
+                { facingMode: "environment" }, // Prioriza la cámara trasera
+                config,
+                onScanSuccess,
+                onScanError
+            ).then(() => {
+                startScanBtn.textContent = 'Detener Cronometraje';
+                resultElement.innerHTML = "Estado: 🟢 **Cámara Activa**. Enfoque un código QR.";
+            }).catch((err) => {
+                resultElement.innerHTML = `❌ **ERROR** al iniciar cámara: ${err}. Asegúrese de usar HTTPS y dar permiso.`;
+                console.error("Error al iniciar cámara:", err);
+            });
+        });
+
+        zoomInBtn.addEventListener('click', () => {
+            applyZoom(zoomCapabilities.current + ZOOM_STEP);
+        });
+
+        zoomOutBtn.addEventListener('click', () => {
+            applyZoom(zoomCapabilities.current - ZOOM_STEP);
+        });
+        
+        /**
+         * Exporta los registros a un archivo .txt.
+         */
+        exportBtn.addEventListener('click', () => {
+            if (timeRecords.length === 0) {
+                alert("No hay registros para exportar.");
+                return;
+            }
+
+            // Crear el encabezado del archivo
+            let fileContent = "ID_Corredor,Timestamp_MS,Hora_Formateada\n";
+            
+            // Agregar cada registro al contenido del archivo
+            timeRecords.forEach(record => {
+                fileContent += `${record.id},${record.timestamp},${record.timeFormatted}\n`;
+            });
+
+            // Crear un Blob (objeto de archivo) y un enlace de descarga
+            const blob = new Blob([fileContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            
+            // Nombrar el archivo
+            a.download = `tiempos_parciales_${new Date().toISOString().slice(0, 10)}.txt`;
+            a.href = url;
+            
+            // Simular un clic para iniciar la descarga
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert(`Exportados ${timeRecords.length} registros a ${a.download}`);
+        });
+
+        // NOTA IMPORTANTE: html5-qrcode necesita un entorno seguro (HTTPS) para acceder a la cámara. 
+        // Si lo abres como archivo local (file://), podría funcionar, pero se recomienda subirlo a un servidor (aunque sea local).
+    </script>
+
+</body>
+</html>
