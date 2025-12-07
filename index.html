@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <title>Crono V11 - Master Reset</title>
+    <title>Crono V12 - Mobile Fix</title>
 
     <style>
         :root { 
@@ -31,7 +31,7 @@
         .screen { display: none; flex: 1; overflow: hidden; flex-direction: column; }
         .screen.active { display: flex; }
         
-        /* BARRA SUPERIOR */
+        /* BARRA SUPERIOR (DEFAULT/DESKTOP) */
         .top-bar { 
             background: #000; padding: 6px 10px; display: flex; gap: 8px; align-items: center; 
             box-shadow: 0 2px 10px rgba(0,0,0,0.5); z-index: 10; height: 50px; flex-shrink: 0;
@@ -43,7 +43,7 @@
         .top-bar button.primary { background: var(--accent); border-color: var(--accent); font-weight: bold; color: #000; }
         .top-bar button:active { transform: scale(0.96); }
 
-        /* GRID */
+        /* GRID (DEFAULT/DESKTOP) */
         .grid-container {
             flex: 1; padding: 4px; overflow-y: auto; display: grid; gap: 4px;
             grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); 
@@ -161,6 +161,64 @@
         #btn-copy::before { content: '📋'; }
         #btn-json::before { content: '💾'; }
         #btn-txt::before { content: '📄'; }
+
+        /* ======================================= */
+        /* MEDIA QUERY PARA MOVIL (OPTIMIZACION V12) */
+        /* ======================================= */
+        @media (max-width: 600px) {
+            /* TOP BAR FIX: Reducir tamaño de botones y espacio */
+            .top-bar {
+                padding: 6px 4px;
+                gap: 4px;
+            }
+            .top-bar button {
+                padding: 0 6px; /* Reduced padding */
+                font-size: 11px; /* Smaller font */
+                height: 30px; /* Shorter buttons */
+                flex-grow: 1; /* Allow buttons to fill space */
+                min-width: unset;
+            }
+            
+            /* GRID FIX: Forzar dos columnas para maximizar espacio */
+            .grid-container {
+                grid-template-columns: repeat(2, 1fr) !important; 
+                gap: 3px;
+                padding: 3px;
+            }
+            
+            .runner-card {
+                min-height: 100px;
+                padding: 3px 6px;
+            }
+
+            /* Reducir font size para el timer principal */
+            .timer-display {
+                font-size: 1.8em; 
+            }
+
+            /* Reducir el contador de vueltas para liberar espacio */
+            .lap-counter {
+                font-size: 1.1em;
+                padding: 1px 6px;
+            }
+
+            /* Stats mas compactas */
+            .stats-grid {
+                font-size: 0.65rem;
+            }
+
+            /* Configuracion mas compacta */
+            #config-screen {
+                padding: 10px;
+            }
+        }
+
+        @media (max-width: 400px) {
+             /* Force single column on very narrow screens (e.g., iPhone SE/old Android) */
+            .grid-container {
+                grid-template-columns: 1fr !important; 
+            }
+        }
     </style>
 </head>
 <body>
@@ -168,7 +226,7 @@
 <div class="app">
 
     <div id="config-screen" class="screen active">
-        <h2 style="margin-top:0; font-size:1.5em">Configuracion V11</h2>
+        <h2 style="margin-top:0; font-size:1.5em">Configuracion V12</h2>
         
         <div class="config-group">
             <div style="display:flex; gap:10px; margin-bottom:10px;">
@@ -342,12 +400,12 @@ function renderGrid(){
     grid.innerHTML = '';
     const n = runners.length;
     
-    // Grid Responsive
-    if(n <= 4) grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(280px, 1fr))";
-    else if(n <= 9) grid.style.gridTemplateColumns = "repeat(3, 1fr)"; 
-    else if(n <= 12) grid.style.gridTemplateColumns = "repeat(4, 1fr)"; 
-    else if(n <= 20) grid.style.gridTemplateColumns = "repeat(5, 1fr)";
-    else grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(140px, 1fr))";
+    // Configuracion de Grid para Desktop/Tablet grande
+    if(n <= 4 && window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(280px, 1fr))";
+    else if(n <= 9 && window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(3, 1fr)"; 
+    else if(n <= 12 && window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(4, 1fr)"; 
+    else if(n <= 20 && window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(5, 1fr)";
+    else if (window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(140px, 1fr))";
 
     runners.forEach(r => {
         const card = document.createElement('div');
@@ -358,6 +416,7 @@ function renderGrid(){
         if(r.lapsData.length % 2 !== 0) card.classList.add('bg-odd');
 
         card.id = `card-${r.id}`;
+        // Prevent default tap action to avoid conflicts with scroll/long-press
         card.onpointerdown = (e) => { e.preventDefault(); handleTap(r.id); }; 
 
         const currentLapIdx = r.lapsData.length;
@@ -440,6 +499,7 @@ function handleTap(id){
     if(r.running && !r.finished) {
         const nextIdx = r.lapsData.length;
         const distOfNextLap = r.lapPlan[nextIdx] || 0;
+        // Bloqueo mas corto para distancias muy cortas
         r.lockDuration = (distOfNextLap <= 25) ? 2000 : 5000;
         card.classList.add('locked-delay');
         setTimeout(() => { if(r.running) card.classList.remove('locked-delay'); }, r.lockDuration);
@@ -510,7 +570,7 @@ function resetAllRunners(){
         alert("No hay corredores cargados para reiniciar.");
         return;
     }
-    if(!confirm("ADVERTENCIA: ¿Seguro que quieres reiniciar TODOS los cronometros? Se perderan todos los tiempos de vuelta de todos los atletas y no se podra deshacer esta accion.")){
+    if(!confirm("ADVERTENCIA: ¿Seguro que quieres reiniciar TODOS los cronometros? Se perderan todos los tiempos de vuelta y no se podra deshacer esta accion.")){
         return;
     }
 
@@ -589,7 +649,7 @@ function showResults(){
 }
 
 function generateReportText(){
-    let txt = "RESULTADOS CRONO V11\n================================\nPos | Nombre | Tiempo | Mejor /100m\n--------------------------------\n";
+    let txt = "RESULTADOS CRONO V12\n================================\nPos | Nombre | Tiempo | Mejor /100m\n--------------------------------\n";
     const sorted = getSortedRunners();
     sorted.forEach((r, index) => {
         const t = r.finished ? r.lapsData[r.lapsData.length-1].splitTime : r.elapsed;
