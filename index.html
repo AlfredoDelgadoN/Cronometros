@@ -1,754 +1,142 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-    <title>Crono V12 - Mobile Fix</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alfredo Delgado - Entrenador de Fondo</title>
     <style>
-        :root { 
-            --bg-body: #0d0d0d; 
-            --card-bg-even: #1e1e1e; 
-            --card-bg-odd: #10303e;  
-            --text-main: #e0e0e0; 
-            --accent: #4caf50; 
-            --highlight: #b9ff6b;
-            --finished-bg: #152e16;
-            --locked-color: #ff5252;
-            
-            /* Metricas */
-            --color-time: #ffffff;
-            --color-run: #ffd54f; 
-            --color-bike: #4fc3f7; 
-            --color-swim: #90caf9; 
-        }
-        * { box-sizing: border-box; user-select: none; -webkit-tap-highlight-color: transparent; }
-        html, body { height: 100%; margin: 0; background: var(--bg-body); font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; overflow: hidden; color: var(--text-main); }
-        
-        .app { display: flex; flex-direction: column; height: 100vh; }
-
-        /* PANTALLAS */
-        .screen { display: none; flex: 1; overflow: hidden; flex-direction: column; }
-        .screen.active { display: flex; }
-        
-        /* BARRA SUPERIOR (DEFAULT/DESKTOP) */
-        .top-bar { 
-            background: #000; padding: 6px 10px; display: flex; gap: 8px; align-items: center; 
-            box-shadow: 0 2px 10px rgba(0,0,0,0.5); z-index: 10; height: 50px; flex-shrink: 0;
-        }
-        .top-bar button { 
-            background: #333; border: 1px solid #555; color: #fff; padding: 0 12px; 
-            border-radius: 4px; font-size: 13px; cursor: pointer; height: 34px; white-space: nowrap;
-        }
-        .top-bar button.primary { background: var(--accent); border-color: var(--accent); font-weight: bold; color: #000; }
-        .top-bar button:active { transform: scale(0.96); }
-
-        /* GRID (DEFAULT/DESKTOP) */
-        .grid-container {
-            flex: 1; padding: 4px; overflow-y: auto; display: grid; gap: 4px;
-            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); 
-            align-content: start;
-        }
-
-        /* CARD DESIGN */
-        .runner-card {
-            background: var(--card-bg-even); 
-            border-radius: 6px; padding: 4px 8px;
-            display: flex; flex-direction: column; justify-content: space-between;
-            position: relative; border: 1px solid #333; cursor: pointer;
-            transition: background 0.2s ease, transform 0.1s;
-            min-height: 120px;
-        }
-
-        /* ESTADOS VISUALES */
-        .runner-card.running { border-color: var(--accent); }
-        .runner-card.bg-odd { background-color: var(--card-bg-odd); }
-        .runner-card.tapped-feedback { background-color: #fff !important; transform: scale(0.98); }
-        .runner-card.tapped-feedback * { color: #000 !important; text-shadow: none; }
-        .runner-card.finished { background: var(--finished-bg) !important; border-color: #4caf50; opacity: 0.9; }
-
-        /* BLOQUEO */
-        .runner-card.locked-delay { border-color: var(--locked-color); }
-        .lock-icon {
-            position: absolute; top: 45%; left: 50%; transform: translate(-50%, -50%);
-            font-size: 30px; color: rgba(255, 82, 82, 0.8); display: none; z-index: 5; pointer-events: none;
-        }
-        .runner-card.locked-delay .lock-icon { display: block; }
-
-        /* CONTENIDO TARJETA */
-        .card-header { 
-            display: flex; justify-content: space-between; align-items: flex-start; 
-            margin-bottom: 2px; height: 26px;
-        }
-        
-        .runner-name { 
-            font-weight: bold; color: #fff; font-size: 1.1em; 
-            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
-            max-width: 65%; margin-top: 2px;
-        }
-        
-        .timer-display { 
-            font-family: 'Courier New', monospace; font-weight: 700; font-size: 2.1em;
-            color: var(--highlight); text-align: center; line-height: 1; margin: 0 0 4px 0;
-            text-shadow: 0 0 5px rgba(185, 255, 107, 0.1);
-        }
-
-        /* STATS GRID */
-        .stats-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 2px 8px;
-            font-size: 0.72rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 4px;
-        }
-        .stat-item { display: flex; justify-content: space-between; align-items: center; }
-        .stat-label { color: #888; font-size: 0.9em; }
-        .stat-val { font-weight: bold; font-family: 'Segoe UI', sans-serif; }
-        
-        .val-lap { color: var(--color-time); }
-        .val-run { color: var(--color-run); }
-        .val-bike { color: var(--color-bike); }
-        .val-swim { color: var(--color-swim); }
-
-        .current-dist-display {
-            position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
-            font-size: 10px; color: #000; font-weight: bold; background: #e6b800;
-            padding: 1px 6px; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
-            z-index: 2;
-        }
-
-        /* VUELTAS Y BOTON DE RESET */
-        .lap-counter { 
-            position: absolute; top: 4px; right: 8px;
-            font-size: 1.3em; 
-            font-weight: bold;
-            background: #333; 
-            padding: 2px 8px; 
-            border-radius: 4px; 
-            color: #fff; 
-            border: 1px solid #555;
-            min-width: 50px;
+        /* Estilos CSS Internos para que se vea "bonita" y limpia */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f9; /* Fondo muy claro */
+            color: #333; /* Texto oscuro */
+            margin: 0;
+            padding: 20px;
             text-align: center;
         }
-        .finished .lap-counter { background: #4caf50; color: #000; border-color: #fff; }
-
-        /* CONFIG */
-        #config-screen { padding: 20px; overflow-y: auto; background: var(--card-bg-even); color: #fff; }
-        .config-group { margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 15px; }
-        input[type=number], input[type=text] { background: #111; border: 1px solid #555; color: #fff; padding: 8px; border-radius: 4px; width: 100%; font-size: 16px; margin-top: 5px; }
-        label { display: block; color: #aaa; }
-        
-        /* TABLAS */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
-        th, td { border: 1px solid #444; padding: 6px; text-align: center; color: #ddd; }
-        th { background: #333; cursor: pointer; }
-        tr:nth-child(even) { background: #262626; }
-        
-        /* UTILS */
-        .file-input-wrapper { margin-top: 10px; padding: 10px; border: 1px dashed #666; text-align: center; }
-
-        /* FIX BOTONES DE RESULTADOS EN MOBILE */
-        #results-screen .top-bar {
-            padding: 6px 4px;
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff; /* Fondo blanco para el contenido */
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
-        #results-screen .top-bar button {
-            padding: 0 8px; 
-            font-size: 11px; 
-            height: 30px;
+        header h1 {
+            color: #007bff; /* Un azul vibrante */
+            margin-bottom: 5px;
         }
-        .icon-btn::before {
-            font-family: Arial, sans-serif;
+        .profile-pic {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%; /* Para que sea redonda */
+            object-fit: cover;
+            margin: 20px 0;
+            border: 4px solid #007bff; /* Borde azul */
+        }
+        .section {
+            margin: 25px 0;
+            padding: 15px;
+            border-top: 1px solid #eee;
+        }
+        .section h2 {
+            color: #555;
+            border-bottom: 2px solid #007bff;
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+        .objective-list {
+            list-style: none; /* Quitamos las viñetas por defecto */
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap; /* Permite que los elementos salten de línea en pantallas pequeñas */
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .objective-list li {
+            background-color: #e9f7ff; /* Un fondo muy claro para cada opción */
+            padding: 15px 25px;
+            border-radius: 8px;
+            flex-basis: 40%; /* Ocupa casi la mitad del espacio */
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s;
+        }
+        .objective-list li:hover {
+            transform: translateY(-5px); /* Pequeño efecto al pasar el mouse */
+            background-color: #d1eaff;
+        }
+        .objective-list a {
+            text-decoration: none; /* Quitamos el subrayado del enlace */
+            color: #007bff;
             font-weight: bold;
-            margin-right: 2px;
+            display: block; /* Hace que todo el 'li' sea el área de clic */
         }
-        #btn-copy::before { content: '📋'; }
-        #btn-json::before { content: '💾'; }
-        #btn-txt::before { content: '📄'; }
-
-        /* ======================================= */
-        /* MEDIA QUERY PARA MOVIL (OPTIMIZACION V12) */
-        /* ======================================= */
-        @media (max-width: 600px) {
-            /* TOP BAR FIX: Reducir tamaño de botones y espacio */
-            .top-bar {
-                padding: 6px 4px;
-                gap: 4px;
-            }
-            .top-bar button {
-                padding: 0 6px; /* Reduced padding */
-                font-size: 11px; /* Smaller font */
-                height: 30px; /* Shorter buttons */
-                flex-grow: 1; /* Allow buttons to fill space */
-                min-width: unset;
-            }
-            
-            /* GRID FIX: Forzar dos columnas para maximizar espacio */
-            .grid-container {
-                grid-template-columns: repeat(2, 1fr) !important; 
-                gap: 3px;
-                padding: 3px;
-            }
-            
-            .runner-card {
-                min-height: 100px;
-                padding: 3px 6px;
-            }
-
-            /* Reducir font size para el timer principal */
-            .timer-display {
-                font-size: 1.8em; 
-            }
-
-            /* Reducir el contador de vueltas para liberar espacio */
-            .lap-counter {
-                font-size: 1.1em;
-                padding: 1px 6px;
-            }
-
-            /* Stats mas compactas */
-            .stats-grid {
-                font-size: 0.65rem;
-            }
-
-            /* Configuracion mas compacta */
-            #config-screen {
-                padding: 10px;
-            }
+        footer {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            color: #777;
         }
-
-        @media (max-width: 400px) {
-             /* Force single column on very narrow screens (e.g., iPhone SE/old Android) */
-            .grid-container {
-                grid-template-columns: 1fr !important; 
-            }
+        footer a {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
 
-<div class="app">
-
-    <div id="config-screen" class="screen active">
-        <h2 style="margin-top:0; font-size:1.5em">Configuracion V12</h2>
+    <div class="container">
         
-        <div class="config-group">
-            <div style="display:flex; gap:10px; margin-bottom:10px;">
-                <button class="top-bar button" onclick="toggleFullScreen()" style="flex:1; background:#000; color:#fff; border: 1px solid #fff;">⛶ Pantalla Completa</button>
-            </div>
+        <header>
+            <h1>Hola, Soy Alfredo Delgado</h1>
+        </header>
+
+        <img src="[URL_DE_TU_FOTO]" alt="Foto de Alfredo Delgado" class="profile-pic"> 
+
+        <div class="section">
+            <h2>Mi Experiencia</h2>
+            <p>
+                Soy entrenador del equipo de Fondo del Club Regatas desde hace 26 años. 
+                Mi pasión es el atletismo y el desarrollo de mis deportistas.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2>¿Cómo puedo ayudarte?</h2>
+            <p>
+                Te puedo ayudar a medir y analizar tus tiempos de entrenamiento con precisión. 
+                He creado varias herramientas de cronometraje especializadas para tus necesidades:
+            </p>
             
-            <div class="file-input-wrapper">
-                <label style="margin-bottom:5px; color:#fff;">📂 Cargar copia anterior (JSON)</label>
-                <input type="file" id="file-loader" accept=".json" onchange="loadFromFile()" style="color:#fff;" />
-            </div>
+            <ul class="objective-list">
+                <li>
+                    <a href="test_cooper.html">1. Test Cooper</a>
+                </li>
+
+                <li>
+                    <a href="cronometros_multiples.html">2. Cronómetros Múltiples</a>
+                </li>
+
+                <li>
+                    <a href="cronometros_qr.html">3. Cronómetros Código QR</a>
+                </li>
+
+                <li>
+                    <a href="cronometros_gps.html">4. Cronómetros GPS</a>
+                </li>
+            </ul>
         </div>
 
-        <div class="config-group">
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:15px;">
-                <div>
-                    <label>Distancia Total (m)</label>
-                    <input id="total-distance" type="number" value="1500" />
-                </div>
-                <div>
-                    <label>Largo Vuelta (m)</label>
-                    <input id="track-length" type="number" value="100" />
-                </div>
-            </div>
-        </div>
+        <footer>
+            <p>
+                Puedes contactarme directamente en mi correo: 
+                <a href="mailto:delgadoalfredo@hotmail.com">delgadoalfredo@hotmail.com</a>
+            </p>
+        </footer>
 
-        <div class="config-group">
-            <label>Corredores (Max 20)</label>
-            <input id="num-runners" type="number" value="12" min="1" max="60" />
-        </div>
-
-        <div class="config-group">
-            <label>Nombres</label>
-            <div id="names-area" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap:8px; max-height:150px; overflow-y:auto; margin-top:5px"></div>
-            <button onclick="generateNameInputs()" style="margin-top:8px; padding:6px; background:#444; border:none; color:#fff; cursor:pointer; border-radius:4px">Regenerar campos</button>
-        </div>
-
-        <button class="top-bar button primary" style="width:100%; height:50px; font-size:18px; background:#e43d0ad8;" onclick="setupRunners(); changeScreen('timers-screen')">
-            IR A CRONOMETROS
-        </button>
     </div>
-
-    <div id="timers-screen" class="screen">
-        <div class="top-bar">
-            <button onclick="changeScreen('config-screen')">⚙ Config</button>
-            <button onclick="resetAllRunners()" style="background:#cc0000; border-color:#cc0000; font-weight:bold;">💣 Reset</button> 
-            <div style="flex:1"></div>
-            <button class="primary" onclick="startAll()">▶ TODOS</button>
-            <button onclick="pauseAll()">⏸ Pausar</button>
-            <button onclick="showResults()">📋 Resultados</button>
-        </div>
-        
-        <div id="runners-grid" class="grid-container"></div>
-    </div>
-
-    <div id="results-screen" class="screen">
-        <div class="top-bar">
-            <button onclick="changeScreen('timers-screen')">⬅ Volver</button>
-            <div style="flex:1; text-align:center; font-weight:bold">Resultados</div>
-            <button id="btn-copy" class="icon-btn" onclick="copyReportToClipboard()" style="background:#0277bd; border-color:#0277bd;">Copiar Reporte</button>
-            <button id="btn-json" class="icon-btn" onclick="exportJSON()" style="background:#f57f17; border-color:#f57f17;">JSON</button>
-            <button id="btn-txt" class="icon-btn primary" onclick="exportTXT()">TXT</button>
-        </div>
-        <div style="padding:10px; overflow-y:auto">
-            <table id="results-table">
-                <thead>
-                    <tr><th>Pos</th><th>Nombre</th><th>Tiempo Total</th><th>Vueltas</th><th>Promedio</th><th>Mejor 100m</th></tr>
-                </thead>
-                <tbody id="results-body"></tbody>
-            </table>
-        </div>
-    </div>
-
-</div>
-
-<script>
-// --- CONFIGURACION Y UTILIDADES ---
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function playBeep() {
-    if(audioCtx.state === 'suspended') audioCtx.resume();
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'square'; osc.frequency.value = 600; 
-    gain.gain.value = 0.1;
-    osc.start(); osc.stop(audioCtx.currentTime + 0.1);
-}
-const finishSound = new Audio('https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg');
-
-let runners = [];
-
-function changeScreen(id){
-    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
-}
-function toggleFullScreen() {
-    if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>console.log(e));
-    else if (document.exitFullscreen) document.exitFullscreen();
-}
-
-// --- FORMATO DE TIEMPO (Sin acentos en las funciones) ---
-function formatTime(ms){
-    if(ms === 0) return "0:00.0";
-    const s = Math.floor((ms / 1000) % 60);
-    const m = Math.floor((ms / 60000) % 60);
-    const h = Math.floor(ms / 3600000);
-    const d = Math.floor((ms % 1000) / 100);
-    let str = "";
-    if(h > 0) str += h + ":";
-    str += (h > 0 && m < 10 ? "0" : "") + m + ":";
-    str += (s < 10 ? "0" : "") + s + ".";
-    str += d; 
-    return str;
-}
-
-function formatRunPace(ms){
-    if(!ms || ms === Infinity) return "-:--";
-    const sec = Math.round(ms / 1000);
-    return `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2,'0')}`;
-}
-
-function formatSwimPace(msPer100m){
-    if(!msPer100m || msPer100m === Infinity) return "-:--.-";
-    const totalSec = msPer100m / 1000;
-    const m = Math.floor(totalSec / 60);
-    const s = Math.floor(totalSec % 60);
-    const d = Math.floor((totalSec * 10) % 10);
-    return `${m}:${s.toString().padStart(2,'0')}.${d}`;
-}
-
-function planLaps(dist, track){
-    if(track <= 0) return [dist];
-    const fullLaps = Math.floor(dist / track);
-    const remainder = Math.round((dist - (fullLaps * track)) * 100) / 100;
-    if(remainder > 1) return [remainder, ...Array(fullLaps).fill(track)];
-    else return Array(fullLaps).fill(track);
-}
-
-function initRunnersFromInputs(){
-    const n = parseInt(document.getElementById('num-runners').value) || 1;
-    const dist = parseFloat(document.getElementById('total-distance').value) || 1000;
-    const track = parseFloat(document.getElementById('track-length').value) || 100;
-    const lapPlan = planLaps(dist, track);
-    runners = [];
-    for(let i=1; i<=n; i++){
-        const nameEl = document.getElementById(`name-${i}`);
-        runners.push({
-            id: i,
-            name: nameEl ? nameEl.value : `Atleta ${i}`,
-            lapPlan: [...lapPlan],
-            lapsData: [],
-            running: false, finished: false,
-            startTime: 0, elapsed: 0, interval: null,
-            lastActionTime: 0, lockDuration: 0
-        });
-    }
-}
-
-function setupRunners(){
-    // Si runners esta vacio (no se cargo backup), inicializar desde inputs
-    if(runners.length === 0){
-        initRunnersFromInputs();
-    }
-    renderGrid();
-}
-
-// --- RENDERIZADO Y LOGICA DE VUELTAS ---
-
-function renderGrid(){
-    const grid = document.getElementById('runners-grid');
-    grid.innerHTML = '';
-    const n = runners.length;
     
-    // Configuracion de Grid para Desktop/Tablet grande
-    if(n <= 4 && window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(280px, 1fr))";
-    else if(n <= 9 && window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(3, 1fr)"; 
-    else if(n <= 12 && window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(4, 1fr)"; 
-    else if(n <= 20 && window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(5, 1fr)";
-    else if (window.innerWidth > 600) grid.style.gridTemplateColumns = "repeat(auto-fit, minmax(140px, 1fr))";
-
-    runners.forEach(r => {
-        const card = document.createElement('div');
-        card.className = 'runner-card';
-        // Restaurar estado visual
-        if(r.finished) card.classList.add('finished');
-        if(r.running) card.classList.add('running');
-        if(r.lapsData.length % 2 !== 0) card.classList.add('bg-odd');
-
-        card.id = `card-${r.id}`;
-        // Prevent default tap action to avoid conflicts with scroll/long-press
-        card.onpointerdown = (e) => { e.preventDefault(); handleTap(r.id); }; 
-
-        const currentLapIdx = r.lapsData.length;
-        const totalLaps = r.lapPlan.length;
-        const lapDist = r.lapPlan[currentLapIdx] || 0;
-
-        let lastLapTime = "-:--";
-        let lastSpeed = "--.-";
-        let lastPaceRun = "-:--";
-        let lastPaceSwim = "-:--.-";
-        let dispTime = formatTime(r.elapsed);
-
-        if(r.lapsData.length > 0){
-             const l = r.lapsData[r.lapsData.length - 1];
-             lastLapTime = formatTime(l.lapDuration).slice(0,-2);
-             const sec = l.lapDuration/1000;
-             if(sec>0) lastSpeed = ((l.dist/1000)/(sec/3600)).toFixed(1);
-             if(l.dist>0) {
-                 lastPaceRun = formatRunPace((l.lapDuration/l.dist)*1000);
-                 lastPaceSwim = formatSwimPace((l.lapDuration/l.dist)*100);
-             }
-             if(r.finished) dispTime = formatTime(l.splitTime);
-        }
-
-        card.innerHTML = `
-            <div class="current-dist-display" id="header-dist-${r.id}">${r.finished ? 'FIN' : lapDist+'m'}</div>
-            <div class="lock-icon">🔒</div>
-            <div class="card-header">
-                <span class="runner-name">${r.name}</span>
-            </div>
-            
-            <span class="lap-counter" id="lap-count-${r.id}">${currentLapIdx}/${totalLaps}</span>
-            <div class="timer-display" id="timer-${r.id}">${dispTime}</div>
-            
-            <div class="stats-grid">
-                <div class="stat-item"><span class="stat-label">Vta</span><span class="stat-val val-lap" id="last-lap-${r.id}">${lastLapTime}</span></div>
-                <div class="stat-item"><span class="stat-label">km/h</span><span class="stat-val val-bike" id="speed-${r.id}">${lastSpeed}</span></div>
-                <div class="stat-item"><span class="stat-label">/km</span><span class="stat-val val-run" id="pace-run-${r.id}">${lastPaceRun}</span></div>
-                <div class="stat-item"><span class="stat-label">/100m</span><span class="stat-val val-swim" id="pace-swim-${r.id}">${lastPaceSwim}</span></div>
-            </div>
-        `;
-        grid.appendChild(card);
-        
-        // Reactivar intervalo si estaba corriendo
-        if(r.running){
-             r.startTime = Date.now() - r.elapsed;
-             clearInterval(r.interval);
-             r.interval = setInterval(() => {
-                r.elapsed = Date.now() - r.startTime;
-                const tEl = document.getElementById(`timer-${r.id}`);
-                if(tEl) tEl.textContent = formatTime(r.elapsed);
-            }, 41);
-        }
-    });
-}
-
-function handleTap(id){
-    const r = runners.find(x => x.id === id);
-    if(!r || r.finished) return;
-
-    const now = Date.now();
-    if (r.running && (now - r.lastActionTime < r.lockDuration)) return; 
-
-    const card = document.getElementById(`card-${id}`);
-    card.classList.add('tapped-feedback');
-    setTimeout(() => card.classList.remove('tapped-feedback'), 150);
-    playBeep();
-
-    r.lastActionTime = now;
-
-    if(!r.running && r.elapsed === 0){
-        startRunner(r);
-    } else {
-        recordLap(r);
-    }
-
-    if(r.lapsData.length % 2 !== 0) card.classList.add('bg-odd');
-    else card.classList.remove('bg-odd');
-    
-    if(r.running && !r.finished) {
-        const nextIdx = r.lapsData.length;
-        const distOfNextLap = r.lapPlan[nextIdx] || 0;
-        // Bloqueo mas corto para distancias muy cortas
-        r.lockDuration = (distOfNextLap <= 25) ? 2000 : 5000;
-        card.classList.add('locked-delay');
-        setTimeout(() => { if(r.running) card.classList.remove('locked-delay'); }, r.lockDuration);
-    }
-}
-
-function startRunner(r){
-    if(r.running || r.finished) return;
-    r.running = true;
-    r.startTime = Date.now() - r.elapsed;
-    document.getElementById(`card-${r.id}`).classList.add('running');
-    r.interval = setInterval(() => {
-        r.elapsed = Date.now() - r.startTime;
-        document.getElementById(`timer-${r.id}`).textContent = formatTime(r.elapsed);
-    }, 41);
-}
-
-function recordLap(r){
-    if(!r.running) return;
-    const now = Date.now();
-    const currentSplit = now - r.startTime;
-    const prevSplit = r.lapsData.length > 0 ? r.lapsData[r.lapsData.length-1].splitTime : 0;
-    const lapTime = currentSplit - prevSplit;
-    const lapDist = r.lapPlan[r.lapsData.length];
-
-    r.lapsData.push({ splitTime: currentSplit, lapDuration: lapTime, dist: lapDist });
-
-    // Actualizar UI
-    document.getElementById(`last-lap-${r.id}`).textContent = formatTime(lapTime).slice(0,-2);
-    
-    const seconds = lapTime / 1000;
-    let kmh = (seconds > 0) ? (lapDist / 1000) / (seconds / 3600) : 0;
-    document.getElementById(`speed-${r.id}`).textContent = kmh.toFixed(1);
-
-    let paceRun = (lapDist > 0) ? (lapTime / lapDist) * 1000 : 0;
-    document.getElementById(`pace-run-${r.id}`).textContent = formatRunPace(paceRun);
-
-    let paceSwim = (lapDist > 0) ? (lapTime / lapDist) * 100 : 0;
-    document.getElementById(`pace-swim-${r.id}`).textContent = formatSwimPace(paceSwim);
-
-    document.getElementById(`lap-count-${r.id}`).textContent = `${r.lapsData.length}/${r.lapPlan.length}`;
-
-    if(r.lapsData.length >= r.lapPlan.length){
-        finishRunner(r);
-    } else {
-        const nextIdx = r.lapsData.length;
-        document.getElementById(`header-dist-${r.id}`).textContent = `${r.lapPlan[nextIdx]}m`;
-    }
-}
-
-function finishRunner(r){
-    r.running = false;
-    r.finished = true;
-    clearInterval(r.interval);
-    document.getElementById(`timer-${r.id}`).textContent = formatTime(r.elapsed);
-    const card = document.getElementById(`card-${r.id}`);
-    card.classList.remove('running', 'locked-delay', 'bg-odd');
-    card.classList.add('finished');
-    document.getElementById(`header-dist-${r.id}`).textContent = "FIN";
-    
-    try { finishSound.currentTime = 0; finishSound.play(); setTimeout(()=>finishSound.pause(),2000); } catch(e){}
-}
-
-// --- CONTROLES GLOBALES ---
-
-function resetAllRunners(){
-    if(runners.length === 0){
-        alert("No hay corredores cargados para reiniciar.");
-        return;
-    }
-    if(!confirm("ADVERTENCIA: ¿Seguro que quieres reiniciar TODOS los cronometros? Se perderan todos los tiempos de vuelta y no se podra deshacer esta accion.")){
-        return;
-    }
-
-    runners.forEach(r => {
-        clearInterval(r.interval);
-        r.lapsData = [];
-        r.elapsed = 0;
-        r.startTime = 0;
-        r.lastActionTime = 0;
-        r.lockDuration = 0;
-        r.running = false;
-        r.finished = false;
-    });
-
-    // Despues de resetear, volvemos a configurar los corredores con los nombres y distancias actuales.
-    initRunnersFromInputs(); 
-    renderGrid(); 
-    alert("Todos los tiempos han sido borrados. Listo para empezar una nueva carrera.");
-}
-
-function startAll(){
-    runners.forEach(r => {
-        if(!r.finished && !r.running) {
-            startRunner(r);
-            r.lastActionTime = Date.now();
-            r.lockDuration = 3000; 
-            const card = document.getElementById(`card-${r.id}`);
-            card.classList.add('locked-delay');
-            setTimeout(() => card.classList.remove('locked-delay'), r.lockDuration);
-        }
-    });
-    playBeep();
-}
-
-function pauseAll(){
-    runners.forEach(r => {
-        if(r.running){
-            clearInterval(r.interval);
-            r.running = false;
-            document.getElementById(`card-${r.id}`).classList.remove('running');
-        }
-    });
-}
-
-// --- RESULTADOS Y ALMACENAMIENTO ---
-
-function getSortedRunners(){
-    return [...runners].sort((a, b) => {
-        if(a.finished && !b.finished) return -1;
-        if(!a.finished && b.finished) return 1;
-        const timeA = a.finished ? a.lapsData[a.lapsData.length-1].splitTime : (a.elapsed || 9e9);
-        const timeB = b.finished ? b.lapsData[b.lapsData.length-1].splitTime : (b.elapsed || 9e9);
-        return timeA - timeB;
-    });
-}
-
-function showResults(){
-    changeScreen('results-screen');
-    const tbody = document.getElementById('results-body'); tbody.innerHTML = '';
-    getSortedRunners().forEach((r, index) => {
-        let totalTime = r.finished ? r.lapsData[r.lapsData.length-1].splitTime : r.elapsed;
-        let avg = r.lapsData.length > 0 ? (totalTime / r.lapsData.length) : 0;
-        let bestSwim = 999999999;
-        r.lapsData.forEach(l => {
-             const p = (l.lapDuration / l.dist) * 100;
-             if(p < bestSwim) bestSwim = p;
-        });
-        if(bestSwim === 999999999) bestSwim = 0;
-
-        const tr = document.createElement('tr');
-        if(r.finished && index < 3) tr.style.color = ["#ffd700","#c0c0c0","#cd7f32"][index];
-
-        tr.innerHTML = `<td>${index + 1}</td><td style="font-weight:bold;text-align:left">${r.name}</td><td>${formatTime(totalTime)}</td><td>${r.lapsData.length}</td><td>${formatTime(avg)}</td><td>${formatSwimPace(bestSwim)}</td>`;
-        tbody.appendChild(tr);
-    });
-}
-
-function generateReportText(){
-    let txt = "RESULTADOS CRONO V12\n================================\nPos | Nombre | Tiempo | Mejor /100m\n--------------------------------\n";
-    const sorted = getSortedRunners();
-    sorted.forEach((r, index) => {
-        const t = r.finished ? r.lapsData[r.lapsData.length-1].splitTime : r.elapsed;
-        let bestSwim = 0; let minP = 9e9;
-        r.lapsData.forEach(l=>{ const p=(l.lapDuration/l.dist)*100; if(p<minP){minP=p; bestSwim=p;} });
-        txt += `${(index+1)} | ${r.name} | ${formatTime(t)} | ${formatSwimPace(bestSwim)}\n`;
-    });
-    txt += "\nDETALLE VUELTAS:\n";
-    sorted.forEach(r => {
-        txt += `\n[ ${r.name} ]\n`;
-        r.lapsData.forEach((l, idx) => {
-            const swim = formatSwimPace((l.lapDuration/l.dist)*100);
-            txt += `  L${idx+1}: ${formatTime(l.lapDuration)} -> ${swim}/100m\n`; 
-        });
-    });
-    return txt;
-}
-
-function exportTXT(){
-    const txt = generateReportText();
-    const blob = new Blob([txt], {type: 'text/plain'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); 
-    a.download = `Resultados_${new Date().getTime()}.txt`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-}
-
-// Guardar Backup Completo (JSON)
-function exportJSON(){
-    const cleanRunners = runners.map(r => {
-        const copy = {...r};
-        copy.interval = null; 
-        return copy;
-    });
-    const jsonStr = JSON.stringify(cleanRunners);
-    const blob = new Blob([jsonStr], {type: 'application/json'});
-    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); 
-    a.download = `Backup_${new Date().getTime()}.json`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-}
-
-// Cargar Backup
-function loadFromFile(){
-    const input = document.getElementById('file-loader');
-    if(input.files.length === 0) return;
-    const file = input.files[0];
-    const reader = new FileReader();
-    reader.onload = function(e){
-        try {
-            const data = JSON.parse(e.target.result);
-            if(Array.isArray(data)){
-                // Detener cualquier cronometro activo antes de reemplazar los datos
-                pauseAll(); 
-                runners = data;
-                
-                // Actualizar inputs de configuracion con los nombres cargados
-                const area = document.getElementById('names-area'); area.innerHTML = '';
-                runners.forEach(r => {
-                     const inp = document.createElement('input');
-                     inp.id = `name-${r.id}`; inp.value = r.name;
-                     area.appendChild(inp);
-                });
-                document.getElementById('num-runners').value = runners.length;
-                
-                // Mostrar resultados inmediatamente para revisar los datos
-                alert("Datos cargados correctamente. Se mostraran los resultados guardados.");
-                showResults();
-            }
-        } catch(err){
-            alert("Error al leer archivo JSON: " + err);
-        }
-    };
-    reader.readAsText(file);
-}
-
-// Copiar Reporte al Portapapeles (Reemplaza a enviar email directo)
-function copyReportToClipboard(){
-    const txt = generateReportText();
-    
-    navigator.clipboard.writeText(txt).then(() => {
-        alert("Reporte copiado al portapapeles. Ahora puedes pegarlo en tu correo o documento.");
-    }).catch(err => {
-        alert("No se pudo copiar automaticamente. Por favor, use el boton 'Guardar TXT' y adjunte el archivo.");
-    });
-}
-
-function generateNameInputs(){
-    const n = parseInt(document.getElementById('num-runners').value) || 1;
-    const area = document.getElementById('names-area');
-    const currentNames = [];
-    for(let i=1; i<=60; i++){ const el = document.getElementById(`name-${i}`); if(el) currentNames[i] = el.value; }
-    area.innerHTML = '';
-    for(let i=1; i<=n; i++){
-        const inp = document.createElement('input');
-        inp.id = `name-${i}`; inp.placeholder = `Atleta ${i}`;
-        inp.value = currentNames[i] ? currentNames[i] : `Atleta ${i}`;
-        area.appendChild(inp);
-    }
-}
-generateNameInputs();
-</script>
 </body>
 </html>
