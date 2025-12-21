@@ -54,18 +54,81 @@
     #speed-btn { left: 20px; }
     #pace-btn { left: 50%; transform: translateX(-50%); }
     #distance-btn { right: 20px; }
+      /* Contenedor flexible para métricas (abajo) */
+    #metrics-bar {
+        position: absolute;
+        bottom: 20px;
+        left: 10px;
+        right: 10px;
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        z-index: 1000;
+    }
+
+    .metric-btn {
+        flex: 1; /* Cada botón ocupa el mismo espacio */
+        padding: 10px 6px;
+        font-size: 0.9rem;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        border: none;
+        border-radius: 6px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    /* Ajuste para pantallas muy pequeñas */
+    @media (max-width: 400px) {
+        .metric-btn {
+            font-size: 0.75rem;
+            padding: 8px 4px;
+        }
+    }
+
+    /* Botones de control (Iniciar / Detener) */
+    #control-buttons {
+        position: absolute;
+        bottom: 80px;
+        left: 0;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        z-index: 1000;
+    }
+
+    .control-btn {
+        padding: 12px 20px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        background: rgba(0,0,0,0.6);
+        color: white;
+        border: none;
+        border-radius: 6px;
+    }
+  
   </style>
 </head>
 <body>
-  <div id="main-timer">00:00:00</div>
-  <div id="lap-timer">00:00.0</div>
-  <button id="stop-btn" class="btn">Detener</button>
-  <button id="start-btn" class="btn">Iniciar</button>
-  <button id="speed-btn" class="btn">Velocidad: --</button>
-  <button id="pace-btn" class="btn">Ritmo: --</button>
-  <button id="distance-btn" class="btn">Distancia: 0.00 km</button>
+    <div id="main-timer">00:00:00</div>
+    <div id="lap-timer">00:00.0</div>
 
-  <div id="map"></div>
+    <!-- Botones de control: Detener / Iniciar -->
+    <div id="control-buttons">
+    <button id="stop-btn" class="control-btn">Detener</button>
+    <button id="start-btn" class="control-btn">Iniciar</button>
+    </div>
+
+    <!-- Barra de métricas: Velocidad, Ritmo, Distancia -->
+    <div id="metrics-bar">
+      <button id="speed-btn" class="metric-btn">Vel: --</button>
+      <button id="pace-btn" class="metric-btn">Rit: --</button>
+      <button id="distance-btn" class="metric-btn">Dist: 0.00 km</button>
+    </div>
+
+    <div id="map"></div>
 
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
