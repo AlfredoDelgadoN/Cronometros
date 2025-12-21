@@ -496,12 +496,8 @@
         }
         /* Contenedor de Vueltas (Laps) MEJORADO */
         .laps-container {
-            background-color: #fff;
-            border-bottom: 1px solid #ddd;
-            flex-shrink: 0;
-            max-height: 180px;
-            overflow-y: auto;
-            z-index: 1000;
+            max-height: 35vh !important; /* Más LAPs visibles */
+            min-height: 160px;
         }
         .laps-container h3 {
             margin: 10px;
@@ -512,6 +508,78 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+        /* Responsive para móviles - LAPs optimizados */
+        @media (max-width: 768px) {
+        .stats-container { padding: 8px; }
+        .laps-container { 
+            max-height: 40vh; /* Más alto en móviles */
+            min-height: 120px;
+            padding: 8px;
+        }
+  
+        /* LAPs en UNA LÍNEA compacta */
+        .lap-stats {
+            grid-template-columns: 1fr !important;
+            gap: 4px !important;
+        }
+  
+        .laps-list li {
+            padding: 8px 10px !important;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 0.85em;
+        }
+  
+        /* LÍNEA ÚNICA: LAP # Tiempo Distancia Ritmo(Tipo) */
+        .lap-single-line {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace; /* Fuente monoespaciada para alineación perfecta */
+        }
+  
+        .lap-number { font-size: 1em; color: #007bff; }
+        .lap-inline-stats {
+            display: flex;
+            gap: 12px;
+            font-size: 0.8em;
+            flex: 1;
+            justify-content: flex-end;
+        }
+        .lap-stat-inline {
+            white-space: nowrap;
+            font-weight: 700;
+        }
+        .lap-time-inline { color: #2c3e50; }
+        .lap-distance-inline { color: #28a745; }
+        .lap-pace-inline { color: #dc3545; }
+        .lap-type-inline {
+            font-size: 0.75em;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+            min-width: 18px;
+            text-align: center;
+        }
+  
+        /* Mapa más grande */
+        .content-container { flex-grow: 1.2; }
+  
+        /* Botones más compactos */
+        .secondary-controls { 
+            grid-template-columns: 1fr 1fr !important;
+            gap: 6px;
+        }
+        .secondary-controls button { padding: 10px 6px; font-size: 0.85em; }
+        }
+
+        /* Tablets intermedias */
+        @media (max-width: 1024px) and (min-width: 769px) {
+        .laps-container { max-height: 30vh; }
         }
         .total-time {
             font-size: 0.85em;
@@ -532,15 +600,13 @@
             border-bottom: none;
         }
         .lap-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
+            display: none; /* Ocultamos el header separado */
         }
         .lap-number {
+            font-size: 1em;
             font-weight: bold;
             color: #007bff;
-            font-size: 1.1em;
+            min-width: 60px;
         }
         .lap-type-indicator {
             font-size: 0.8em;
@@ -875,7 +941,7 @@
             </div>
             <!-- Botón LAP con cronómetro parcial -->
             <button id="actionBtn" class="lap-btn">
-                <span id="actionBtnLabel" class="lap-btn-label">START</span>
+                <span id="actionBtnLabel" class="lap-btn-label">INICIAR</span>
                 <span id="lapPartialTimer" class="lap-partial-timer">00:00.0</span>
             </button>
             <audio id="lapSound" preload="auto">
@@ -883,7 +949,7 @@
             </audio>
             <!-- Botones secundarios: Detener, Auto Lap, Ajustes -->
             <div class="secondary-controls">
-                <button id="stopBtn" disabled>STOP</button>
+                <button id="stopBtn" disabled>DETENER</button>
                 <button id="autoLapBtn">AUTO LAP</button>
                 <button id="settingsBtn">AJUSTES</button>
             </div>
@@ -1650,40 +1716,30 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
         // --- MOSTRAR LISTA DE LAPS MEJORADA ---
         function displayLap(lap) {
             const li = document.createElement('li');
-            let typeClass, typeText;
+            // Determinar tipo y abreviatura
+            let typeText, typeClass;
             if (lap.type === 'distance') {
-                typeClass = 'lap-type-distance';
-                typeText = '📏 Distancia';
+                typeText = 'D'; typeClass = 'lap-type-distance';
             } else if (lap.type === 'time') {
-                typeClass = 'lap-type-time';
-                typeText = '⏱️ Tiempo';
+                typeText = 'T'; typeClass = 'lap-type-time';
             } else if (lap.type === 'both') {
-                typeClass = 'lap-type-distance';
-                typeText = '📏⏱️ Ambos';
+                typeText = 'DT'; typeClass = 'lap-type-distance';
             } else {
-                typeClass = 'lap-type-manual';
-                typeText = '👆 Manual';
+                typeText = 'M'; typeClass = 'lap-type-manual';
             }
+  
             li.innerHTML = `
-                <div class="lap-header">
-                    <span class="lap-number">LAP ${lap.number}</span>
-                    <span class="lap-type-indicator ${typeClass}">${typeText}</span>
-                </div>
-                <div class="lap-stats">
-                    <div class="lap-stat">
-                        <span class="lap-stat-label">TIEMPO</span>
-                        <span class="lap-stat-value lap-time">${formatTime(lap.time)}</span>
-                    </div>
-                    <div class="lap-stat">
-                        <span class="lap-stat-label">DISTANCIA</span>
-                        <span class="lap-stat-value lap-distance">${lap.distance.toFixed(2)} km</span>
-                    </div>
-                    <div class="lap-stat">
-                        <span class="lap-stat-label">RITMO</span>
-                        <span class="lap-stat-value lap-pace">${lap.pace ? lap.pace.formatted : '--:--'}</span>
-                    </div>
+                <div class="lap-single-line">
+                <span class="lap-number">LAP ${lap.number}</span>
+                <span class="lap-inline-stats">
+                    <span class="lap-stat-inline lap-time-inline">T: ${formatTime(lap.time)}</span>
+                    <span class="lap-stat-inline lap-distance-inline">D: ${lap.distance.toFixed(2)}km</span>
+                    <span class="lap-stat-inline lap-pace-inline">R: ${lap.pace ? lap.pace.formatted : '----'}</span>
+                    <span class="lap-type-inline ${typeClass}">${typeText}</span>
+                </span>
                 </div>
             `;
+  
             lapsList.prepend(li);
         }
         function updateTotalLapTime() {
@@ -1818,7 +1874,7 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
             timeInterval = null;
             // Detener cronómetro parcial
             stopPartialTimer();
-            actionBtnLabel.textContent = 'START';
+            actionBtnLabel.textContent = 'INICIAR';
             stopBtn.disabled = true;
             activityIndicator.style.display = 'none';
             const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
