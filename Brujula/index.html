@@ -1016,41 +1016,7 @@
             CYCLING: { max: 40, name: "Bicicleta", color: "#e74c3c", icon: "🚴" },
             DRIVING: { max: 200, name: "Conduciendo", color: "#9b59b6", icon: "🚗" }
         };
-        // --- ELEMENTOS DEL DOM ---
-        const lapBtn = document.getElementById('lapBtn');
-        const actionBtn = document.getElementById('actionBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const autoLapBtn = document.getElementById('autoLapBtn');
-        const settingsBtn = document.getElementById('settingsBtn');
-        const timeDisplay = document.getElementById('time');
-        const speedDisplay = document.getElementById('speed');
-        const distanceDisplay = document.getElementById('distance-display');
-        const paceDisplay = document.getElementById('pace');
-        const lapPartialTimer = document.getElementById('lapPartialTimer');
-        const compassArrow = document.getElementById('compass-arrow');
-        const compassStatus = document.getElementById('compass-status');
-        const lapsContainer = document.getElementById('laps-container');
-        const lapsList = document.getElementById('laps-list');
-        const totalLapTimeDisplay = document.getElementById('total-lap-time');
-        const activityIndicator = document.getElementById('activity-indicator');
-        const activityDot = document.getElementById('activity-dot');
-        const activityText = document.getElementById('activity-text');
-        const lapSound = document.getElementById('lapSound');
-        const actionBtnLabel = document.getElementById('actionBtnLabel');
-        // Elementos del modal MEJORADO
-        const settingsModal = document.getElementById('settingsModal');
-        const closeModal = document.getElementById('closeModal');
-        const cancelSettings = document.getElementById('cancelSettings');
-        const saveSettings = document.getElementById('saveSettings');
-        const lapDistanceInput = document.getElementById('lapDistance');
-        const lapTimeInput = document.getElementById('lapTime');
-        const enableTimeLapCheckbox = document.getElementById('enableTimeLap');
-        const enableSoundCheckbox = document.getElementById('enableSound');
-        const unitKmBtn = document.getElementById('unitKm');
-        const unitMBtn = document.getElementById('unitM');
-        // Elementos para el botón de pantalla completa
-        const mapContainer = document.getElementById('map');
-        const fullscreenButton = document.getElementById('fullscreen-btn');
+        
         let isFullscreen = false;
 
         // --- INICIALIZACIÓN ---
@@ -1061,9 +1027,44 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
+            // --- ELEMENTOS DEL DOM ---
+            const lapBtn = document.getElementById('lapBtn');
+            const actionBtn = document.getElementById('actionBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const autoLapBtn = document.getElementById('autoLapBtn');        
+            const timeDisplay = document.getElementById('time');
+            const speedDisplay = document.getElementById('speed');
+            const distanceDisplay = document.getElementById('distance-display');
+            const paceDisplay = document.getElementById('pace');
+            const lapPartialTimer = document.getElementById('lapPartialTimer');
+            const compassArrow = document.getElementById('compass-arrow');
+            const compassStatus = document.getElementById('compass-status');
+            const lapsContainer = document.getElementById('laps-container');
+            const lapsList = document.getElementById('laps-list');
+            const totalLapTimeDisplay = document.getElementById('total-lap-time');
+            const activityIndicator = document.getElementById('activity-indicator');
+            const activityDot = document.getElementById('activity-dot');
+            const activityText = document.getElementById('activity-text');
+            const lapSound = document.getElementById('lapSound');
+            const actionBtnLabel = document.getElementById('actionBtnLabel');
+            // Elementos del modal MEJORADO
+            const settingsModal = document.getElementById('settingsModal');
+            const closeModal = document.getElementById('closeModal');
+            const cancelSettings = document.getElementById('cancelSettings');
+            const saveSettings = document.getElementById('saveSettings');
+            const lapDistanceInput = document.getElementById('lapDistance');
+            const lapTimeInput = document.getElementById('lapTime');
+            const enableTimeLapCheckbox = document.getElementById('enableTimeLap');
+            const enableSoundCheckbox = document.getElementById('enableSound');
+            const unitKmBtn = document.getElementById('unitKm');
+            const unitMBtn = document.getElementById('unitM');
+            // Elementos para el botón de pantalla completa
+            const mapContainer = document.getElementById('map');
+            const fullscreenButton = document.getElementById('fullscreen-btn');
+
             // Event listeners para botones
-            actionBtn.addEventListener('click', handleActionButton);
-            stopBtn.addEventListener('click', stopTracking);
+            const settingsBtn = document.getElementById('settingsBtn');
+            actionBtn.addEventListener('click', handleActionButton);            
             autoLapBtn.addEventListener('click', toggleAutoLap);
             settingsBtn.addEventListener('click', openSettings);
             // Event listeners para el modal
@@ -1830,12 +1831,13 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
             calculateNextAutoLapTargets();
         }
         function stopTracking() {
-            if (isTracking) {
-                // Registrar LAP final si hay distancia
-                if (totalDistance - lastLapDistance > 0.001) {
-                    recordManualLap();
-                }
+            if (!isTracking) return;
+
+            // Registrar LAP final si hay avance
+            if (totalDistance - lastLapDistance > 0.001) {
+                recordManualLap();
             }
+
             liberarWakeLock();
             document.removeEventListener('visibilitychange', handleVisibilityChange);
             isTracking = false;
@@ -1845,19 +1847,20 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
             }
             clearInterval(timeInterval);
             timeInterval = null;
-            // Detener cronómetro parcial
             stopPartialTimer();
-            actionBtnLabel.textContent = 'START';
-            stopBtn.disabled = true;
+
+            // Actualizar elapsedTime para el guardado
+            elapsedTime = Date.now() - startTime;
+
             activityIndicator.style.display = 'none';
+
             const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
-            const totalTime = Date.now() - startTime;
             alert(`🏁 RECORRIDO FINALIZADO
-📏 Distancia: ${totalDistance.toFixed(2)} km
-⏱️ Tiempo total: ${formatTime(totalTime)}
-🏁 Vueltas: ${laps.length}
-⏱️ Tiempo en LAPs: ${formatTime(totalLapTime)}
-📍 Marcadores: ${kmMarkers.length} km + ${lapMarkers.length} LAPs`);
+        📏 Distancia: ${totalDistance.toFixed(2)} km
+        ⏱️ Tiempo total: ${formatTime(elapsedTime)}
+        🏁 Vueltas: ${laps.length}
+        ⏱️ Tiempo en LAPs: ${formatTime(totalLapTime)}
+        📍 Marcadores: ${kmMarkers.length} km + ${lapMarkers.length} LAPs`);
         }
         function updatePosition(position) {
             const { latitude, longitude } = position.coords;
@@ -1975,24 +1978,20 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
 
         // --- Guardar en .txt ---
         function saveLapData() {
-            const totalTimeMs = elapsedTime;
-            const totalSecs = totalTimeMs / 1000;
-            const mins = Math.floor(totalSecs / 60);
-            const secs = (totalSecs % 60).toFixed(1);
-            const totalTimeStr = `${mins}m ${secs}s`;
+            const totalTimeFormatted = formatTime(elapsedTime);
+            let content = `Registro de cronómetro con GPS\n`;
+            content += `Tiempo total: ${totalTimeFormatted}\n`;
+            content += `Distancia total: ${totalDistance.toFixed(2)} km\n`;
+            content += `Número de vueltas: ${laps.length}\n`;
+            content += `----------------------------------------\n\n`;
 
-            let content = `Registro de cronómetro\n`;
-            content += `Tiempo total: ${totalTimeStr}\n`;
-            content += `Vueltas: ${laps.length}\n`;
-            content += `----------------------------------------\n`;
-
-            let prev = 0;
             laps.forEach((lap, i) => {
-                const diff = lap - prev;
-                const diffSecs = (diff / 1000).toFixed(2);
-                const cumSecs = (lap / 1000).toFixed(2);
-                content += `Vuelta ${i + 1}: ${diffSecs}s (acum: ${cumSecs}s)\n`;
-                prev = lap;
+                content += `VUELTA ${lap.number}\n`;
+                content += `  Tipo: ${lap.type === 'manual' ? 'Manual' : lap.type === 'distance' ? 'Por distancia' : lap.type === 'time' ? 'Por tiempo' : 'Mixto'}\n`;
+                content += `  Tiempo: ${formatTime(lap.time)}\n`;
+                content += `  Distancia: ${lap.distance.toFixed(3)} km\n`;
+                content += `  Ritmo: ${lap.pace ? lap.pace.formatted + '/km' : '--:--'}\n`;
+                content += `\n`;
             });
 
             const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
@@ -2017,6 +2016,7 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
             actionBtnLabel.textContent = "START";
             lapPartialTimer.textContent = "00:00.0";
             stopBtn.style.display = "none";
+            stopBtn.textContent = "STOP"; // ¡importante!
             lapBtn.disabled = false;
         }
 
