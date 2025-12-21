@@ -536,40 +536,63 @@
         }
   
         .laps-list li {
-            padding: 5px 8px !important;
+            padding: 8px 12px !important;
             margin: 0 !important;
-            min-height: 32px !important;
+            border-bottom: 1px solid #e9ecef !important;
+            font-size: 1em !important; /* BASE GRANDE */
         }
   
         /* LÍNEA ÚNICA: LAP # Tiempo Distancia Ritmo(Tipo) */
         .lap-single-line {
-            padding: 3px 6px !important; /* MÁS COMPACTO */
-            gap: 6px !important;
-            font-size: 0.75em !important;
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: 12px !important;
+            padding: 8px !important;
+            background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%) !important;
+            border-radius: 8px !important;
+            font-weight: 700 !important;            
         }
   
-        .lap-number { font-size: 1em; color: #007bff; }
+        .lap-number { 
+            font-size: 1.3em !important;     /* MUY GRANDE */
+            font-weight: 900 !important;
+            color: #007bff !important;
+            min-width: 80px !important;
+            text-align: left !important; 
+        }
         .lap-inline-stats {
-            display: flex;
-            gap: 12px;
-            font-size: 0.8em;
-            flex: 1;
-            justify-content: flex-end;
+            display: flex !important;
+            gap: 16px !important;           /* ESPACIO entre elementos */
+            flex: 1 !important;
+            justify-content: flex-end !important;
+            font-size: 1.1em !important;    /* GRANDE */
         }
         .lap-stat-inline {
             white-space: nowrap;
-            font-weight: 700;
+            font-weight: 800;
+            min-width: 70px !important;
+            text-align: right !important;
         }
-        .lap-time-inline { color: #2c3e50; }
-        .lap-distance-inline { color: #28a745; }
-        .lap-pace-inline { color: #dc3545; }
+        .lap-time-inline { 
+            color: #2c3e50;
+            font-size: 1.15em !important;  /* TIEMPO MÁS GRANDE */ 
+        }
+        .lap-distance-inline { 
+            color: #28a745;
+            font-size: 1.1em !important; 
+        }
+        .lap-pace-inline { 
+           color: #dc3545;
+           font-size: 1.1em !important;
+        }
         .lap-type-inline {
-            font-size: 0.75em;
-            padding: 2px 6px;
-            border-radius: 4px;
-            font-weight: bold;
-            min-width: 18px;
-            text-align: center;
+            font-size: 1em !important;      /* TIPO GRANDE */
+            padding: 4px 8px !important;
+            border-radius: 6px !important;
+            font-weight: 800 !important;
+            min-width: 25px !important;
+            text-align: center !important;            
         }
   
         /* Mapa más grande */
