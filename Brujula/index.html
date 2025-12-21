@@ -875,7 +875,7 @@
             </div>
             <!-- Botón LAP con cronómetro parcial -->
             <button id="actionBtn" class="lap-btn">
-                <span id="actionBtnLabel" class="lap-btn-label">INICIAR</span>
+                <span id="actionBtnLabel" class="lap-btn-label">START</span>
                 <span id="lapPartialTimer" class="lap-partial-timer">00:00.0</span>
             </button>
             <audio id="lapSound" preload="auto">
@@ -883,7 +883,7 @@
             </audio>
             <!-- Botones secundarios: Detener, Auto Lap, Ajustes -->
             <div class="secondary-controls">
-                <button id="stopBtn" disabled>DETENER</button>
+                <button id="stopBtn" disabled>STOP</button>
                 <button id="autoLapBtn">AUTO LAP</button>
                 <button id="settingsBtn">AJUSTES</button>
             </div>
@@ -1818,7 +1818,7 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
             timeInterval = null;
             // Detener cronómetro parcial
             stopPartialTimer();
-            actionBtnLabel.textContent = 'INICIAR';
+            actionBtnLabel.textContent = 'START';
             stopBtn.disabled = true;
             activityIndicator.style.display = 'none';
             const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
