@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cronómetro con Mapa</title>
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body, #map { height: 100%; width: 100%; }
+    #main-timer {
+      position: absolute;
+      top: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: black;
+      text-shadow: 2px 2px 4px rgba(255,255,255,0.75);
+      z-index: 1000;
+    }
+    #lap-timer {
+      position: absolute;
+      bottom: 20px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 1.5rem;
+      color: black;
+      text-shadow: 2px 2px 4px rgba(255,255,255,0.75);
+      z-index: 1000;
+    }
+    .btn {
+      position: absolute;
+      bottom: 80px;
+      padding: 12px 20px;
+      font-size: 1.1rem;
+      cursor: pointer;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      z-index: 1000;
+    }
+    #start-btn { right: 20px; }
+    #stop-btn { left: 20px; }
+    #speed-btn, #pace-btn, #distance-btn {
+      bottom: 140px;
+      width: 160px;
+      text-align: center;
+    }
+    #speed-btn { left: 20px; }
+    #pace-btn { left: 50%; transform: translateX(-50%); }
+    #distance-btn { right: 20px; }
+  </style>
+</head>
+<body>
+  <div id="main-timer">00:00:00</div>
+  <div id="lap-timer">00:00.0</div>
+  <button id="stop-btn" class="btn">Detener</button>
+  <button id="start-btn" class="btn">Iniciar</button>
+  <button id="speed-btn" class="btn">Velocidad: --</button>
+  <button id="pace-btn" class="btn">Ritmo: --</button>
+  <button id="distance-btn" class="btn">Distancia: 0.00 km</button>
+
+  <div id="map"></div>
+
+  <!-- Leaflet JS -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // ========== CONFIGURACIÓN GLOBAL ==========
+    let map, marker, polyline;
+    let watchId = null;
+    let startTime = null;
+    let lapStartTime = null;
+    let isRunning = false;
+    let laps = [];
+    let positions = [];
+    let totalDistance = 0;
+    let lastPosition = null;
+    let lapTimerInterval = null;
+    let mainTimerInterval = null;
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    // ========== INICIALIZAR MAPA ==========
+    function initMap(lat, lng) {
+      if (map) map.remove();
+      map = L.map('map').setView([lat, lng], 15);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+      }).addTo(map);
+      marker = L.marker([lat, lng]).addTo(map);
+      polyline = L.polyline([], { color: 'red' }).addTo(map);
+    }
+
+    // ========== SONIDO BEEP ==========
+    function beep() {
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      oscillator.connect(gainNode);
+      gainNode.connect(audioContext.destination);
+      oscillator.frequency.value = 880;
+      oscillator.type = 'sine';
+      gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.2);
+      oscillator.start(audioContext.currentTime);
+      oscillator.stop(audioContext.currentTime + 0.2);
+    }
+
+    // ========== FORMATO DE TIEMPO ==========
+    function formatTime(ms) {
+      const totalSec = Math.floor(ms / 1000);
+      const h = Math.floor(totalSec / 3600).toString().padStart(2, '0');
+      const m = Math.floor((totalSec % 3600) / 60).toString().padStart(2, '0');
+      const s = (totalSec % 60).toString().padStart(2, '0');
+      return `${h}:${m}:${s}`;
+    }
+
+    function formatLapTime(ms) {
+      const totalSec = ms / 1000;
+      const m = Math.floor(totalSec / 60).toString().padStart(2, '0');
+      const s = Math.floor(totalSec % 60).toString().padStart(2, '0');
+      const dec = Math.floor((totalSec % 1) * 10);
+      return `${m}:${s}.${dec}`;
+    }
+
+    // ========== CÁLCULO DE DISTANCIA (Haversine) ==========
+    function distance(lat1, lon1, lat2, lon2) {
+      const R = 6371e3; // Radio de la Tierra en metros
+      const φ1 = lat1 * Math.PI / 180;
+      const φ2 = lat2 * Math.PI / 180;
+      const Δφ = (lat2 - lat1) * Math.PI / 180;
+      const Δλ = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+                Math.cos(φ1) * Math.cos(φ2) *
+                Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c; // en metros
+    }
+
+    // ========== ACTUALIZAR POSICIÓN ==========
+    function updatePosition(pos) {
+      const { latitude, longitude } = pos.coords;
+      marker.setLatLng([latitude, longitude]);
+      map.panTo([latitude, longitude]);
+      polyline.addLatLng([latitude, longitude]);
+
+      if (lastPosition) {
+        const d = distance(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
+        totalDistance += d;
+        document.getElementById('distance-btn').textContent = `Distancia: ${(totalDistance / 1000).toFixed(2)} km`;
+      }
+
+      positions.push({
+        lat: latitude,
+        lng: longitude,
+        time: Date.now(),
+        dist: totalDistance
+      });
+      lastPosition = { latitude, longitude };
+
+      // Calcular velocidad y ritmo
+      if (isRunning && positions.length > 1) {
+        const last = positions[positions.length - 1];
+        const prev = positions[positions.length - 2];
+        const dt = (last.time - prev.time) / 1000; // segundos
+        const dd = (last.dist - prev.dist) / 1000; // km
+        if (dt > 0) {
+          const speedKmh = (dd / dt) * 3600;
+          document.getElementById('speed-btn').textContent = `Velocidad: ${speedKmh.toFixed(1)} km/h`;
+          if (speedKmh > 0) {
+            const pace = 60 / speedKmh; // min/km
+            const paceMin = Math.floor(pace);
+            const paceSec = Math.floor((pace - paceMin) * 60);
+            document.getElementById('pace-btn').textContent = `Ritmo: ${paceMin}:${paceSec.toString().padStart(2, '0')} min/km`;
+          }
+        }
+      }
+    }
+
+    // ========== DESCARGAR TXT ==========
+    function downloadTxt() {
+      let content = "Cronómetro de Ruta\n==================\n\n";
+      content += `Distancia total: ${(totalDistance / 1000).toFixed(3)} km\n`;
+      content += `Tiempo total: ${formatTime(Date.now() - startTime)}\n\n`;
+      content += "Laps:\n";
+      laps.forEach((lap, i) => {
+        content += `Lap ${i + 1}: ${formatLapTime(lap.duration)}\n`;
+      });
+      const blob = new Blob([content], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'ruta_cronometro.txt';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ========== CONFIGURAR BOTONES ==========
+    document.getElementById('start-btn').addEventListener('click', () => {
+      if (!isRunning) {
+        // Iniciar
+        isRunning = true;
+        startTime = Date.now();
+        lapStartTime = startTime;
+        document.getElementById('start-btn').textContent = 'Lap';
+        mainTimerInterval = setInterval(() => {
+          document.getElementById('main-timer').textContent = formatTime(Date.now() - startTime);
+        }, 1000);
+        lapTimerInterval = setInterval(() => {
+          if (isRunning) {
+            document.getElementById('lap-timer').textContent = formatLapTime(Date.now() - lapStartTime);
+          }
+        }, 100);
+      } else {
+        // Registrar Lap
+        const lapTime = Date.now() - lapStartTime;
+        laps.push({ duration: lapTime });
+        beep();
+
+        // Marcar en el mapa
+        const latlng = marker.getLatLng();
+        L.circleMarker(latlng, {
+          radius: 8,
+          color: 'blue',
+          fillColor: '#00f',
+          fillOpacity: 0.8
+        }).addTo(map).bindTooltip(`Lap ${laps.length}`, { permanent: true });
+
+        // Reiniciar lap timer
+        lapStartTime = Date.now();
+        document.getElementById('lap-timer').textContent = '00:00.0';
+      }
+    });
+
+    document.getElementById('stop-btn').addEventListener('click', () => {
+      if (isRunning) {
+        // Detener
+        isRunning = false;
+        clearInterval(mainTimerInterval);
+        clearInterval(lapTimerInterval);
+        if (watchId) navigator.geolocation.clearWatch(watchId);
+        document.getElementById('stop-btn').textContent = 'Guardar';
+      } else {
+        // Guardar
+        downloadTxt();
+        // Reiniciar interfaz (opcional)
+        location.reload();
+      }
+    });
+
+    // ========== INICIAR GEOLOCALIZACIÓN ==========
+    function startTracking() {
+      if (!navigator.geolocation) {
+        alert("Geolocalización no soportada.");
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          initMap(pos.coords.latitude, pos.coords.longitude);
+          watchId = navigator.geolocation.watchPosition(updatePosition, (err) => {
+            console.error("Error de geolocalización:", err);
+            alert("Error al obtener la ubicación.");
+          }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 10000 });
+        },
+        (err) => {
+          console.error("Error inicial:", err);
+          alert("No se pudo obtener la ubicación inicial.");
+        },
+        { enableHighAccuracy: true, timeout: 10000 }
+      );
+    }
+
+    // Iniciar al cargar
+    window.addEventListener('load', startTracking);
+  </script>
+</body>
+</html>
