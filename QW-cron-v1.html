@@ -66,25 +66,23 @@
         z-index: 1000;
     }
 
-    .metric-btn {
-        flex: 1; /* Cada botón ocupa el mismo espacio */
-        padding: 10px 4px;
-        font-size: 0.9rem;
-        text-align: center;
+    .metric-btn {      
+        padding: 8px 12px;
+        font-size: 0.9rem;        
         background: rgba(0, 0, 0, 0.65);
         color: white;
         border: none;
-        border-radius: 8px;
+        border-radius: 6px;
         white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
+        z-index: 1000;
         min-width: 0; /* importante para que flex funcione bien en móviles */
+        width: auto;
     }
     /* Ajuste para pantallas muy pequeñas */
     @media (max-width: 360px) {
         .metric-btn {
             font-size: 0.8rem;
-            padding: 8px 2px;
+            padding: 6px 10px;
         }
         #metrics-bar {
           gap: 10px;
@@ -129,9 +127,9 @@
 
     <!-- Barra de métricas: Velocidad, Ritmo, Distancia -->
     <div id="metrics-bar">
-      <button id="speed-btn" class="metric-btn">Vel: --</button>
-      <button id="pace-btn" class="metric-btn">Rit: --</button>
-      <button id="distance-btn" class="metric-btn">Km: 0.00</button>
+      <button id="speed-btn" class="metric-btn" style="position: absolute; bottom: 20px; left: 12px;">Vel: --</button>
+      <button id="pace-btn" class="metric-btn" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);">Rit: --</button>
+      <button id="distance-btn" class="metric-btn" style="position: absolute; bottom: 20px; right: 12px;">Km: 0.00</button>
     </div>
 
     <div id="map"></div>
