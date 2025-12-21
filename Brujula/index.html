@@ -944,6 +944,43 @@
          body.fullscreen-active .content-container {
              flex-grow: 2; /* Hace que el mapa ocupe aún más espacio si otros elementos están ocultos */
          }
+         /* NOTIFICACIÓN LAP VISIBLE EN PANTALLA COMPLETA */
+        body.fullscreen-active .lap-notification {
+            display: block !important;  /* FORZAR visible */
+            z-index: 9999 !important;  /* POR ENCIMA del mapa */
+            top: 20% !important;       /* POSICIÓN perfecta */
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            max-width: 95vw !important;
+            font-size: 1.4em !important; /* MÁS GRANDE */
+            padding: 30px 40px !important;
+            border: 3px solid rgba(255,255,255,0.8) !important;
+            backdrop-filter: blur(10px) !important;
+            animation: lapNotificationFullscreen 5s ease forwards !important;        
+        }
+        /* Animación específica para fullscreen */
+        @keyframes lapNotificationFullscreen {
+            0% { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.8); 
+            }
+            10% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1.05); 
+            }
+            15% { 
+                transform: translate(-50%, -50%) scale(1); 
+            }
+            70% { 
+                opacity: 1; 
+                transform: translate(-50%, -50%) scale(1); 
+            }
+            100% { 
+                opacity: 0; 
+                transform: translate(-50%, -50%) scale(0.9); 
+            }
+        }
+
     </style>
 </head>
 <body>
