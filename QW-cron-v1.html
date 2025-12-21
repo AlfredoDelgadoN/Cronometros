@@ -58,32 +58,38 @@
     #metrics-bar {
         position: absolute;
         bottom: 20px;
-        left: 10px;
-        right: 10px;
+        left: 12px;
+        right: 12px;
         display: flex;
         justify-content: space-between;
-        gap: 8px;
+        gap: 12px;
         z-index: 1000;
     }
 
     .metric-btn {
         flex: 1; /* Cada botón ocupa el mismo espacio */
-        padding: 10px 6px;
+        padding: 10px 4px;
         font-size: 0.9rem;
         text-align: center;
-        background: rgba(0, 0, 0, 0.6);
+        background: rgba(0, 0, 0, 0.65);
         color: white;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        min-width: 0; /* importante para que flex funcione bien en móviles */
     }
     /* Ajuste para pantallas muy pequeñas */
-    @media (max-width: 400px) {
+    @media (max-width: 360px) {
         .metric-btn {
-            font-size: 0.75rem;
-            padding: 8px 4px;
+            font-size: 0.8rem;
+            padding: 8px 2px;
+        }
+        #metrics-bar {
+          gap: 10px;
+          left: 10px;
+          right: 10px;
         }
     }
 
@@ -123,9 +129,9 @@
 
     <!-- Barra de métricas: Velocidad, Ritmo, Distancia -->
     <div id="metrics-bar">
-      <button id="speed-btn" class="metric-btn">Km/h: --</button>
+      <button id="speed-btn" class="metric-btn">Vel: --</button>
       <button id="pace-btn" class="metric-btn">Rit: --</button>
-      <button id="distance-btn" class="metric-btn">KM: 0.00</button>
+      <button id="distance-btn" class="metric-btn">Km: 0.00</button>
     </div>
 
     <div id="map"></div>
@@ -214,7 +220,7 @@
       if (lastPosition) {
         const d = distance(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
         totalDistance += d;
-        document.getElementById('distance-btn').textContent = `Distancia: ${(totalDistance / 1000).toFixed(2)} km`;
+        document.getElementById('distance-btn').textContent = `KM: ${(totalDistance / 1000).toFixed(2)}`;
       }
 
       positions.push({
@@ -233,12 +239,12 @@
         const dd = (last.dist - prev.dist) / 1000; // km
         if (dt > 0) {
           const speedKmh = (dd / dt) * 3600;
-          document.getElementById('speed-btn').textContent = `Velocidad: ${speedKmh.toFixed(1)} km/h`;
+          document.getElementById('speed-btn').textContent = `Vel: ${speedKmh.toFixed(1)}`;
           if (speedKmh > 0) {
             const pace = 60 / speedKmh; // min/km
             const paceMin = Math.floor(pace);
             const paceSec = Math.floor((pace - paceMin) * 60);
-            document.getElementById('pace-btn').textContent = `Ritmo: ${paceMin}:${paceSec.toString().padStart(2, '0')} min/km`;
+            document.getElementById('pace-btn').textContent = `Rit: ${paceMin}:${paceSec.toString().padStart(2, '0')}`;
           }
         }
       }
