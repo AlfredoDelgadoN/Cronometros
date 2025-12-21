@@ -874,7 +874,7 @@
                 </div>
             </div>
             <!-- Botón LAP con cronómetro parcial -->
-            <button id="actionBtn" class="lap-btn">
+            <button id="lapBtn" class="lap-btn" onclick="handleLapButton()">
                 <span id="actionBtnLabel" class="lap-btn-label">START</span>
                 <span id="lapPartialTimer" class="lap-partial-timer">00:00.0</span>
             </button>
@@ -883,7 +883,7 @@
             </audio>
             <!-- Botones secundarios: Detener, Auto Lap, Ajustes -->
             <div class="secondary-controls">
-                <button id="stopBtn" disabled>STOP</button>
+                <button id="stopBtn" onclick="handleStopButton()" style="display: none;">STOP</button>
                 <button id="autoLapBtn">AUTO LAP</button>
                 <button id="settingsBtn">AJUSTES</button>
             </div>
@@ -974,13 +974,15 @@
         let startMarker;
         let currentPositionMarker;
         let watchPositionId;
-        let startTime;
+        let startTime = null;
+        let elapsedTime = 0;
         let timeInterval;
         let partialTimerInterval; // Intervalo para el cronómetro parcial
         let routeCoordinates = [];
         let isTracking = false;
         let totalDistance = 0;
         let laps = [];
+        let lapInterval = null; // si usas setInterval para actualizar el cronómetro
         let lastLapTimestamp = 0;
         let lastLapDistance = 0;
         let lastPos = null;
@@ -1015,6 +1017,7 @@
             DRIVING: { max: 200, name: "Conduciendo", color: "#9b59b6", icon: "🚗" }
         };
         // --- ELEMENTOS DEL DOM ---
+        const lapBtn = document.getElementById('lapBtn');
         const actionBtn = document.getElementById('actionBtn');
         const stopBtn = document.getElementById('stopBtn');
         const autoLapBtn = document.getElementById('autoLapBtn');
@@ -1184,6 +1187,27 @@
                 compassArrow.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
             }
         }
+
+        // --- BOTÓN PRINCIPAL (START / LAP) ---
+        function handleLapButton() {
+            if (!isTracking) {
+                startTracking();
+            } else {
+                recordManualLap();
+            }
+        }
+
+        // --- BOTÓN SECUNDARIO (STOP → SAVE) ---
+        function handleStopButton() {
+            if (stopBtn.textContent === "SAVE") {
+                saveLapData();
+            } else {
+                stopTracking();
+                stopBtn.textContent = "SAVE";
+                lapBtn.disabled = true; // Opcional: desactivar clic en LAP
+            }
+        }
+
         // --- CRONÓMETRO PARCIAL (en el botón LAP) ---
         function startPartialTimer() {
             partialTimerStart = Date.now();
@@ -1943,6 +1967,54 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
                 paceDisplay.textContent = '--:--';
             }
         }
+
+        // --- Guardar en .txt ---
+        function saveLapData() {
+            const totalTimeMs = elapsedTime;
+            const totalSecs = totalTimeMs / 1000;
+            const mins = Math.floor(totalSecs / 60);
+            const secs = (totalSecs % 60).toFixed(1);
+            const totalTimeStr = `${mins}m ${secs}s`;
+
+            let content = `Registro de cronómetro\n`;
+            content += `Tiempo total: ${totalTimeStr}\n`;
+            content += `Vueltas: ${laps.length}\n`;
+            content += `----------------------------------------\n`;
+
+            let prev = 0;
+            laps.forEach((lap, i) => {
+                const diff = lap - prev;
+                const diffSecs = (diff / 1000).toFixed(2);
+                const cumSecs = (lap / 1000).toFixed(2);
+                content += `Vuelta ${i + 1}: ${diffSecs}s (acum: ${cumSecs}s)\n`;
+                prev = lap;
+            });
+
+            const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `recorrido_${new Date().toISOString().slice(0,19).replace(/:/g,'-')}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            resetInterface();
+        }
+
+        function resetInterface() {
+            isTracking = false;
+            elapsedTime = 0;
+            laps = [];
+            startTime = null;
+
+            actionBtnLabel.textContent = "START";
+            lapPartialTimer.textContent = "00:00.0";
+            stopBtn.style.display = "none";
+            lapBtn.disabled = false;
+        }
+
         // --- FUNCIONES AUXILIARES ---
         function resetData() {
             // Limpiar marcadores y líneas
