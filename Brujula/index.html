@@ -1627,6 +1627,7 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
             oscillator.stop(ctx.currentTime + 0.2); // Duración del beep: 200 ms
         }
         function recordManualLap() {
+            if (!isTracking) return
             const currentTime = Date.now();
             const lapTime = currentTime - lastLapTimestamp;
             const lapDistance = totalDistance - lastLapDistance;
@@ -1752,7 +1753,11 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
             startTime = Date.now();
             lastLapTimestamp = startTime; // Inicializa el tiempo para el primer LAP
             lastLapDistance = 0;
-            actionBtnLabel.textContent = 'LAP';
+            actionBtnLabel.textContent = "LAP";
+            lapPartialTimer.textContent = "00:00.0"; // o puedes ocultarlo si prefieres
+            stopBtn.style.display = "inline-block";
+            stopBtn.textContent = "STOP";
+            lapBtn.disabled = false;
             stopBtn.disabled = false;
             lapsContainer.style.display = 'block';
             navigator.geolocation.getCurrentPosition((position) => {
