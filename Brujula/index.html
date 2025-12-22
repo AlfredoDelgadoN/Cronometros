@@ -395,7 +395,7 @@
         }
         .lap-notification h3 {
             margin: 0 0 15px 0;
-            font-size: 1em;
+            font-size: 1.8em;
             color: white;
             text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
         }
@@ -403,7 +403,7 @@
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 15px;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
         }
         .lap-notification .lap-detail {
             background-color: rgba(255, 255, 255, 0.2);
@@ -417,7 +417,7 @@
             display: block;
         }
         .lap-notification .lap-detail .value {
-            font-size: 1em;
+            font-size: 1.4em;
             font-weight: 800;
         }
         .lap-notification .lap-type {
@@ -480,11 +480,12 @@
         }
         /* Contenedor de Vueltas (Laps) MEJORADO */
         .laps-container {
-            max-height: 160px !important;  /* Más alto para más LAPs */
-            overflow-y: auto !important;   /* Scroll vertical */
-            overflow-x: hidden !important;
-            scrollbar-width: thin;         /* Firefox: scroll delgado */
-            scrollbar-color: #007bff #f1f1f1;           
+            background-color: #fff;
+            border-bottom: 1px solid #ddd;
+            flex-shrink: 0;
+            max-height: 180px;
+            overflow-y: auto;
+            z-index: 1000;           
         }
         .laps-list {
             padding: 0 !important;
