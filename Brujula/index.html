@@ -44,7 +44,13 @@
         }
         /* Panel de estadísticas - DISTRIBUCIÓN OPTIMIZADA */
         .stats-container {
-            flex-shrink: 2 !important; /* Stats más pequeños */
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            background-color: white;
+            border-bottom: 1px solid #ddd;
+            flex-shrink: 0;
+            z-index: 1000;
         }
         /* PRIMERA LÍNEA: TIEMPO GRANDE */
         .time-row {
