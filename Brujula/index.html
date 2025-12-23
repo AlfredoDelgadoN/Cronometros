@@ -135,7 +135,7 @@
         .lap-partial-timer {
             font-size: 1.3em;
             font-weight: 800;
-            background: rgba(0,0,0,0.25);
+            background: rgba(0,0,0,0.6);
             padding: 6px 14px;
             border-radius: 10px;
             min-width: 95px;
@@ -152,25 +152,29 @@
             font-size: 1.4em !important;   /* TEXTO GRANDE */
             border-radius: 20px !important;
             margin: 12px 0 !important;
-            box-shadow: 0 8px 25px rgba(4, 50, 255, 0.4) !important;
+            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6) !important;
             letter-spacing: 1px !important;
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+            color: white;
         }
         #actionBtn:hover {
             transform: translateY(-3px) !important;
-            box-shadow: 0 8px 25px rgba(65, 68, 245, 0.774) !important;
+            box-shadow: 0 8px 25px rgba(250, 234, 9, 0.986) !important;
         }
         /* Cronómetro parcial dentro del botón LAP */
         .lap-partial-timer {
             font-size: 1.1em;
             font-weight: 800;
             margin-top: 8px;
-            color: rgb(34, 11, 235);
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            color: #ffffff; /* Iniciar del LAP blanco fondo AZUL */
+            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
             letter-spacing: 0.5px;
-            background-color: rgba(0, 0, 0, 0.2);
+            background-color: rgba(0, 0, 0, 0.6);
             padding: 5px 10px;
             border-radius: 8px;
             display: inline-block;
+            /* 🔒 AISLAR DEL BOTÓN */
+            pointer-events: none;
         }
         .lap-partial-timer.running {
             animation: pulseTimer 1.5s infinite;
@@ -455,13 +459,13 @@
         }
         /* Colores para diferentes actividades */
         .walking {
-            color: #3498db !important;
+            color: #22ee33 !important;
         }
         .running {
-            color: #2ecc71 !important;
+            color: #fa9006 !important;
         }
         .cycling {
-            color: #e74c3c !important;
+            color: #f1210a !important;
         }
         .driving {
             color: #9b59b6 !important;
