@@ -2060,7 +2060,7 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
                 );
             }
             totalDistance = newDistance;
-            distanceDisplay.textContent = `${totalDistance.toFixed(2)} km`;
+            distanceDisplay.textContent = totalDistance.toFixed(2);
             updatePace();
         }
         function updateTime() {
