@@ -18,27 +18,27 @@
       font-size: 2.5rem;
       font-weight: bold;
       color: black;
-      text-shadow: 2px 2px 4px rgba(255,255,255,0.75);
+      text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
       z-index: 1000;
     }
     #lap-timer {
       position: absolute;
-      bottom: 15px;
+      bottom: 10px;
       left: 0;
       width: 100%;
       text-align: center;
-      font-size: 1.5rem;
+      font-size: 1.6rem;
       color: black;
-      text-shadow: 2px 2px 4px rgba(255,255,255,0.75);
+      text-shadow: 2px 2px 4px rgba(255,255,255,0.8);
       z-index: 1000;
     }
     .btn {
       position: absolute;
-      bottom: 80px;
+      bottom: 100px;
       padding: 12px 20px;
       font-size: 1.1rem;
       cursor: pointer;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.8);
       color: white;
       border: none;
       border-radius: 6px;
@@ -47,7 +47,7 @@
     #start-btn { right: 20px; }
     #stop-btn { left: 20px; }
     #speed-btn, #pace-btn, #distance-btn {
-      bottom: 140px;
+      bottom: 240px;
       width: 100px;
       text-align: center;
     }
@@ -68,7 +68,7 @@
 
     .metric-btn {      
         padding: 8px 12px;
-        font-size: 0.9rem;        
+        font-size: 1.3rem;        
         background: rgba(0, 0, 0, 0.65);
         color: white;
         border: none;
@@ -127,9 +127,9 @@
 
     <!-- Barra de métricas: Velocidad, Ritmo, Distancia -->
     <div id="metrics-bar">
-      <button id="speed-btn" class="metric-btn" style="position: absolute; bottom: 20px; left: 6px;">Vel: --</button>
-      <button id="pace-btn" class="metric-btn" style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%);">Rit: --</button>
-      <button id="distance-btn" class="metric-btn" style="position: absolute; bottom: 20px; right: 6px;">Km: 0.00</button>
+      <button id="speed-btn" class="metric-btn" style="position: absolute; bottom: 120px; left: 6px;">V: --</button>
+      <button id="pace-btn" class="metric-btn" style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);">R: --</button>
+      <button id="distance-btn" class="metric-btn" style="position: absolute; bottom: 120px; right: 6px;">K: 0.00</button>
     </div>
 
     <div id="map"></div>
@@ -218,7 +218,7 @@
       if (lastPosition) {
         const d = distance(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
         totalDistance += d;
-        document.getElementById('distance-btn').textContent = `KM: ${(totalDistance / 1000).toFixed(2)}`;
+        document.getElementById('distance-btn').textContent = `K: ${(totalDistance / 1000).toFixed(2)}`;
       }
 
       positions.push({
@@ -237,12 +237,12 @@
         const dd = (last.dist - prev.dist) / 1000; // km
         if (dt > 0) {
           const speedKmh = (dd / dt) * 3600;
-          document.getElementById('speed-btn').textContent = `Vel: ${speedKmh.toFixed(1)}`;
+          document.getElementById('speed-btn').textContent = `V: ${speedKmh.toFixed(1)}`;
           if (speedKmh > 0) {
             const pace = 60 / speedKmh; // min/km
             const paceMin = Math.floor(pace);
             const paceSec = Math.floor((pace - paceMin) * 60);
-            document.getElementById('pace-btn').textContent = `Rit: ${paceMin}:${paceSec.toString().padStart(2, '0')}`;
+            document.getElementById('pace-btn').textContent = `R: ${paceMin}:${paceSec.toString().padStart(2, '0')}`;
           }
         }
       }
