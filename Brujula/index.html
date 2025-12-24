@@ -1485,7 +1485,7 @@ Próximo LAP por tiempo: ${formatTime(nextAutoLapTime * 1000)}`);
             // Marcar LAP en el mapa
             const lastCoord = routeCoordinates[routeCoordinates.length - 1];
             if (lastCoord) {
-                createLapMarker(lastCoord[0], lastCoord[1], lap.number, type);
+                createLapMarker(lastCoord[0], lastCoord[1], lap.number, type, lap.pace ? lap.pace.formatted : '--:--');
             }
             // Reproducir sonido
             playLapSound();
@@ -1590,23 +1590,28 @@ Próximo LAP por tiempo: ${formatTime(nextAutoLapTime * 1000)}`);
             kmMarkers.push(kmMarker);
         }
         // --- MARCAR CADA LAP EN EL MAPA ---
-        function createLapMarker(lat, lng, lapNumber, type) {
+        function createLapMarker(lat, lng, lapNumber, type, pace) {
             const lapIcon = L.divIcon({
                 html: `<div class="lap-marker">L${lapNumber}</div>`,
                 className: 'lap-marker-div',
                 iconSize: [34, 34],
                 iconAnchor: [17, 17]
             });
+            const lapTypeText = type === 'distance' ? 'Distancia' :
+                                type === 'time' ? 'Tiempo' :
+                                type === 'both' ? 'Distancia y Tiempo' : 'Manual';
+            const popupContent = `
+                <div style="font-size: 11px; color: #2c3e50;">
+                🏁 LAP ${lapNumber}<br>
+                Tipo: ${lapTypeText}<br>
+                Distancia: ${(totalDistance).toFixed(2)} km<br>
+                Ritmo: ${pace} min/km
+                </div>`;
             const lapMarker = L.marker([lat, lng], {
                 icon: lapIcon,
-                title: `LAP ${lapNumber} (${type === 'distance' ? 'por distancia' : type === 'time' ? 'por tiempo' : type === 'both' ? 'por distancia y tiempo' : 'manual'})`,
+                title: `LAP ${lapNumber} (${lapTypeText})`,
                 opacity: 0.8
-            }).addTo(map)
-              .bindPopup(`<div style="font-size: 11px; color: #2c3e50;">
-                🏁 LAP ${lapNumber}<br>
-                Tipo: ${type === 'distance' ? 'Distancia' : type === 'time' ? 'Tiempo' : type === 'both' ? 'Distancia y Tiempo' : 'Manual'}<br>
-                Distancia: ${totalDistance.toFixed(2)} km
-              </div>`);
+            }).addTo(map).bindPopup(popupContent);
             lapMarkers.push(lapMarker);
         }
         // --- GESTIÓN DE AJUSTES MEJORADA ---
@@ -1885,10 +1890,10 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
                 });
                 startMarker = L.marker([latitude, longitude], {
                     icon: startIcon,
-                    title: 'Punto de Inicio',
+                    title: 'Inicio',
                     opacity: 0.8
                 }).addTo(map)
-                    .bindPopup('<div style="font-size: 12px; font-weight: bold; color: #27ae60;">🏁 Punto de Inicio</div>')
+                    .bindPopup('<div style="font-size: 12px; font-weight: bold; color: #27ae60;">🏁 Inicio</div>')
                     .openPopup();
                 watchPositionId = navigator.geolocation.watchPosition(updatePosition, handleError, {
                     enableHighAccuracy: true,
