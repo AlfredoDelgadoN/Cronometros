@@ -149,6 +149,7 @@
     let lastPosition = null;
     let lapTimerInterval = null;
     let mainTimerInterval = null;
+    let hasMarkedStart = false;
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -275,6 +276,17 @@
         isRunning = true;
         startTime = Date.now();
         lapStartTime = startTime;
+
+        // Marcar inicio en el mapa
+        if (!hasMarkedStart) {
+          const startLatLng = marker.getLatLng();
+          L.marker(startLatLng, { title: 'Inicio' })
+            .addTo(map)
+            .bindTooltip('Inicio', { permanent: true, direction: 'top' })
+            .openTooltip();
+          hasMarkedStart = true;
+        }
+
         document.getElementById('start-btn').textContent = 'Lap';
         mainTimerInterval = setInterval(() => {
           document.getElementById('main-timer').textContent = formatTime(Date.now() - startTime);
@@ -292,12 +304,10 @@
 
         // Marcar en el mapa
         const latlng = marker.getLatLng();
-        L.circleMarker(latlng, {
-          radius: 8,
-          color: 'blue',
-          fillColor: '#00f',
-          fillOpacity: 0.8
-        }).addTo(map).bindTooltip(`Lap ${laps.length}`, { permanent: true });
+        L.marker(latlng, { title: `Lap ${laps.length}` })
+          .addTo(map)
+          .bindTooltip(`Lap ${laps.length}`, { permanent: true, direction: 'top' })
+          .openTooltip();
 
         // Reiniciar lap timer
         lapStartTime = Date.now();
@@ -312,6 +322,13 @@
         clearInterval(mainTimerInterval);
         clearInterval(lapTimerInterval);
         if (watchId) navigator.geolocation.clearWatch(watchId);
+        // Marcar Fin en el mapa
+        const endLatLng = marker.getLatLng();
+        L.marker(endLatLng, { title: 'Fin' })
+          .addTo(map)
+          .bindTooltip('Fin', { permanent: true, direction: 'top' })
+          .openTooltip();
+
         document.getElementById('stop-btn').textContent = 'Guardar';
       } else {
         // Guardar
