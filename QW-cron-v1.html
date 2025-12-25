@@ -157,6 +157,41 @@
 
     <div id="map"></div>
 
+    <div id="coord-input-panel" style="
+      position: absolute;
+      top: 80px;
+      left: 10px;
+      background: rgba(255,255,255,0.9);
+      padding: 10px;
+      border-radius: 6px;
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    ">
+      <input id="lat-input" type="text" placeholder="Latitud (ej: -33.45)" style="padding: 6px; font-size: 14px; width: 140px;" />
+      <input id="lng-input" type="text" placeholder="Longitud (ej: -70.65)" style="padding: 6px; font-size: 14px; width: 140px;" />
+      <div style="display: flex; gap: 4px;">
+        <button id="set-coord-btn" style="padding: 5px 8px; font-size: 12px; background: #d32f2f; color: white; border: none; border-radius: 4px; cursor: pointer;">Marcar y Medir</button>
+        <button id="close-coord-btn" style="padding: 5px 8px; font-size: 12px; background: #999; color: white; border: none; border-radius: 4px; cursor: pointer;">Cerrar</button>
+      </div>
+    </div>
+
+    <button id="open-coord-btn" style="
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(50,50,50,0.85);
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 14px;
+      cursor: pointer;
+      z-index: 1000;
+    ">📍 Coordenadas</button>
+
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
@@ -272,6 +307,17 @@
       map.panTo([latitude, longitude]);
       polyline.addLatLng([latitude, longitude]);
 
+      // ===== ACTUALIZAR DISTANCIA DE MEDICIÓN SI HAY ANCLA =====
+      if (measureAnchor) {
+        const d = distance(
+          measureAnchor.lat,
+          measureAnchor.lng,
+          pos.coords.latitude,
+          pos.coords.longitude
+        );
+        document.getElementById('measure-display').textContent = `${Math.round(d)} m`;
+      }
+
       if (lastPosition) {
         const d = distance(lastPosition.latitude, lastPosition.longitude, latitude, longitude);
         totalDistance += d;
@@ -380,6 +426,59 @@
         lapStartTime = Date.now();
         document.getElementById('lap-timer').textContent = '00:00.0';
       }
+    });
+
+    // ========== PANEL DE COORDENADAS MANUAL ==========
+    document.getElementById('open-coord-btn').addEventListener('click', () => {
+      document.getElementById('coord-input-panel').style.display = 'flex';
+    });
+
+    document.getElementById('close-coord-btn').addEventListener('click', () => {
+      document.getElementById('coord-input-panel').style.display = 'none';
+    });
+
+    document.getElementById('set-coord-btn').addEventListener('click', () => {
+      const latStr = document.getElementById('lat-input').value.trim();
+      const lngStr = document.getElementById('lng-input').value.trim();
+      const lat = parseFloat(latStr);
+      const lng = parseFloat(lngStr);
+
+      if (isNaN(lat) || isNaN(lng)) {
+        alert("Por favor ingresa coordenadas válidas.");
+        return;
+      }
+
+      // Eliminar marcador anterior si existe
+      if (measureMarker) {
+        map.removeLayer(measureMarker);
+      }
+
+      // Crear ancla de medición
+      measureAnchor = { lat, lng };
+
+      // Icono de alfiler rojo (como antes)
+      const pinSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+          <path fill="#D32F2F" d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 1 1 0-5 2.5 2.5 0 0 1 0 5z"/>
+          <circle cx="12" cy="9" r="1.8" fill="white"/>
+        </svg>
+      `;
+
+      const pinIcon = L.divIcon({
+        html: `<div style="width:30px;height:30px;display:flex;align-items:center;justify-content:center;transform:translate(-50%,-100%);pointer-events:none;">${pinSvg}</div>`,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30]
+      });
+
+      measureMarker = L.marker([lat, lng], { icon: pinIcon }).addTo(map)
+        .bindTooltip("Punto de medición", { permanent: false, offset: [0, -20] });
+
+      // Reiniciar display
+      document.getElementById('measure-display').textContent = "0 m";
+      document.getElementById('coord-input-panel').style.display = 'none';
+
+      // Opcional: centrar el mapa en el punto
+      // map.setView([lat, lng], 16);
     });
 
     document.getElementById('stop-btn').addEventListener('click', () => {
