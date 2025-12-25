@@ -138,7 +138,7 @@
       z-index: 1001;
       min-width: 80px;
       text-align: center;
-    ">-- m</div>
+    ">-- m</div
 
     <div id="lap-timer">00:00.0</div>
 
@@ -176,6 +176,8 @@
     let measureMode = false;
     let measureStartPos = null;
     let measureDistance = 0;
+    let measureAnchor = null;      // {lat, lng}
+    let measureMarker = null;      // Leaflet marker o circle
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -254,17 +256,17 @@
         time: Date.now(),
         dist: totalDistance
       });
-      // ===== MEDICIÓN EN TIEMPO REAL (si está activa) =====
-      if (measureMode && measureStartPos) {
-        const currentPos = pos.coords;
-        measureDistance = distance(
-          measureStartPos.latitude,
-          measureStartPos.longitude,
-          currentPos.latitude,
-          currentPos.longitude
+      // ===== ACTUALIZAR DISTANCIA DE MEDICIÓN SI HAY ANCLA =====
+      if (measureAnchor) {
+        const d = distance(
+          measureAnchor.lat,
+          measureAnchor.lng,
+          pos.coords.latitude,
+          pos.coords.longitude
         );
-        document.getElementById('measure-display').textContent = `${Math.round(measureDistance)} m`;
+        document.getElementById('measure-display').textContent = `${Math.round(d)} m`;
       }
+
       lastPosition = { latitude, longitude };
 
       // Calcular velocidad y ritmo
@@ -382,25 +384,31 @@
         return;
       }
 
-      if (!measureMode) {
-        // Iniciar medición
-        measureMode = true;
-        measureStartPos = lastPosition;
-        measureDistance = 0;
-        document.getElementById('measure-btn').textContent = "Finalizar";
-        document.getElementById('measure-display').textContent = "0 m";
-      } else {
-        // Finalizar medición
-        // Dentro del else (cuando se finaliza)
-        const endPos = lastPosition;
-        L.polyline([measureStartPos, endPos], { color: 'green', weight: 3 }).addTo(map);
-        measureMode = false;
-        measureStartPos = null;
-        document.getElementById('measure-btn').textContent = "Medir";
-        // Opcional: mantener la última distancia mostrada o resetear
-        // Aquí la dejamos fija como valor final
+      // Eliminar marcador anterior si existe
+      if (measureMarker) {
+        map.removeLayer(measureMarker);
       }
-    });    
+
+      // Crear nuevo punto de anclaje
+      measureAnchor = { lat: lastPosition.latitude, lng: lastPosition.longitude };
+
+      // Icono personalizado: regla 📏
+      const ruleIcon = L.divIcon({
+        className: 'measure-anchor-icon', // Opcional: para CSS personalizado
+        html: '<div style="font-size: 24px; line-height: 1; text-align: center; transform: translateX(-50%) translateY(-50%); pointer-events: none;">📏</div>',
+        iconSize: [24, 24],
+        iconAnchor: [12, 12] // Centrado
+      });
+
+      // Crear marcador con el icono de regla
+      measureMarker = L.marker([measureAnchor.lat, measureAnchor.lng], {
+        icon: ruleIcon,
+        zIndexOffset: 1000
+      }).addTo(map).bindTooltip("Origen de medición", { permanent: false, offset: [0, -10] });
+
+      // Reiniciar visualización
+      document.getElementById('measure-display').textContent = "0 m";
+    });  
 
     // ========== INICIAR GEOLOCALIZACIÓN ==========
     function startTracking() {
