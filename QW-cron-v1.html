@@ -393,18 +393,36 @@
       measureAnchor = { lat: lastPosition.latitude, lng: lastPosition.longitude };
 
       // Icono personalizado: regla 📏
+      // SVG personalizado: regla en naranja brillante (#FF6F00)
+      const ruleSvg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+          <path fill="#FF6F00" d="M5 22h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2zm0-2v-7h5v7H5zm7 0v-5h5v5h-5zm5-7V4h5v6h-5zm-7 0V6h5v4h-5zm-5 0V9h5v2H5z"/>
+          <circle cx="12" cy="12" r="8" fill="none" stroke="#FFD54F" stroke-width="1"/>
+        </svg>
+      `;
       const ruleIcon = L.divIcon({
-        className: 'measure-anchor-icon', // Opcional: para CSS personalizado
-        html: '<div style="font-size: 24px; line-height: 1; text-align: center; transform: translateX(-50%) translateY(-50%); pointer-events: none;">📏</div>',
-        iconSize: [24, 24],
-        iconAnchor: [12, 12] // Centrado
+        className: 'measure-rule-icon',
+        html: `<div style="
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transform: translate(-50%, -50%);
+          pointer-events: none;
+        ">${ruleSvg}</div>`,
+        iconSize: [28, 28],
+        iconAnchor: [14, 14]
       });
 
-      // Crear marcador con el icono de regla
+      // Crear marcador con icono SVG llamativo
       measureMarker = L.marker([measureAnchor.lat, measureAnchor.lng], {
         icon: ruleIcon,
         zIndexOffset: 1000
-      }).addTo(map).bindTooltip("Origen de medición", { permanent: false, offset: [0, -10] });
+      }).addTo(map).bindTooltip("Origen de medición", {
+        permanent: false,
+        offset: [0, -15]
+      });
 
       // Reiniciar visualización
       document.getElementById('measure-display').textContent = "0 m";
