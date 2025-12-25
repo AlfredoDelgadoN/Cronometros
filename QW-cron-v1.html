@@ -182,6 +182,15 @@
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
     // ========== INICIALIZAR MAPA ==========
+    function getUrlParams() {
+      const params = new URLSearchParams(window.location.search);
+      const lat = parseFloat(params.get('lat'));
+      const lng = parseFloat(params.get('lng'));
+      if (!isNaN(lat) && !isNaN(lng)) {
+        return { lat, lng };
+      }
+      return null;
+    }
     function initMap(lat, lng) {
       if (map) map.remove();
       map = L.map('map').setView([lat, lng], 15);
@@ -190,6 +199,25 @@
       }).addTo(map);
       marker = L.marker([lat, lng]).addTo(map);
       polyline = L.polyline([], { color: 'red' }).addTo(map);
+    }
+    // Intentar cargar marcador desde URL
+    const sharedLocation = getUrlParams();
+    let sharedMarker = null;
+
+    if (sharedLocation) {
+      // Eliminar marcador anterior si existe
+      if (sharedMarker) map.removeLayer(sharedMarker);
+
+      // Crear marcador visible
+      sharedMarker = L.marker([sharedLocation.lat, sharedLocation.lng], {
+        zIndexOffset: 2000
+      }).addTo(map).bindTooltip("Ubicación compartida", {
+        permanent: false,
+        offset: [0, -10]
+      });
+
+      // Opcional: centrar el mapa en esa ubicación
+      // map.setView([sharedLocation.lat, sharedLocation.lng], 16);
     }
 
     // ========== SONIDO BEEP ==========
