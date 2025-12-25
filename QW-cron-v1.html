@@ -117,6 +117,27 @@
 </head>
 <body>
     <div id="main-timer">00:00:00</div>
+    <div id="measure-display" style="
+      position: absolute;
+      top: 60px;
+      right: 20px;
+      background: rgba(255,255,255,0.85);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 1rem;
+      color: black;
+      font-weight: bold;
+      z-index: 1000;
+      min-width: 80px;
+      text-align: center;
+    ">-- m</div>
+    <button id="measure-btn" class="metric-btn" style="
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(0,0,0,0.8);
+      z-index: 1000;
+    ">Medir</button>
     <div id="lap-timer">00:00.0</div>
 
     <!-- Botones de control: Detener / Iniciar -->
@@ -337,6 +358,58 @@
         location.reload();
       }
     });
+
+    // ========== BOTÓN MEDIR ==========
+    let measureMode = false;
+    let startPos = null;
+
+    document.getElementById('measure-btn').addEventListener('click', () => {
+      if (!isRunning) {
+        alert("Debes iniciar el cronómetro primero.");
+        return;
+      }
+
+      if (!measureMode) {
+        // Iniciar medición: usar próximo LAP como punto inicial
+        document.getElementById('measure-btn').textContent = "Finalizar";
+        measureMode = true;
+        startPos = null; // Se establecerá en el próximo LAP
+        document.getElementById('measure-display').textContent = "-- m";
+      } else {
+        // Finalizar medición
+        document.getElementById('measure-btn').textContent = "Medir";
+        measureMode = false;
+        startPos = null;
+        document.getElementById('measure-display').textContent = "-- m";
+      }
+    });
+
+    // Interceptamos la creación de Laps para usarlos en la medición
+    const originalStartBtnHandler = document.getElementById('start-btn').onclick;
+    document.getElementById('start-btn').onclick = function (e) {
+      // Ejecutar comportamiento original
+      originalStartBtnHandler.call(this, e);
+
+      // Lógica adicional para "Medir"
+      if (isRunning && measureMode) {
+        const currentPos = marker.getLatLng();
+        if (!startPos) {
+          // Primer LAP después de presionar "Medir"
+          startPos = { lat: currentPos.lat, lng: currentPos.lng };
+          document.getElementById('measure-display').textContent = "0 m";
+        } else {
+          // Segundo LAP: calcular distancia
+          const endPos = { lat: currentPos.lat, lng: currentPos.lng };
+          const d = distance(startPos.lat, startPos.lng, endPos.lat, endPos.lng); // en metros
+          document.getElementById('measure-display').textContent = `${Math.round(d)} m`;
+          // Opcional: salir del modo medición automáticamente
+          measureMode = false;
+          document.getElementById('measure-btn').textContent = "Medir";
+          // Opcional: marcar segmento en el mapa
+          L.polyline([startPos, endPos], { color: 'green', weight: 3 }).addTo(map);
+        }
+      }
+    };
 
     // ========== INICIAR GEOLOCALIZACIÓN ==========
     function startTracking() {
