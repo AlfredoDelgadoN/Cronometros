@@ -153,6 +153,7 @@
       min-width: 140px;
       text-align: left;
       font-family: monospace;
+      cursor: pointer; /* 👈 añade este para indicar que es clickeable */
     ">Lat: --<br>Lng: --</div>
 
     <div id="lap-timer">00:00.0</div>
@@ -601,6 +602,33 @@
 
     // Iniciar al cargar
     window.addEventListener('load', startTracking);
+    // ========== COPIAR COORDENADAS AL PORTAPAPELES ==========
+    document.getElementById('position-display').addEventListener('click', async () => {
+      const display = document.getElementById('position-display');
+      const text = display.textContent;
+
+      // Extraer valores de "Lat: -33.456789" y "Lng: -70.123456"
+      const latMatch = text.match(/Lat:\s*([\-0-9.]+)/);
+      const lngMatch = text.match(/Lng:\s*([\-0-9.]+)/);
+
+      if (latMatch && lngMatch) {
+        const lat = latMatch[1];
+        const lng = lngMatch[1];
+        const coordText = `${lat},${lng}`;
+
+        try {
+          await navigator.clipboard.writeText(coordText);
+          // Feedback visual opcional
+          const originalHTML = display.innerHTML;
+          display.innerHTML = '<span style="color:green;">¡Copiado!</span>';
+          setTimeout(() => {
+            display.innerHTML = originalHTML;
+          }, 1000);
+        } catch (err) {
+          alert("No se pudo copiar al portapapeles.");
+        }
+      }
+    });
   </script>
 </body>
 </html>
