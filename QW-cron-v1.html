@@ -140,6 +140,21 @@
       text-align: center;
     ">-- m</div>
 
+    <div id="position-display" style="
+      position: absolute;
+      top: 90px;
+      right: 20px;
+      background: rgba(255,255,255,0.85);
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      color: black;
+      z-index: 1001;
+      min-width: 140px;
+      text-align: left;
+      font-family: monospace;
+    ">Lat: --<br>Lng: --</div>
+
     <div id="lap-timer">00:00.0</div>
 
     <!-- Botones de control: Detener / Iniciar -->
@@ -306,6 +321,12 @@
       marker.setLatLng([latitude, longitude]);
       map.panTo([latitude, longitude]);
       polyline.addLatLng([latitude, longitude]);
+
+      // ===== ACTUALIZAR DISPLAY DE POSICIÓN ACTUAL =====
+      const lat = pos.coords.latitude.toFixed(6);
+      const lng = pos.coords.longitude.toFixed(6);
+      document.getElementById('position-display').innerHTML = 
+      `Lat: ${lat}<br>Lng: ${lng}`;
 
       // ===== ACTUALIZAR DISTANCIA DE MEDICIÓN SI HAY ANCLA =====
       if (measureAnchor) {
