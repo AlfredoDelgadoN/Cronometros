@@ -229,6 +229,10 @@
     let measureDistance = 0;
     let measureAnchor = null;      // {lat, lng}
     let measureMarker = null;      // Leaflet marker o circle
+    let speedMode = 'instant'; // 'instant' o 'average'
+    let paceMode = 'instant';  // 'instant' o 'average'
+    let distanceUnit = 'km';   // 'km' o 'mi
+
 
     const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -250,6 +254,9 @@
       }).addTo(map);
       marker = L.marker([lat, lng]).addTo(map);
       polyline = L.polyline([], { color: 'red' }).addTo(map);
+    }
+    function kmToMiles(km) {
+      return km * 0.621371;
     }
     // Intentar cargar marcador desde URL
     const sharedLocation = getUrlParams();
@@ -366,21 +373,50 @@
       lastPosition = { latitude, longitude };
 
       // Calcular velocidad y ritmo
+      // === ACTUALIZAR MÉTRICAS SEGÚN MODO ===
       if (isRunning && positions.length > 1) {
-        const last = positions[positions.length - 1];
-        const prev = positions[positions.length - 2];
-        const dt = (last.time - prev.time) / 1000; // segundos
-        const dd = (last.dist - prev.dist) / 1000; // km
-        if (dt > 0) {
-          const speedKmh = (dd / dt) * 3600;
-          document.getElementById('speed-btn').textContent = `V: ${speedKmh.toFixed(1)}`;
-          if (speedKmh > 0) {
-            const pace = 60 / speedKmh; // min/km
-            const paceMin = Math.floor(pace);
-            const paceSec = Math.floor((pace - paceMin) * 60);
-            document.getElementById('pace-btn').textContent = `R: ${paceMin}:${paceSec.toString().padStart(2, '0')}`;
+          const now = Date.now();
+          const elapsedSec = (now - startTime) / 1000; // segundos totales
+          const totalKm = totalDistance / 1000;
+
+          // Velocidad
+          let speedValue;
+          if (speedMode === 'instant') {
+              const last = positions[positions.length - 1];
+              const prev = positions[positions.length - 2];
+              const dt = (last.time - prev.time) / 1000;
+              const dd = (last.dist - prev.dist) / 1000;
+              speedValue = dt > 0 ? (dd / dt) * 3600 : 0;
+          } else {
+              speedValue = elapsedSec > 0 ? (totalKm / elapsedSec) * 3600 : 0;
           }
-        }
+
+          // Ritmo
+          let paceDisplay = '--';
+          if (speedValue > 0) {
+              const pace = 60 / speedValue; // min/km
+              const paceMin = Math.floor(pace);
+              const paceSec = Math.floor((pace - paceMin) * 60);
+              paceDisplay = `${paceMin}:${paceSec.toString().padStart(2, '0')}`;
+          }
+
+          // Mostrar en botones
+          const speedUnit = speedMode === 'instant' ? '' : ' ⌀';
+          document.getElementById('speed-btn').textContent = `V: ${speedValue > 0 ? speedValue.toFixed(1) : '--'}${speedUnit}`;
+
+          const paceUnit = paceMode === 'instant' ? '' : ' ⌀';
+          document.getElementById('pace-btn').textContent = `R: ${paceDisplay}${paceUnit}`;
+
+          // Distancia
+          let distanceValue, distanceLabel;
+          if (distanceUnit === 'km') {
+              distanceValue = totalKm.toFixed(2);
+              distanceLabel = 'K';
+          } else {
+              distanceValue = kmToMiles(totalKm).toFixed(2);
+              distanceLabel = 'M';
+          }
+          document.getElementById('distance-btn').textContent = `${distanceLabel}: ${distanceValue}`;
       }
     }
 
@@ -575,7 +611,22 @@
 
       // Reiniciar visualización
       document.getElementById('measure-display').textContent = "0 m";
-    });  
+    });
+
+    // Cambiar modo Velocidad
+    document.getElementById('speed-btn').addEventListener('click', () => {
+        speedMode = speedMode === 'instant' ? 'average' : 'instant';
+    });
+
+    // Cambiar modo Ritmo
+    document.getElementById('pace-btn').addEventListener('click', () => {
+        paceMode = paceMode === 'instant' ? 'average' : 'instant';
+    });
+
+    // Cambiar unidad de Distancia
+    document.getElementById('distance-btn').addEventListener('click', () => {
+        distanceUnit = distanceUnit === 'km' ? 'mi' : 'km';
+    });
 
     // ========== INICIAR GEOLOCALIZACIÓN ==========
     function startTracking() {
