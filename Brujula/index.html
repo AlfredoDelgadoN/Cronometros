@@ -1137,54 +1137,46 @@ alert("¡Hola soy Alfredo Delgado, este en mi cronometro!");
 
 // --- NUEVA FUNCIÓN PARA TOGGLE DE VISTA LAP ---
 function toggleLapFullscreen() {
-isLapFullscreen = !isLapFullscreen;
+    isLapFullscreen = !isLapFullscreen;
     
     if (isLapFullscreen) {
-        // Crear header personalizado para pantalla completa
-        const header = lapsContainer.querySelector('h3');
-        if (header) {
-            header.innerHTML = `
-                <div class="lap-fullscreen-header">
-                    <span>📊 Vueltas (Laps) - Total: ${formatTime(laps.reduce((sum, lap) => sum + lap.time, 0))}</span>
-                    <button class="lap-fullscreen-close" id="close-lap-fullscreen">✕</button>
-                </div>
-                <div class="lap-fullscreen-help">Presiona ESC o toca el botón X para cerrar</div>
-            `;
-        }
+        // Agregar botón flotante para cerrar
+        const closeButton = document.createElement('button');
+        closeButton.id = 'lap-fullscreen-close';
+        closeButton.innerHTML = '✕ CERRAR';
+        closeButton.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10000;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        `;
+        closeButton.addEventListener('click', toggleLapFullscreen);
+        document.body.appendChild(closeButton);
         
         lapsContainer.classList.add('lap-fullscreen');
         document.body.classList.add('lap-fullscreen-active');
         lapViewButton.innerHTML = '📊';
         lapViewButton.title = 'Vista de Vueltas';
         
-        // Agregar listener para el botón de cerrar
-        setTimeout(() => {
-            const closeBtn = document.getElementById('close-lap-fullscreen');
-            if (closeBtn) {
-                closeBtn.addEventListener('click', toggleLapFullscreen);
-            }
-        }, 100);
-        
-        // Agregar listener para tecla ESC
-        document.addEventListener('keydown', handleLapFullscreenKeydown);
-        
     } else {
-        // Restaurar header original
-        const header = lapsContainer.querySelector('h3');
-        if (header) {
-            header.innerHTML = `
-                <span>Vueltas (Laps)</span>
-                <span class="total-time" id="total-lap-time">Total: ${formatTime(laps.reduce((sum, lap) => sum + lap.time, 0))}</span>
-            `;
+        // Remover botón de cerrar
+        const closeButton = document.getElementById('lap-fullscreen-close');
+        if (closeButton) {
+            closeButton.remove();
         }
         
         lapsContainer.classList.remove('lap-fullscreen');
         document.body.classList.remove('lap-fullscreen-active');
         lapViewButton.innerHTML = '📊';
         lapViewButton.title = 'Vista de Vueltas';
-        
-        // Remover listener de tecla ESC
-        document.removeEventListener('keydown', handleLapFullscreenKeydown);
     }
 }
 // Función para manejar tecla ESC
