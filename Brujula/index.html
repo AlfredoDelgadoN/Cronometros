@@ -487,6 +487,7 @@ flex-shrink: 0;
 max-height: 180px;
 overflow-y: auto;
 z-index: 1000;
+position: relative;
 }
 .laps-list {
 padding: 0 !important;
@@ -794,70 +795,55 @@ box-shadow: 0 2px 6px rgba(0,0,0,0.4);
 .fullscreen-icon::before {
 content: "\2921";
 }
-body.fullscreen-active {
+/* --- NUEVO ESTILO PARA EL BOTÓN DE LAP VIEW --- */
+#lap-view-btn {
+position: absolute;
+top: 20px;
+left: 20px;
+z-index: 400;
+padding: 8px;
+background-color: rgba(255, 255, 255, 0.9);
+border: 1px solid #ccc;
+border-radius: 4px;
+cursor: pointer;
+font-size: 16px;
+width: 36px;
+height: 36px;
+display: flex;
+align-items: center;
+justify-content: center;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+#lap-view-btn:hover {
+background-color: white;
+}
+body.lap-fullscreen-active {
 overflow: hidden;
 }
-#map:-webkit-full-screen {
-width: 100% !important;
-height: 100% !important;
+.laps-container.lap-fullscreen {
+position: fixed;
+top: 0;
+left: 0;
+width: 100vw;
+height: 100vh;
+max-height: none;
 z-index: 9999;
+background: white;
+border: none;
+border-radius: 0;
+box-shadow: none;
 }
-#map:-moz-full-screen {
-width: 100% !important;
-height: 100% !important;
-z-index: 9999;
+.laps-container.lap-fullscreen h3 {
+padding: 15px;
+margin: 0;
+border: none;
+font-size: 1.5em;
+background: #007bff;
+color: white;
 }
-#map:-ms-fullscreen {
-width: 100% !important;
-height: 100% !important;
-z-index: 9999;
-}
-#map:fullscreen {
-width: 100% !important;
-height: 100% !important;
-z-index: 9999;
-}
-body.fullscreen-active .stats-container,
-body.fullscreen-active .laps-container,
-body.fullscreen-active .compass-container {
-display: none;
-}
-body.fullscreen-active .content-container {
-flex-grow: 2;
-}
-body.fullscreen-active .lap-notification {
-display: block !important;
-z-index: 9999 !important;
-top: 20% !important;
-left: 50% !important;
-transform: translate(-50%, -50%) !important;
-max-width: 95vw !important;
-font-size: 1.4em !important;
-padding: 30px 40px !important;
-border: 3px solid rgba(255,255,255,0.8) !important;
-backdrop-filter: blur(10px) !important;
-animation: lapNotificationFullscreen 5s ease forwards !important;
-}
-@keyframes lapNotificationFullscreen {
-0% {
-opacity: 0;
-transform: translate(-50%, -50%) scale(0.8);
-}
-10% {
-opacity: 1;
-transform: translate(-50%, -50%) scale(1.05);
-}
-15% {
-transform: translate(-50%, -50%) scale(1);
-}
-70% {
-opacity: 1;
-transform: translate(-50%, -50%) scale(1);
-}
-100% {
-opacity: 0;
-transform: translate(-50%, -50%) scale(0.9);
-}
+.laps-container.lap-fullscreen #laps-list {
+max-height: calc(100vh - 60px);
+overflow-y: auto;
 }
 </style>
 </head>
@@ -915,6 +901,7 @@ transform: translate(-50%, -50%) scale(0.9);
 <div class="content-container">
 <div id="map"></div>
 <button id="fullscreen-btn" class="fullscreen-icon" title="Pantalla Completa / Salir"></button>
+<button id="lap-view-btn" title="Vista de Vueltas">📊</button>
 <div class="compass-container">
 <div class="compass">
 <div class="compass-line"></div>
@@ -1019,9 +1006,10 @@ CYCLING: { max: 40, name: "Bicicleta", color: "#e74c3c", icon: "🚴" },
 DRIVING: { max: 200, name: "Conduciendo", color: "#9b59b6", icon: "🚗" }
 };
 // Nuevas variables para modos interactivos
-let speedMode = 'instant'; // 'instant' o 'average'
-let distanceUnit = 'km';   // 'km' o 'mi'
-let paceMode = 'average';  // 'average' o 'instant'
+let speedMode = 'instant';
+let distanceUnit = 'km';
+let paceMode = 'average';
+let isLapFullscreen = false;
 
 // --- ELEMENTOS DEL DOM ---
 const actionBtn = document.getElementById('actionBtn');
@@ -1058,6 +1046,7 @@ const fullscreenButton = document.getElementById('fullscreen-btn');
 const speedBox = document.getElementById('speed-box');
 const distanceBox = document.getElementById('distance-box');
 const paceBox = document.getElementById('pace-box');
+const lapViewButton = document.getElementById('lap-view-btn');
 let isFullscreen = false;
 let distanceInMiles = 0;
 let totalSpeedSum = 0;
@@ -1088,11 +1077,30 @@ speedBox.addEventListener('click', () => toggleSpeedMode());
 distanceBox.addEventListener('click', () => toggleDistanceUnit());
 paceBox.addEventListener('click', () => togglePaceMode());
 
+// Listener para el nuevo botón de vista de LAPs
+lapViewButton.addEventListener('click', toggleLapFullscreen);
+
 setupCompass();
 loadSavedSettings();
 resetPartialTimer();
 alert("¡Hola soy Alfredo Delgado, este en mi cronometro!");
 });
+
+// --- NUEVA FUNCIÓN PARA TOGGLE DE VISTA LAP ---
+function toggleLapFullscreen() {
+isLapFullscreen = !isLapFullscreen;
+if (isLapFullscreen) {
+lapsContainer.classList.add('lap-fullscreen');
+document.body.classList.add('lap-fullscreen-active');
+lapViewButton.innerHTML = '✕';
+lapViewButton.title = 'Cerrar vista de vueltas';
+} else {
+lapsContainer.classList.remove('lap-fullscreen');
+document.body.classList.remove('lap-fullscreen-active');
+lapViewButton.innerHTML = '📊';
+lapViewButton.title = 'Vista de Vueltas';
+}
+}
 
 // --- EVENTOS DE PANTALLA COMPLETA ---
 document.addEventListener('fullscreenchange', updateFullscreenStatus);
@@ -1108,6 +1116,10 @@ if (isFullscreen) {
 document.body.classList.add('fullscreen-active');
 } else {
 document.body.classList.remove('fullscreen-active');
+// Asegurarse de salir de la vista de LAPs si se sale de fullscreen del mapa
+if (isLapFullscreen) {
+toggleLapFullscreen();
+}
 }
 }
 
