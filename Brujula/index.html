@@ -1647,27 +1647,23 @@ function calculateAveragePace() {
 }
 // Función para mostrar todos los LAPs en pantalla completa
 function showAllLapsInFullscreen() {
-    // Guardar el contenido original
-    const originalContent = lapsList.innerHTML;
-    lapsContainer.dataset.originalContent = originalContent;
-    
-    // Limpiar y mostrar todos los LAPs
+    // NO guardar innerHTML como originalContent - siempre regenerar desde laps
     lapsList.innerHTML = '';
     
     if (laps.length === 0) {
         const emptyMessage = document.createElement('div');
         emptyMessage.className = 'no-laps-message-compact';
-        emptyMessage.textContent = 'No hay vueltas registradas. Inicia el cronómetro y marca LAPs.';
+        emptyMessage.innerHTML = '<div style="font-size: 3em; margin-bottom: 15px; opacity: 0.5;">⚪</div>No hay vueltas registradas. Inicia el cronómetro y marca LAPs.';
         lapsList.appendChild(emptyMessage);
         return;
     }
     
-    // Mostrar todos los LAPs ordenados del más reciente al más antiguo
+    // Mostrar TODOS los laps ordenados del más reciente al más antiguo
     const sortedLaps = [...laps].reverse();
-    
     sortedLaps.forEach((lap, index) => {
         const displayIndex = laps.length - index;
-        createLapListItem(lap, displayIndex, true); // true = fullscreen mode
+        const li = createLapListItem(lap, displayIndex, true); // true = fullscreen mode
+        lapsList.appendChild(li);
     });
 }
 // Función para crear item de LAP (compartida entre modos)
@@ -1764,23 +1760,16 @@ function createFullscreenCloseButton() {
 }
 // Función para restaurar vista normal
 function restoreNormalLapView() {
-    // Si había contenido original, restaurarlo
-    if (lapsContainer.dataset.originalContent) {
-        lapsList.innerHTML = lapsContainer.dataset.originalContent;
-        delete lapsContainer.dataset.originalContent;
-    } else {
-        // Mostrar solo los últimos 8 LAPs
-        lapsList.innerHTML = '';
-        const recentLaps = [...laps].slice(-8).reverse();
-        
-        recentLaps.forEach((lap, index) => {
-            const displayIndex = laps.length - (recentLaps.length - index - 1);
-            const li = createLapListItem(lap, displayIndex, false);
-            lapsList.appendChild(li);
-        });
-    }
+    lapsList.innerHTML = ''; // Limpiar siempre
     
-    // Actualizar header normal
+    // Mostrar solo los últimos 8 laps
+    const recentLaps = [...laps].slice(-10).reverse();
+    recentLaps.forEach((lap, index) => {
+        const displayIndex = laps.length - recentLaps.length + index + 1;
+        const li = createLapListItem(lap, displayIndex, false); // false = normal mode
+        lapsList.appendChild(li);
+    });
+    
     updateTotalLapTime();
 }
 // Función para crear la vista profesional
@@ -1969,14 +1958,14 @@ fullscreenButton.addEventListener('click', toggleFullscreen);
 function updateFullscreenStatus() {
 isFullscreen = !!document.fullscreenElement || !!document.webkitFullscreenElement || !!document.mozFullScreenElement || !!document.msFullscreenElement;
 if (isFullscreen) {
-document.body.classList.add('fullscreen-active');
+    document.body.classList.add('fullscreen-active');
 } else {
-document.body.classList.remove('fullscreen-active');
-// Asegurarse de salir de la vista de LAPs si se sale de fullscreen del mapa
-if (isLapFullscreen) {
-toggleLapFullscreen();
-}
-}
+    document.body.classList.remove('fullscreen-active');
+        // Asegurarse de salir de la vista de LAPs si se sale de fullscreen del mapa
+        if (isLapFullscreen) {
+            toggleLapFullscreen();
+        }
+    }
 }
 
 function toggleFullscreen() {
