@@ -461,7 +461,7 @@ transition: all 0.5s ease;
 color: #22ee33 !important;
 }
 .running {
-color: #fa9006 !important;
+color: #f8f8f8 !important;
 }
 .cycling {
 color: #f1210a !important;
@@ -550,7 +550,7 @@ gap: 12px !important;
 padding: 8px !important;
 background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%) !important;
 border-radius: 8px !important;
-font-weight: 500 !important;
+font-weight: 400 !important;
 }
 .lap-number {
 font-size: 1.5em !important;
@@ -799,7 +799,7 @@ content: "\2921";
 #lap-view-btn {
 position: absolute;
 top: 20px;
-left: 20px;
+left: 45px;
 z-index: 400;
 padding: 8px;
 background-color: rgba(255, 255, 255, 0.9);
@@ -837,9 +837,57 @@ box-shadow: none;
 padding: 15px;
 margin: 0;
 border: none;
-font-size: 1.5em;
+font-size: 1.4em;
 background: #007bff;
 color: white;
+}
+/* Agregar al final del CSS */
+.lap-fullscreen-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    margin: 0;
+    background: #007bff;
+    color: white;
+    border-bottom: 2px solid #0056b3;
+}
+
+.lap-fullscreen-close {
+    background: white;
+    color: #007bff;
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.lap-fullscreen-close:hover {
+    background: #f8f9fa;
+    transform: scale(1.1);
+}
+
+/* Hacer la lista desplazable */
+#laps-list.lap-fullscreen-list {
+    max-height: calc(100vh - 70px);
+    overflow-y: auto;
+    padding: 15px;
+}
+
+/* Agregar mensaje de ayuda */
+.lap-fullscreen-help {
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    color: #666;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
 }
 .laps-container.lap-fullscreen #laps-list {
 max-height: calc(100vh - 60px);
@@ -1070,6 +1118,7 @@ unitKmBtn.addEventListener('click', () => selectUnit('km'));
 unitMBtn.addEventListener('click', () => selectUnit('m'));
 enableTimeLapCheckbox.addEventListener('change', function() {
 lapTimeInput.disabled = !this.checked;
+setupLapFullscreenClickOutside();
 });
 
 // Nuevos listeners para los indicadores interactivos
@@ -1089,18 +1138,70 @@ alert("¡Hola soy Alfredo Delgado, este en mi cronometro!");
 // --- NUEVA FUNCIÓN PARA TOGGLE DE VISTA LAP ---
 function toggleLapFullscreen() {
 isLapFullscreen = !isLapFullscreen;
-if (isLapFullscreen) {
-lapsContainer.classList.add('lap-fullscreen');
-document.body.classList.add('lap-fullscreen-active');
-lapViewButton.innerHTML = '✕';
-lapViewButton.title = 'Cerrar vista de vueltas';
-} else {
-lapsContainer.classList.remove('lap-fullscreen');
-document.body.classList.remove('lap-fullscreen-active');
-lapViewButton.innerHTML = '📊';
-lapViewButton.title = 'Vista de Vueltas';
+    
+    if (isLapFullscreen) {
+        // Crear header personalizado para pantalla completa
+        const header = lapsContainer.querySelector('h3');
+        if (header) {
+            header.innerHTML = `
+                <div class="lap-fullscreen-header">
+                    <span>📊 Vueltas (Laps) - Total: ${formatTime(laps.reduce((sum, lap) => sum + lap.time, 0))}</span>
+                    <button class="lap-fullscreen-close" id="close-lap-fullscreen">✕</button>
+                </div>
+                <div class="lap-fullscreen-help">Presiona ESC o toca el botón X para cerrar</div>
+            `;
+        }
+        
+        lapsContainer.classList.add('lap-fullscreen');
+        document.body.classList.add('lap-fullscreen-active');
+        lapViewButton.innerHTML = '📊';
+        lapViewButton.title = 'Vista de Vueltas';
+        
+        // Agregar listener para el botón de cerrar
+        setTimeout(() => {
+            const closeBtn = document.getElementById('close-lap-fullscreen');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', toggleLapFullscreen);
+            }
+        }, 100);
+        
+        // Agregar listener para tecla ESC
+        document.addEventListener('keydown', handleLapFullscreenKeydown);
+        
+    } else {
+        // Restaurar header original
+        const header = lapsContainer.querySelector('h3');
+        if (header) {
+            header.innerHTML = `
+                <span>Vueltas (Laps)</span>
+                <span class="total-time" id="total-lap-time">Total: ${formatTime(laps.reduce((sum, lap) => sum + lap.time, 0))}</span>
+            `;
+        }
+        
+        lapsContainer.classList.remove('lap-fullscreen');
+        document.body.classList.remove('lap-fullscreen-active');
+        lapViewButton.innerHTML = '📊';
+        lapViewButton.title = 'Vista de Vueltas';
+        
+        // Remover listener de tecla ESC
+        document.removeEventListener('keydown', handleLapFullscreenKeydown);
+    }
 }
+// Función para manejar tecla ESC
+function handleLapFullscreenKeydown(event) {
+    if (event.key === 'Escape' && isLapFullscreen) {
+        toggleLapFullscreen();
+    }
 }
+// Agregar también la posibilidad de hacer clic fuera para cerrar
+function setupLapFullscreenClickOutside() {
+    lapsContainer.addEventListener('click', function(event) {
+        if (isLapFullscreen && event.target === this) {
+            toggleLapFullscreen();
+        }
+    });
+}
+
 
 // --- EVENTOS DE PANTALLA COMPLETA ---
 document.addEventListener('fullscreenchange', updateFullscreenStatus);
