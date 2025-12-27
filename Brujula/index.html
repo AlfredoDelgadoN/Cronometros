@@ -518,9 +518,37 @@ border-radius: 3px;
 background: linear-gradient(180deg, #0056b3, #004085);
 }
 @media (max-width: 768px) {
-.content-container { flex-grow: 4 !important; }
-.stats-container { padding: 6px !important; }
+    .lap-table th,
+    .lap-table td {
+        padding: 10px 6px;
+        font-size: 0.85em;
+    }
+    
+    .lap-table th {
+        font-size: 0.8em;
+        padding: 12px 6px;
+    }
+    
+    .lap-fullscreen-close-btn {
+        padding: 10px 16px;
+        font-size: 0.9em;
+    }
 }
+@media (max-width: 480px) {
+    .lap-table-container {
+        padding: 10px;
+    }
+    
+    .lap-table {
+        font-size: 0.8em;
+    }
+    
+    .lap-type-cell {
+        min-width: 50px;
+        padding: 4px 8px !important;
+    }
+}
+
 .lap-stats {
 grid-template-columns: 1fr !important;
 gap: 4px !important;
@@ -828,19 +856,148 @@ width: 100vw;
 height: 100vh;
 max-height: none;
 z-index: 9999;
-background: white;
+background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
 border: none;
 border-radius: 0;
 box-shadow: none;
+overflow: hidden;
 }
 .laps-container.lap-fullscreen h3 {
-padding: 15px;
-margin: 0;
-border: none;
-font-size: 1.4em;
-background: #007bff;
-color: white;
+    padding: 20px 20px 15px 20px;
+    margin: 0;
+    border: none;
+    font-size: 1.8em;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    text-align: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
 }
+.laps-container.lap-fullscreen h3 span:first-child {
+    font-weight: 800;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+.laps-container.lap-fullscreen h3 .total-time {
+    font-size: 0.8em;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 8px 15px;
+    border-radius: 20px;
+    font-weight: 600;
+}
+/* Tabla profesional para LAPs */
+.lap-table-container {
+    height: calc(100vh - 120px);
+    overflow-y: auto;
+    padding: 15px;
+}
+.lap-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+}
+.lap-table thead {
+    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+    color: white;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+.lap-table th {
+    padding: 16px 12px;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+}
+.lap-table th:last-child {
+    border-right: none;
+}
+.lap-table tbody tr {
+    border-bottom: 1px solid #f1f1f1;
+    transition: all 0.3s ease;
+}
+
+.lap-table tbody tr:nth-child(even) {
+    background-color: #f8fafc;
+}
+
+.lap-table tbody tr:hover {
+    background-color: #e8f4ff;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 123, 255, 0.1);
+}
+
+.lap-table td {
+    padding: 14px 10px;
+    text-align: center;
+    font-size: 0.95em;
+    vertical-align: middle;
+}
+/* Estilos específicos para cada columna */
+.lap-number-cell {
+    font-weight: 900;
+    font-size: 1.2em;
+    color: #007bff;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-right: 2px solid #dee2e6;
+}
+
+.lap-time-cell {
+    font-family: 'Courier New', monospace;
+    font-weight: 700;
+    color: #2c3e50;
+    font-size: 1.1em;
+}
+
+.lap-distance-cell {
+    color: #28a745;
+    font-weight: 700;
+}
+
+.lap-pace-cell {
+    color: #dc3545;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+}
+
+.lap-type-cell {
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 6px 12px !important;
+    margin: 0 auto;
+    display: inline-block;
+    min-width: 70px;
+    font-size: 0.85em;
+}
+/* Colores para tipos de LAP */
+.lap-type-manual {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+}
+
+.lap-type-distance {
+    background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+    color: white;
+}
+
+.lap-type-time {
+    background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+    color: #212529;
+}
+
+.lap-type-both {
+    background: linear-gradient(135deg, #6f42c1 0%, #5a32a3 100%);
+    color: white;
+}
+
 /* Agregar al final del CSS */
 .lap-fullscreen-header {
     display: flex;
@@ -852,25 +1009,28 @@ color: white;
     color: white;
     border-bottom: 2px solid #0056b3;
 }
-
-.lap-fullscreen-close {
-    background: white;
-    color: #007bff;
+/* Botón flotante de cerrar */
+.lap-fullscreen-close-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+    color: white;
     border: none;
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    font-size: 20px;
+    padding: 12px 24px;
+    border-radius: 25px;
     cursor: pointer;
+    font-weight: 700;
+    box-shadow: 0 4px 15px rgba(220, 53, 69, 0.4);
     display: flex;
     align-items: center;
-    justify-content: center;
-    font-weight: bold;
+    gap: 8px;
+    transition: all 0.3s ease;
 }
-
-.lap-fullscreen-close:hover {
-    background: #f8f9fa;
-    transform: scale(1.1);
+.lap-fullscreen-close-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(220, 53, 69, 0.6);
 }
 
 /* Hacer la lista desplazable */
@@ -878,6 +1038,41 @@ color: white;
     max-height: calc(100vh - 70px);
     overflow-y: auto;
     padding: 15px;
+}
+/* Mensaje cuando no hay LAPs */
+.no-laps-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #6c757d;
+    font-size: 1.2em;
+    background: white;
+    border-radius: 12px;
+    margin: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+.no-laps-message i {
+    font-size: 3em;
+    display: block;
+    margin-bottom: 15px;
+    color: #adb5bd;
+}
+/* Scrollbar personalizado */
+.lap-table-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.lap-table-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.lap-table-container::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #007bff, #0056b3);
+    border-radius: 4px;
+}
+
+.lap-table-container::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #0056b3, #004085);
 }
 
 /* Agregar mensaje de ayuda */
@@ -892,6 +1087,12 @@ color: white;
 .laps-container.lap-fullscreen #laps-list {
 max-height: calc(100vh - 60px);
 overflow-y: auto;
+}
+/* Mejorar el aspecto de los items en pantalla completa */
+.lap-fullscreen .lap-single-line {
+    padding: 15px !important;
+    margin: 8px 0 !important;
+    font-size: 1.2em !important;
 }
 </style>
 </head>
@@ -1140,45 +1341,206 @@ function toggleLapFullscreen() {
     isLapFullscreen = !isLapFullscreen;
     
     if (isLapFullscreen) {
-        // Agregar botón flotante para cerrar
-        const closeButton = document.createElement('button');
-        closeButton.id = 'lap-fullscreen-close';
-        closeButton.innerHTML = '✕ CERRAR';
-        closeButton.style.cssText = `
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 10000;
-            background: #dc3545;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-weight: bold;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-        `;
-        closeButton.addEventListener('click', toggleLapFullscreen);
-        document.body.appendChild(closeButton);
+        // Crear interfaz profesional
+        createProfessionalLapView();
         
         lapsContainer.classList.add('lap-fullscreen');
         document.body.classList.add('lap-fullscreen-active');
         lapViewButton.innerHTML = '📊';
         lapViewButton.title = 'Vista de Vueltas';
         
-    } else {
-        // Remover botón de cerrar
-        const closeButton = document.getElementById('lap-fullscreen-close');
-        if (closeButton) {
-            closeButton.remove();
-        }
+        // Agregar listener para tecla ESC
+        document.addEventListener('keydown', handleLapFullscreenKeydown);
         
+        // Agregar listener para hacer clic fuera del contenido (opcional)
+        setTimeout(() => {
+            const tableContainer = document.querySelector('.lap-table-container');
+            if (tableContainer) {
+                tableContainer.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        toggleLapFullscreen();
+                    }
+                });
+            }
+        }, 100);
+        
+    } else {
+        // Restaurar vista normal
         lapsContainer.classList.remove('lap-fullscreen');
         document.body.classList.remove('lap-fullscreen-active');
         lapViewButton.innerHTML = '📊';
         lapViewButton.title = 'Vista de Vueltas';
+        
+        // Remover botón de cerrar si existe
+        const closeBtn = document.getElementById('lap-fullscreen-close-btn');
+        if (closeBtn) closeBtn.remove();
+        
+        // Remover listener de tecla ESC
+        document.removeEventListener('keydown', handleLapFullscreenKeydown);
+        
+        // Restaurar vista original de LAPs
+        renderNormalLapView();
     }
 }
+// Función para crear la vista profesional
+function createProfessionalLapView() {
+    // Guardar el contenido original
+    const originalContent = lapsList.innerHTML;
+    lapsContainer.dataset.originalContent = originalContent;
+    
+    // Calcular total de tiempo
+    const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
+    
+    // Crear contenedor de tabla
+    const tableContainer = document.createElement('div');
+    tableContainer.className = 'lap-table-container';
+    
+    if (laps.length === 0) {
+        // Mostrar mensaje cuando no hay LAPs
+        tableContainer.innerHTML = `
+            <div class="no-laps-message">
+                <div style="font-size: 4em; margin-bottom: 20px;">📊</div>
+                <h3>No hay vueltas registradas</h3>
+                <p>Inicia el cronómetro y marca LAPs para ver estadísticas detalladas aquí.</p>
+            </div>
+        `;
+    } else {
+        // Crear tabla profesional
+        const table = document.createElement('table');
+        table.className = 'lap-table';
+        
+        // Encabezado de la tabla
+        table.innerHTML = `
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Tiempo</th>
+                    <th>Distancia</th>
+                    <th>Ritmo</th>
+                    <th>Tipo</th>
+                </tr>
+            </thead>
+            <tbody id="lap-table-body">
+                ${generateLapTableRows()}
+            </tbody>
+        `;
+        
+        tableContainer.appendChild(table);
+    }
+    
+    // Reemplazar contenido
+    lapsList.innerHTML = '';
+    lapsList.appendChild(tableContainer);
+    
+    // Actualizar header
+    const header = lapsContainer.querySelector('h3');
+    if (header) {
+        header.innerHTML = `
+            <span>🏁 ANÁLISIS DE VUELTAS</span>
+            <span class="total-time">Total: ${formatTime(totalLapTime)} | ${laps.length} LAP${laps.length !== 1 ? 'S' : ''}</span>
+        `;
+    }
+    
+    // Crear botón flotante de cerrar
+    const closeButton = document.createElement('button');
+    closeButton.id = 'lap-fullscreen-close-btn';
+    closeButton.className = 'lap-fullscreen-close-btn';
+    closeButton.innerHTML = '✕ CERRAR VISTA';
+    closeButton.addEventListener('click', toggleLapFullscreen);
+    document.body.appendChild(closeButton);
+}
+
+// Función para generar filas de la tabla
+function generateLapTableRows() {
+    let rows = '';
+    
+    // Ordenar LAPs del más reciente al más antiguo para mejor visualización
+    const sortedLaps = [...laps].reverse();
+    
+    sortedLaps.forEach((lap, index) => {
+        const displayIndex = laps.length - index;
+        
+        // Determinar texto y clase para el tipo
+        let typeText, typeClass;
+        switch(lap.type) {
+            case 'distance':
+                typeText = 'DISTANCIA';
+                typeClass = 'lap-type-distance';
+                break;
+            case 'time':
+                typeText = 'TIEMPO';
+                typeClass = 'lap-type-time';
+                break;
+            case 'both':
+                typeText = 'AMBOS';
+                typeClass = 'lap-type-both';
+                break;
+            default:
+                typeText = 'MANUAL';
+                typeClass = 'lap-type-manual';
+        }
+        
+        rows += `
+            <tr>
+                <td class="lap-number-cell">${displayIndex}</td>
+                <td class="lap-time-cell">${formatTime(lap.time)}</td>
+                <td class="lap-distance-cell">${lap.distance.toFixed(2)} km</td>
+                <td class="lap-pace-cell">${lap.pace ? lap.pace.formatted : '--:--'}</td>
+                <td class="lap-type-cell ${typeClass}">${typeText}</td>
+            </tr>
+        `;
+    });
+    
+    return rows;
+}
+
+// Función para restaurar la vista normal
+function renderNormalLapView() {
+    // Restaurar contenido original
+    if (lapsContainer.dataset.originalContent) {
+        lapsList.innerHTML = lapsContainer.dataset.originalContent;
+        delete lapsContainer.dataset.originalContent;
+    }
+    
+    // Actualizar header normal
+    const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
+    const header = lapsContainer.querySelector('h3');
+    if (header) {
+        header.innerHTML = `
+            <span>Vueltas (Laps)</span>
+            <span class="total-time" id="total-lap-time">Total: ${formatTime(totalLapTime)}</span>
+        `;
+    }
+}
+
+// Función para manejar tecla ESC
+function handleLapFullscreenKeydown(event) {
+    if (event.key === 'Escape' && isLapFullscreen) {
+        toggleLapFullscreen();
+    }
+}
+
+// Función para actualizar la tabla cuando se agrega un LAP
+function updateLapTable() {
+    if (isLapFullscreen) {
+        // Si estamos en vista profesional, actualizar la tabla
+        const tableBody = document.getElementById('lap-table-body');
+        if (tableBody) {
+            tableBody.innerHTML = generateLapTableRows();
+        }
+        
+        // Actualizar header
+        const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
+        const header = lapsContainer.querySelector('h3');
+        if (header) {
+            header.innerHTML = `
+                <span>🏁 ANÁLISIS DE VUELTAS</span>
+                <span class="total-time">Total: ${formatTime(totalLapTime)} | ${laps.length} LAP${laps.length !== 1 ? 'S' : ''}</span>
+            `;
+        }
+    }
+}
+
 // Función para manejar tecla ESC
 function handleLapFullscreenKeydown(event) {
     if (event.key === 'Escape' && isLapFullscreen) {
@@ -1769,25 +2131,31 @@ updateAutoLapButtonTitle();
 
 // --- LAPS ---
 function displayLap(lap) {
-const li = document.createElement('li');
-let typeText, typeClass;
-if (lap.type === 'distance') { typeText = 'D'; typeClass = 'lap-type-distance'; }
-else if (lap.type === 'time') { typeText = 'T'; typeClass = 'lap-type-time'; }
-else if (lap.type === 'both') { typeText = 'DT'; typeClass = 'lap-type-distance'; }
-else { typeText = 'M'; typeClass = 'lap-type-manual'; }
-li.innerHTML = `
-<div class="lap-single-line">
-<span class="lap-number">LAP ${lap.number}</span>
-<span class="lap-inline-stats">
-<span class="lap-stat-inline lap-time-inline">T: ${formatTime(lap.time)}</span>
-<span class="lap-stat-inline lap-distance-inline">D: ${lap.distance.toFixed(2)}km</span>
-<span class="lap-stat-inline lap-pace-inline">R: ${lap.pace ? lap.pace.formatted : '----'}</span>
-<span class="lap-type-inline ${typeClass}">${typeText}</span>
-</span>
-</div>
-`;
-lapsList.prepend(li);
+    const li = document.createElement('li');
+    let typeText, typeClass;
+    if (lap.type === 'distance') { typeText = 'D'; typeClass = 'lap-type-distance'; }
+    else if (lap.type === 'time') { typeText = 'T'; typeClass = 'lap-type-time'; }
+    else if (lap.type === 'both') { typeText = 'DT'; typeClass = 'lap-type-both'; }
+    else { typeText = 'M'; typeClass = 'lap-type-manual'; }
+    
+    li.innerHTML = `
+        <div class="lap-single-line">
+            <span class="lap-number">LAP ${lap.number}</span>
+            <span class="lap-inline-stats">
+                <span class="lap-stat-inline lap-time-inline">T: ${formatTime(lap.time)}</span>
+                <span class="lap-stat-inline lap-distance-inline">D: ${lap.distance.toFixed(2)}km</span>
+                <span class="lap-stat-inline lap-pace-inline">R: ${lap.pace ? lap.pace.formatted : '----'}</span>
+                <span class="lap-type-inline ${typeClass}">${typeText}</span>
+            </span>
+        </div>
+    `;
+    
+    lapsList.prepend(li);
+    
+    // Actualizar la tabla si estamos en vista profesional
+    updateLapTable();
 }
+
 function updateTotalLapTime() {
 if (laps.length === 0) {
 totalLapTimeDisplay.textContent = 'Total: 00:00:00';
