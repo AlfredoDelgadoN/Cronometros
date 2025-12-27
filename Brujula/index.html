@@ -992,44 +992,6 @@
                 transform: translate(-50%, -50%) scale(0.9); 
             }
         }
-        /* Estilos para indicadores que son botones */
-        .indicators-row button {
-            background: none;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            padding: 8px;
-            width: 100%;
-        }
-
-        .indicators-row button:active {
-            transform: scale(0.95);
-            background: linear-gradient(135deg, rgba(0,123,255,0.1) 0%, rgba(0,86,179,0.05) 100%);
-        }
-
-        /* Indicadores con modo alternativo activo */
-        .indicator-box.active-mode {
-            box-shadow: 0 0 0 2px rgba(0,123,255,0.3);
-            background: linear-gradient(135deg, rgba(0,123,255,0.05) 0%, rgba(0,86,179,0.02) 100%);
-        }
-
-        /* Pequeño indicador de que es toggle */
-        .indicator-box::after {
-            content: "↕";
-            position: absolute;
-            top: 5px;
-            right: 5px;
-            font-size: 10px;
-            opacity: 0.5;
-        }
-
-        /* Para indicar el modo actual */
-        .indicator-label-sub {
-            font-size: 0.7em;
-            color: #666;
-            margin-top: 2px;
-            font-weight: normal;
-        }
 
     </style>
 </head>
@@ -1047,25 +1009,20 @@
                 </div>
             </div>
             <!-- SEGUNDA LÍNEA: Tres indicadores -->
-            <!-- SEGUNDA LÍNEA: Tres indicadores como botones -->
-                <div class="indicators-row">
-                    <button class="indicator-box" id="speed-toggle">
-                        <div class="stat-label" id="speed-label">KM/H</div>
-                        <div class="indicator-value" id="speed">0.0</div>
-                        <div class="indicator-value" id="speed-avg" style="display:none">0.0</div>
-                    </button>
-                    <button class="indicator-box" id="distance-toggle">
-                        <div class="stat-label" id="distance-label">KM</div>
-                        <div class="indicator-value" id="distance-display">0.00</div>
-                        <div class="indicator-value" id="distance-miles" style="display:none">0.00</div>
-                    </button>
-                    <button class="indicator-box" id="pace-toggle">
-                        <div class="stat-label" id="pace-label">RITMO</div>
-                        <div class="indicator-value" id="pace">--:--</div>
-                        <div class="indicator-value" id="pace-current" style="display:none">--:--</div>
-                    </button>
+            <div class="indicators-row">
+                <div class="indicator-box">
+                    <div class="stat-label">KM/H</div>
+                    <div class="indicator-value" id="speed">0.0</div>
                 </div>
-            
+                <div class="indicator-box">
+                    <div class="stat-label">KM</div>
+                    <div class="indicator-value" id="distance-display">0.00</div>
+                </div>
+                <div class="indicator-box">
+                    <div class="stat-label">RITMO</div>
+                    <div class="indicator-value" id="pace">--:--</div>
+                </div>
+            </div>
             <!-- Botón LAP con cronómetro parcial -->
             <!-- Botón LAP EXTRA GRANDE -->
             <div class="lap-button-container">
@@ -1203,18 +1160,6 @@
         // Variables para el cronómetro parcial
         let partialTimerStart = 0; // Cuando inició el cronómetro parcial
         let partialTimerRunning = false; // Si el cronómetro está corriendo
-        // --- VARIABLES PARA LOS TOGGLES ---
-        let speedMode = 'current'; // 'current' o 'average'
-        let distanceMode = 'km'; // 'km' o 'miles'
-        let paceMode = 'average'; // 'average' o 'current'
-
-        // Variables para cálculos
-        let totalSpeedSum = 0;
-        let speedCount = 0;
-        let averageSpeed = 0;
-        let lastPaceUpdateTime = 0;
-        let currentPace = null;
-
         // Configuración de actividades por velocidad (km/h)
         const ACTIVITY_THRESHOLDS = {
             STOPPED: { max: 1.5, name: "Detenido", color: "#95a5a6", icon: "⏹️" },
@@ -1258,23 +1203,10 @@
         const mapContainer = document.getElementById('map');
         const fullscreenButton = document.getElementById('fullscreen-btn');
         let isFullscreen = false;
-        // --- ELEMENTOS DEL DOM PARA LOS TOGGLES ---
-        const speedToggle = document.getElementById('speed-toggle');
-        const distanceToggle = document.getElementById('distance-toggle');
-        const paceToggle = document.getElementById('pace-toggle');
-        const speedLabel = document.getElementById('speed-label');
-        const distanceLabel = document.getElementById('distance-label');
-        const paceLabel = document.getElementById('pace-label');
-        const speedAvgDisplay = document.getElementById('speed-avg');
-        const distanceMilesDisplay = document.getElementById('distance-miles');
-        const paceCurrentDisplay = document.getElementById('pace-current');
 
         // --- INICIALIZACIÓN ---
         document.addEventListener('DOMContentLoaded', () => {
             const LIMA_COORDINATES = [-12.046374, -77.042793];
-            speedToggle.addEventListener('click', toggleSpeedMode);
-            distanceToggle.addEventListener('click', toggleDistanceMode);
-            paceToggle.addEventListener('click', togglePaceMode);
             map = L.map('map').setView(LIMA_COORDINATES, 13);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
@@ -1339,134 +1271,6 @@
                 exitFullscreen();
             }
         }
-        // --- FUNCIONES PARA LOS TOGGLES ---
-        function toggleSpeedMode() {
-            speedMode = speedMode === 'current' ? 'average' : 'current';
-            speedToggle.classList.toggle('active-mode');
-    
-            if (speedMode === 'current') {
-                speedLabel.textContent = 'KM/H';
-                document.getElementById('speed').style.display = 'block';
-                speedAvgDisplay.style.display = 'none';
-            } else {
-                speedLabel.textContent = 'KM/H (PROM)';
-                document.getElementById('speed').style.display = 'none';
-                speedAvgDisplay.style.display = 'block';
-                updateAverageSpeed();
-            }
-    
-            // Feedback táctil
-            navigator.vibrate?.(50);
-        }
-
-        function toggleDistanceMode() {
-            distanceMode = distanceMode === 'km' ? 'miles' : 'km';
-            distanceToggle.classList.toggle('active-mode');
-    
-            if (distanceMode === 'km') {
-                distanceLabel.textContent = 'KM';
-                document.getElementById('distance-display').style.display = 'block';
-                distanceMilesDisplay.style.display = 'none';
-            } else {
-                distanceLabel.textContent = 'MILLAS';
-                document.getElementById('distance-display').style.display = 'none';
-                distanceMilesDisplay.style.display = 'block';
-                updateDistanceInMiles();
-            }
-    
-            // Feedback táctil
-            navigator.vibrate?.(50);
-        }
-
-        function togglePaceMode() {
-            paceMode = paceMode === 'average' ? 'current' : 'average';
-            paceToggle.classList.toggle('active-mode');
-    
-            if (paceMode === 'average') {
-                paceLabel.textContent = 'RITMO';
-                document.getElementById('pace').style.display = 'block';
-                paceCurrentDisplay.style.display = 'none';
-            } else {
-                paceLabel.textContent = 'RITMO ACTUAL';
-                document.getElementById('pace').style.display = 'none';
-                paceCurrentDisplay.style.display = 'block';
-                updateCurrentPace();
-            }
-    
-            // Feedback táctil
-            navigator.vibrate?.(50);
-        }
-
-        // --- FUNCIONES DE ACTUALIZACIÓN ---
-        function updateAverageSpeed() {
-            if (speedCount > 0 && totalDistance > 0.01) {
-                averageSpeed = totalSpeedSum / speedCount;
-                speedAvgDisplay.textContent = averageSpeed.toFixed(1);
-            } else {
-                speedAvgDisplay.textContent = '0.0';
-            }
-        }
-
-        function updateDistanceInMiles() {
-            const miles = totalDistance * 0.621371;
-            distanceMilesDisplay.textContent = miles.toFixed(2);
-        }
-
-        function updateCurrentPace() {
-            if (currentPace) {
-                paceCurrentDisplay.textContent = currentPace.formatted || '--:--';
-            } else {
-                paceCurrentDisplay.textContent = '--:--';
-            }
-        }
-
-        // --- MODIFICA LA FUNCIÓN updatePosition PARA ACTUALIZAR LAS ESTADÍSTICAS ---
-        function updatePosition(position) {
-    // ... (código existente hasta el cálculo de velocidad)
-    
-            if (timeS > 0) {
-                const instantSpeed = (distKm / timeS) * 3600;
-                speedHistory.push(instantSpeed);
-        
-                // Actualizar promedio de velocidad
-                totalSpeedSum += instantSpeed;
-                speedCount++;
-                averageSpeed = totalSpeedSum / speedCount;
-        
-                if (speedHistory.length > MAX_HISTORY) {
-                    speedHistory.shift();
-                }
-        
-                const sum = speedHistory.reduce((a, b) => a + b, 0);
-                speedKmh = sum / speedHistory.length;
-        
-                // Calcular ritmo actual (último segmento)
-                if (distKm > 0.001) { // Solo si se movió significativamente
-                    const currentPaceSeconds = (timeS / distKm) * 60; // minutos por km
-                    const paceMinutes = Math.floor(currentPaceSeconds / 60);
-                    const paceSeconds = Math.floor(currentPaceSeconds % 60);
-                    currentPace = {
-                        minutes: paceMinutes,
-                        seconds: paceSeconds,
-                        formatted: `${String(paceMinutes).padStart(2, '0')}:${String(paceSeconds).padStart(2, '0')}`
-                    };
-                }
-        
-                if (speedKmh >= 0 && speedKmh < 200) {
-                    // Actualizar velocidad según el modo
-                    if (speedMode === 'current') {
-                        document.getElementById('speed').textContent = speedKmh.toFixed(1);
-                    } else {
-                        speedAvgDisplay.textContent = averageSpeed.toFixed(1);
-                    }
-            
-                    updateActivityIndicator(speedKmh);
-                } else {
-                    document.getElementById('speed').textContent = '0.0';
-                    speedAvgDisplay.textContent = '0.0';
-                    updateActivityIndicator(0);
-                }
-            }
 
         // Función para entrar en pantalla completa
         function enterFullscreen() {
@@ -2286,34 +2090,6 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
                 paceDisplay.textContent = '--:--';
             }
         }
-        // --- MODIFICA LA FUNCIÓN updateDistance PARA ACTUALIZAR MILLAS ---
-        function updateDistance() {
-            if (routeCoordinates.length < 2) {
-                totalDistance = 0;
-                document.getElementById('distance-display').textContent = "0.00";
-                distanceMilesDisplay.textContent = "0.00";
-                return;
-            }
-    
-            let newDistance = 0;
-            for (let i = 0; i < routeCoordinates.length - 1; i++) {
-                newDistance += calculateDistance(
-                    routeCoordinates[i][0], routeCoordinates[i][1],
-                    routeCoordinates[i+1][0], routeCoordinates[i+1][1]
-                );
-            }
-            totalDistance = newDistance;
-    
-            document.getElementById('distance-display').textContent = totalDistance.toFixed(2);
-    
-            // Actualizar millas si está en ese modo
-            if (distanceMode === 'miles') {
-                updateDistanceInMiles();
-            }
-    
-            updatePace();
-            updateAverageSpeed(); // Actualizar velocidad promedio
-        }
         // --- FUNCIONES AUXILIARES ---
         function resetData() {
             // Limpiar marcadores y líneas
@@ -2364,36 +2140,6 @@ ${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
             activityIndicator.style.display = 'none';
             // Reiniciar cronómetro parcial
             resetPartialTimer();
-            // Reiniciar variables de estadísticas
-            totalSpeedSum = 0;
-            speedCount = 0;
-            averageSpeed = 0;
-            currentPace = null;
-    
-            // Restablecer modos a valores por defecto
-            speedMode = 'current';
-            distanceMode = 'km';
-            paceMode = 'average';
-    
-            // Restablecer displays
-            speedToggle.classList.remove('active-mode');
-            distanceToggle.classList.remove('active-mode');
-            paceToggle.classList.remove('active-mode');
-    
-            speedLabel.textContent = 'KM/H';
-            distanceLabel.textContent = 'KM';
-            paceLabel.textContent = 'RITMO';
-    
-            document.getElementById('speed').style.display = 'block';
-            speedAvgDisplay.style.display = 'none';
-            document.getElementById('distance-display').style.display = 'block';
-            distanceMilesDisplay.style.display = 'none';
-            document.getElementById('pace').style.display = 'block';
-            paceCurrentDisplay.style.display = 'none';
-    
-            speedAvgDisplay.textContent = '0.0';
-            distanceMilesDisplay.textContent = '0.00';
-            paceCurrentDisplay.textContent = '--:--';
         }
         function formatTime(milliseconds) {
             const totalSeconds = Math.floor(milliseconds / 1000);
