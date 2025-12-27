@@ -906,52 +906,39 @@ overflow: hidden;
     display: flex !important;
     justify-content: space-between !important;
     align-items: center !important;
-    gap: 15px !important;
-    padding: 8px 0 !important;
-    background: none !important;
-    border-radius: 8px !important;
-    font-weight: 400 !important;
-    flex-wrap: nowrap;
-    min-height: 40px;
+    gap: 8px !important;
+    padding: 12px 15px !important;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%) !important;
+    border-radius: 12px !important;
+    border-left: 4px solid #007bff !important;
+    margin: 6px 15px !important;
+    font-size: 1em !important;
+    min-height: 50px !important;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.15) !important;
 }
 /* Número de LAP más destacado en pantalla completa */
 .laps-container.lap-fullscreen .lap-number-compact {
-    font-weight: 800 !important;
+    font-weight: 900 !important;
     color: #007bff !important;
-    min-width: 70px !important;
+    font-size: 1.4em !important;
+    min-width: 60px !important;
     text-align: center !important;
-    font-size: 1.1em !important;
-    background: linear-gradient(135deg, #f0f7ff 0%, #e3f2fd 100%);
-    padding: 8px 12px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 2px solid #007bff;
+    background: none !important;
+    padding: 0 !important;
+    border: none !important;
 }
 /* Estadísticas más grandes pero mismo layout */
 .laps-container.lap-fullscreen .lap-inline-stats-compact {
-    display: flex !important;
-    gap: 20px !important;
-    flex: 1 !important;
-    justify-content: flex-end !important;
-    font-size: 1em !important;
-    align-items: center;
-}
-/* Elementos estadísticos más grandes */
-.laps-container.lap-fullscreen .lap-stat-inline-compact {
-    white-space: nowrap;
-    font-weight: 600;
-    min-width: 80px !important;
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+    min-width: 70px !important;
     text-align: center !important;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 12px;
-    border-radius: 8px;
-    background: #f8f9fa;
-    transition: all 0.3s ease;
+    padding: 6px 8px !important;
+    border-radius: 8px !important;
+    background: rgba(255,255,255,0.8) !important;
+    border: 1px solid rgba(0,123,255,0.2) !important;
 }
+
 .laps-container.lap-fullscreen .lap-stat-inline-compact:hover {
     background: #e9ecef;
     transform: scale(1.05);
@@ -963,34 +950,34 @@ overflow: hidden;
     width: 24px;
     text-align: center;
 }
+/* ELIMINAR ICONOS COMPLETAMENTE */
+.laps-container.lap-fullscreen .lap-icon {
+    display: none !important;
+}
 /* Colores específicos */
 .laps-container.lap-fullscreen .lap-time-inline-compact {
-    color: #2c3e50;
-    border-left: 4px solid #2c3e50;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #2c3e50 !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 1.1em !important;
 }
-
 .laps-container.lap-fullscreen .lap-distance-inline-compact {
-    color: #28a745;
-    border-left: 4px solid #28a745;
-    background: linear-gradient(135deg, #f8faf5 0%, #e9f7e9 100%);
+    color: #28a745 !important;
+    font-size: 1.1em !important;
 }
-
 .laps-container.lap-fullscreen .lap-pace-inline-compact {
-    color: #dc3545;
-    border-left: 4px solid #dc3545;
-    background: linear-gradient(135deg, #fdf5f5 0%, #f9e9e9 100%);
+    color: #dc3545 !important;
+    font-family: 'Courier New', monospace !important;
+    font-size: 1.1em !important;
 }
 /* Tipo de LAP más destacado */
 .laps-container.lap-fullscreen .lap-type-inline-compact {
-    font-size: 0.9em !important;
-    padding: 6px 12px !important;
+.laps-container.lap-fullscreen .lap-type-inline-compact {
+    font-size: 0.75em !important;
+    padding: 4px 8px !important;
     border-radius: 12px !important;
     font-weight: 700 !important;
-    min-width: 40px !important;
+    min-width: 32px !important;
     text-align: center !important;
-    color: white !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 .laps-container.lap-fullscreen h3 {
     padding: 15px 20px;
@@ -1621,11 +1608,9 @@ function updateFullscreenLapHeader() {
     const header = lapsContainer.querySelector('h3');
     if (header) {
         header.innerHTML = `
-            <span>🏁 VUELTAS - ${laps.length} LAP${laps.length !== 1 ? 'S' : ''}</span>
+            <span>LAPS (${laps.length})</span>
             <span class="total-time">
-                ⏱️ ${formatTimeCompact(totalLapTime)} | 
-                📏 ${totalDistance.toFixed(2)}km | 
-                🏃 ${avgPace}
+                ${formatTimeCompact(totalLapTime)} | ${totalDistance.toFixed(2)}km | ${avgPace}
             </span>
         `;
     }
@@ -1670,61 +1655,41 @@ function showAllLapsInFullscreen() {
 function createLapListItem(lap, displayIndex, isFullscreen = false) {
     const li = document.createElement('li');
     
-    // Determinar tipo de LAP
-    let typeText, typeClass, typeIcon, typeTitle;
-    if (lap.type === 'distance') { 
-        typeText = 'D'; 
-        typeClass = 'lap-type-distance-compact';
-        typeIcon = '📏';
-        typeTitle = 'Por Distancia';
-    } else if (lap.type === 'time') { 
-        typeText = 'T'; 
-        typeClass = 'lap-type-time-compact';
-        typeIcon = '⏱️';
-        typeTitle = 'Por Tiempo';
-    } else if (lap.type === 'both') { 
-        typeText = 'DT'; 
-        typeClass = 'lap-type-both-compact';
-        typeIcon = '📏⏱️';
-        typeTitle = 'Por Distancia y Tiempo';
-    } else { 
-        typeText = 'M'; 
-        typeClass = 'lap-type-manual-compact';
-        typeIcon = '👆';
-        typeTitle = 'Manual';
+    // Determinar tipo de LAP (solo texto)
+    let typeText, typeClass;
+    if (lap.type === 'distance') {
+        typeText = 'D'; typeClass = 'lap-type-distance-compact';
+    } else if (lap.type === 'time') {
+        typeText = 'T'; typeClass = 'lap-type-time-compact';
+    } else if (lap.type === 'both') {
+        typeText = 'DT'; typeClass = 'lap-type-both-compact';
+    } else {
+        typeText = 'M'; typeClass = 'lap-type-manual-compact';
     }
     
-    // Formato de tiempo
     const lapTimeFormatted = formatTimeCompact(lap.time);
     
-    // Ajustar clases según si es pantalla completa
     const numberClass = isFullscreen ? 'lap-number-compact' : 'lap-number-compact';
     const statsClass = isFullscreen ? 'lap-inline-stats-compact' : 'lap-inline-stats-compact';
     const typeInlineClass = isFullscreen ? 'lap-type-inline-compact' : 'lap-type-inline-compact';
     
     li.innerHTML = `
         <div class="lap-single-line-compact">
-            <span class="${numberClass}">L${displayIndex}</span>
+            <span class="${numberClass}">#${displayIndex}</span>
             <span class="${statsClass}">
                 <span class="lap-stat-inline-compact lap-time-inline-compact" title="Tiempo del LAP">
-                    <span class="lap-icon">⏱️</span>
-                    <span>${lapTimeFormatted}</span>
+                    ${lapTimeFormatted}
                 </span>
                 <span class="lap-stat-inline-compact lap-distance-inline-compact" title="Distancia">
-                    <span class="lap-icon">📏</span>
-                    <span>${lap.distance.toFixed(2)}</span>
+                    ${lap.distance.toFixed(2)}km
                 </span>
                 <span class="lap-stat-inline-compact lap-pace-inline-compact" title="Ritmo">
-                    <span class="lap-icon">🏃</span>
-                    <span>${lap.pace ? lap.pace.formatted : '--:--'}</span>
+                    ${lap.pace ? lap.pace.formatted : '----'}
                 </span>
-                <span class="${typeInlineClass} ${typeClass}" title="${typeTitle}">
-                    ${typeIcon}
-                </span>
+                <span class="${typeInlineClass} ${typeClass}" title="Tipo">${typeText}</span>
             </span>
         </div>
     `;
-    
     return li;
 }
 // Función para agregar encabezado de columnas
