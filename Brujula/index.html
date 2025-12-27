@@ -1,2202 +1,2043 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>cronometro con GPS</title>
-    <!-- Leaflet CSS para el mapa -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
-          crossorigin=""/>
-    <style>
-        /* Estilos generales */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f0f2f5;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            overflow: hidden;
-        }
-        /* Header */
-        .header {
-            background-color: #007bff;
-            color: white;
-            padding: 10px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 2000;
-            flex-shrink: 0;
-        }
-        .header h1 {
-            margin: 0;
-            font-size: 1.5em;
-        }
-        /* Contenedor principal */
-        .main-container {
-            display: flex;
-            flex-direction: column;
-            flex-grow: 1;
-            overflow: hidden;
-        }
-        /* Panel de estadísticas - DISTRIBUCIÓN OPTIMIZADA */
-        .stats-container {
-            display: flex;
-            flex-direction: column;
-            padding: 10px;
-            background-color: white;
-            border-bottom: 1px solid #ddd;
-            flex-shrink: 0;
-            z-index: 1000;
-        }
-        /* PRIMERA LÍNEA: TIEMPO GRANDE */
-        .time-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.8em;
-            margin-bottom: 8px;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-        }
-        .time-container {
-            text-align: center;
-            width: 90%;
-        }
-        .stat-label {
-            font-size: 0.75em;
-            color: #666;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-        .stat-value {
-            font-weight: bold;
-            transition: color 0.5s ease;
-        }
-        /* TIEMPO - EXTRA GRANDE */
-        #time {
-            font-size: 2.5em;
-            color: #2c3e50;
-            font-weight: 800;
-            letter-spacing: -1px;
-            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
-        }
-        /* SEGUNDA LÍNEA: Tres indicadores */
-        .indicators-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .indicator-box {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-            border-radius: 10px;
-            padding: 12px 8px;
-            text-align: center;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
-            border: 1px solid #e9ecef;
-        }
-        .indicator-box .stat-label {
-            font-size: 0.8em;
-            margin-bottom: 6px;
-            color: #6c757d;
-        }
-        .indicator-value {
-            font-size: 2em;
-            font-weight: 700;
-            color: #495057;
-        }
-        /* Colores específicos para cada indicador */
-        #speed {
-            color: #007bff; /* Azul para velocidad */
-        }
-        #distance-display {
-            color: #28a745; /* Verde para distancia */
-        }
-        #pace {
-            color: #dc3545; /* Rojo para ritmo */
-        }
-        /* Botón LAP con cronómetro MEJORADO */
-        .lap-button-container {            
-            width: 98% !important;
-            padding: 0 8px !important;
-            margin: 12px 0 !important;
-            display: block !important; 
-        }
-        .lap-btn-label {
-            font-size: 1.6em;
-            white-space: nowrap;
-        }
-        .lap-partial-timer {
-            font-size: 1.3em;
-            font-weight: 800;
-            background: rgba(0,0,0,0.6);
-            padding: 6px 14px;
-            border-radius: 10px;
-            min-width: 95px;
-            text-align: center;
-        }
-        .lap-partial-timer.running {
-            animation: pulse 1.5s infinite;
-        }
-        #actionBtn {
-            width: 100% !important;        /* ANCHO COMPLETO */
-            max-width: 100% !important;
-            min-height: 65px !important;   /* ALTO para dedo */
-            padding: 18px 24px !important;
-            font-size: 1.4em !important;   /* TEXTO GRANDE */
-            border-radius: 20px !important;
-            margin: 12px 0 !important;
-            box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6) !important;
-            letter-spacing: 1px !important;
-            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
-            color: white;
-        }
-        #actionBtn:hover {
-            transform: translateY(-3px) !important;
-            box-shadow: 0 8px 25px rgba(250, 234, 9, 0.986) !important;
-        }
-        /* Cronómetro parcial dentro del botón LAP */
-        .lap-partial-timer {
-            font-size: 1.1em;
-            font-weight: 800;
-            margin-top: 8px;
-            color: #ffffff; /* Iniciar del LAP blanco fondo AZUL */
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
-            letter-spacing: 0.5px;
-            background-color: rgba(0, 0, 0, 0.6);
-            padding: 5px 10px;
-            border-radius: 8px;
-            display: inline-block;
-            /* 🔒 AISLAR DEL BOTÓN */
-            pointer-events: none;
-        }
-        .lap-partial-timer.running {
-            animation: pulseTimer 1.5s infinite;
-        }
-        @keyframes pulseTimer {
-            0% { opacity: 1; }
-            50% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-        /* Botones secundarios */
-        .secondary-controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr 1fr;
-            gap: 10px;
-        }
-        .secondary-controls button {
-            flex: 1 !important;
-            min-height: 44px !important; /* Suficiente pero no compite */
-            padding: 12px 8px !important;
-            font-size: 0.85em !important;           
-        }
-
-        #stopBtn {
-            background: linear-gradient(135deg, #fc394d 0%, #f7495a 100%);
-        }
-        #stopBtn:hover:not(:disabled) {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
-        }
-        #stopBtn:disabled {
-            background: linear-gradient(135deg, #ccc 0%, #bbb 100%);
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-        #autoLapBtn {
-            background: linear-gradient(135deg, #94deeb 0%, #85e0ee 100%);
-        }
-        #autoLapBtn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(59, 102, 243, 0.5);
-        }
-        #settingsBtn {
-            background: linear-gradient(135deg, #dfe4e7 0%, #68b7f3 100%);
-        }
-        #settingsBtn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
-        }
-        /* Modal de ajustes - MEJORADO */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 4000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-content {
-            background-color: white;
-            padding: 25px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 400px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-        .modal-header h3 {
-            margin: 0;
-            color: #2c3e50;
-        }
-        .close-modal {
-            background: none;
-            border: none;
-            font-size: 1.5em;
-            cursor: pointer;
-            color: #666;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-        }
-        .close-modal:hover {
-            background-color: #f8f9fa;
-        }
-        .setting-group {
-            margin-bottom: 20px;
-        }
-        .setting-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #495057;
-        }
-        .setting-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 1em;
-            transition: border-color 0.3s;
-        }
-        .setting-input:focus {
-            outline: none;
-            border-color: #007bff;
-        }
-        .unit-selector {
-            display: flex;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        .unit-selector button {
-            flex: 1;
-            padding: 10px;
-            border: 2px solid #dee2e6;
-            background-color: white;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s;
-        }
-        .unit-selector button.active {
-            background-color: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-        .modal-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 25px;
-        }
-        .modal-actions button {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 1em;
-        }
-        #saveSettings {
-            background-color: #28a745;
-            color: white;
-        }
-        #saveSettings:hover {
-            background-color: #218838;
-        }
-        #cancelSettings {
-            background-color: #6c757d;
-            color: white;
-        }
-        #cancelSettings:hover {
-            background-color: #5a6268;
-        }
-        /* Opción de desactivar Auto Lap por tiempo */
-        .time-option {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: 5px;
-        }
-        .time-option input[type="checkbox"] {
-            width: 20px;
-            height: 20px;
-        }
-        .time-option label {
-            margin-bottom: 0;
-            font-weight: normal;
-        }
-        /* Notificación de LAP MEJORADA - MÁS GRANDE Y DURADERA */
-        .lap-notification {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%) scale(0.9);
-            background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
-            color: white;
-            padding: 25px 35px;
-            border-radius: 20px;
-            z-index: 5000;
-            font-weight: bold;
-            text-align: center;
-            animation: lapNotification 5s ease forwards;
-            box-shadow: 0 10px 30px rgba(155, 89, 182, 0.4);
-            min-width: 280px;
-            max-width: 90%;
-            border: 4px solid rgba(255, 255, 255, 0.3);
-        }
-        @keyframes lapNotification {
-            0% { 
-                opacity: 0; 
-                transform: translate(-50%, -50%) scale(0.8); 
-            }
-            10% { 
-                opacity: 1; 
-                transform: translate(-50%, -50%) scale(1.05); 
-            }
-            15% { 
-                transform: translate(-50%, -50%) scale(1); 
-            }
-            70% { 
-                opacity: 1; 
-                transform: translate(-50%, -50%) scale(1); 
-            }
-            100% { 
-                opacity: 0; 
-                transform: translate(-50%, -50%) scale(0.9); 
-            }
-        }
-        .lap-notification h3 {
-            margin: 0 0 15px 0;
-            font-size: 1.8em;
-            color: white;
-            text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
-        }
-        .lap-notification .lap-details {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .lap-notification .lap-detail {
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 12px;
-            border-radius: 10px;
-        }
-        .lap-notification .lap-detail .label {
-            font-size: 0.85em;
-            opacity: 0.9;
-            margin-bottom: 5px;
-            display: block;
-        }
-        .lap-notification .lap-detail .value {
-            font-size: 1.4em;
-            font-weight: 800;
-        }
-        .lap-notification .lap-type {
-            font-size: 0.9em;
-            opacity: 0.9;
-            padding: 8px 15px;
-            background-color: rgba(255, 255, 255, 0.2);
-            border-radius: 20px;
-            display: inline-block;
-            margin-top: 10px;
-        }
-        /* Indicador de actividad */
-        .activity-indicator {
-            position: absolute;
-            top: 10px;
-            left: 10px;
-            background-color: rgba(255, 255, 255, 0.95);
-            padding: 8px 12px;
-            border-radius: 20px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-            z-index: 3000;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 12px;
-            font-weight: bold;
-            transition: all 0.5s ease;
-        }
-        .activity-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            display: inline-block;
-            transition: all 0.5s ease;
-        }
-        /* Colores para diferentes actividades */
-        .walking {
-            color: #22ee33 !important;
-        }
-        .running {
-            color: #fa9006 !important;
-        }
-        .cycling {
-            color: #f1210a !important;
-        }
-        .driving {
-            color: #9b59b6 !important;
-        }
-        .stopped {
-            color: #95a5a6 !important;
-        }
-        /* Efectos visuales */
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.8; }
-            100% { opacity: 1; }
-        }
-        .pulse {
-            animation: pulse 1.5s infinite;
-        }
-        /* Contenedor de Vueltas (Laps) MEJORADO */
-        .laps-container {
-            background-color: #fff;
-            border-bottom: 1px solid #ddd;
-            flex-shrink: 0;
-            max-height: 180px;
-            overflow-y: auto;
-            z-index: 1000;           
-        }
-        .laps-list {
-            padding: 0 !important;
-            margin: 0 !important;
-        }
-        .laps-container h3 {
-            margin: 10px;
-            font-size: 1em;
-            color: #333;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        /* Webkit browsers (Chrome, Safari, Edge) */
-        .laps-container::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .laps-container::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-
-        .laps-container::-webkit-scrollbar-thumb {
-            background: linear-gradient(180deg, #007bff, #0056b3);
-            border-radius: 3px;
-        }
-
-        .laps-container::-webkit-scrollbar-thumb:hover {
-            background: linear-gradient(180deg, #0056b3, #004085);
-        }
-        /* Responsive para móviles - LAPs optimizados */
-        @media (max-width: 768px) {
-            .content-container { flex-grow: 4 !important; }
-            .stats-container { padding: 6px !important; }
-        }
-  
-        /* LAPs en UNA LÍNEA compacta */
-        .lap-stats {
-            grid-template-columns: 1fr !important;
-            gap: 4px !important;
-        }
-        /* Indicador visual de scroll */
-        .laps-container::after {
-        content: '';
-        position: absolute;
-        right: 0;
-        top: 0;
-        bottom: 0;
-        width: 4px;
-        background: linear-gradient(to top, transparent 0%, rgba(0,123,255,0.1) 50%, transparent 100%);
-        pointer-events: none;
-        z-index: 10;
-        }
-  
-        .laps-list li {
-            padding: 8px 12px !important;
-            margin: 0 !important;
-            border-bottom: 1px solid #e9ecef !important;
-            font-size: 1.5em !important; /* BASE GRANDE */
-        }
-  
-        /* LÍNEA ÚNICA: LAP # Tiempo Distancia Ritmo(Tipo) */
-        .lap-single-line {
-            display: flex !important;
-            justify-content: space-between !important;
-            align-items: center !important;
-            gap: 12px !important;
-            padding: 8px !important;
-            background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%) !important;
-            border-radius: 8px !important;
-            font-weight: 500 !important;            
-        }
-  
-        .lap-number { 
-            font-size: 1.5em !important;     /* MUY GRANDE */
-            font-weight: 900 !important;
-            color: #007bff !important;
-            min-width: 80px !important;
-            text-align: left !important; 
-        }
-        .lap-inline-stats {
-            display: flex !important;
-            gap: 16px !important;           /* ESPACIO entre elementos */
-            flex: 1 !important;
-            justify-content: flex-end !important;
-            font-size: 1.5em !important;    /* GRANDE */
-        }
-        .lap-stat-inline {
-            white-space: nowrap;
-            font-weight: 800;
-            min-width: 70px !important;
-            text-align: right !important;
-        }
-        .lap-time-inline { 
-            color: #2c3e50;
-            font-size: 0.9em !important;  /* TIEMPO MÁS GRANDE */ 
-        }
-        .lap-distance-inline { 
-            color: #28a745;
-            font-size: 0.9em !important; 
-        }
-        .lap-pace-inline { 
-           color: #dc3545;
-           font-size: 0.9em !important;
-        }
-        .lap-type-inline {
-            font-size: 0.9em !important;      /* TIPO GRANDE */
-            padding: 4px 8px !important;
-            border-radius: 6px !important;
-            font-weight: 800 !important;
-            min-width: 25px !important;
-            text-align: center !important;            
-        }
-  
-        /* Mapa más grande */
-        .content-container { 
-            flex-grow: 3 !important; /* 3x más grande */
-            min-height: 60vh;
-        }
-  
-        /* Botones más compactos */
-        .secondary-controls { 
-            display: flex !important; /* UNA LÍNEA */
-            gap: 4px !important;
-            margin-top: 8px
-        }
-        .secondary-controls button { 
-            padding: 10px 6px; font-size: 0.85em; 
-        }
-        
-
-        /* Tablets intermedias */
-        @media (max-width: 1024px) and (min-width: 769px) {
-        .laps-container { max-height: 30vh; }
-        }
-        .total-time {
-            font-size: 0.85em;
-            color: #666;
-            font-weight: normal;
-        }
-        #laps-list {
-            list-style: none;
-            padding: 0 10px;
-            margin: 0;
-        }
-        #laps-list li {
-            padding: 12px 8px;
-            border-bottom: 1px solid #f0f0f0;
-            font-size: 0.9em;
-        }
-        #laps-list li:last-child {
-            border-bottom: none;
-        }
-        .lap-header {
-            display: none; /* Ocultamos el header separado */
-        }
-        .lap-number {
-            font-size: 1em;
-            font-weight: bold;
-            color: #007bff;
-            min-width: 60px;
-        }
-        .lap-type-indicator {
-            font-size: 0.8em;
-            padding: 3px 8px;
-            border-radius: 10px;
-            background-color: #f8f9fa;
-            color: #666;
-        }
-        .lap-type-distance {
-            background-color: #e3f2fd;
-            color: #1976d2;
-        }
-        .lap-type-time {
-            background-color: #f3e5f5;
-            color: #7b1fa2;
-        }
-        .lap-type-manual {
-            background-color: #e8f5e9;
-            color: #388e3c;
-        }
-        .lap-stats {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            text-align: center;
-        }
-        .lap-stat {
-            display: flex;
-            flex-direction: column;
-        }
-        .lap-stat-label {
-            font-size: 0.75em;
-            color: #666;
-            margin-bottom: 3px;
-        }
-        .lap-stat-value {
-            font-weight: bold;
-            font-size: 1.1em;
-        }
-        .lap-time {
-            color: #2c3e50;
-        }
-        .lap-distance {
-            color: #28a745;
-        }
-        .lap-pace {
-            color: #dc3545;
-        }
-        /* Contenedor para el mapa y la brújula */
-        .content-container {
-            display: flex;
-            flex-grow: 1;
-            position: relative;
-            min-height: 0;
-        }
-        #map {
-            height: 100%;
-            width: 100%;
-            z-index: 1; /* Asegura que esté debajo del botón */
-        }
-        #fullscreen-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            z-index: 400; /* Asegura que esté por encima del mapa */
-            padding: 8px; /* Pequeño pero clickable */
-            background-color: rgba(255, 255, 255, 0.8); /* Fondo semi-transparente */
-            border: 1px solid #ccc;
-            cursor: pointer;
-            font-size: 16px; /* Icono más grande si usas uno */
-            border-radius: 4px;
-            width: 36px;
-            height: 36px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        #fullscreen-btn:hover {
-            background-color: white;
-        }
-        /* Contenedor de la brújula */
-        .compass-container {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            width: 100px;
-            height: 100px;
-            background-color: rgba(255, 255, 255, 0.95);
-            border-radius: 50%;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            border: 2px solid #ddd;
-        }
-        .compass {
-            width: 80px;
-            height: 80px;
-            position: relative;
-            border-radius: 50%;
-            background-color: #f8f9fa;
-        }
-        /* Flecha que apunta al norte */
-        .compass-arrow {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 0;
-            height: 0;
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-bottom: 25px solid #dc3545;
-            transform: translate(-50%, -50%) rotate(0deg);
-            transform-origin: 50% 50%;
-            transition: transform 0.2s ease-out;
-            z-index: 20;
-        }
-        /* Punto central */
-        .compass-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            width: 12px;
-            height: 12px;
-            background-color: #333;
-            border-radius: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 30;
-        }
-        /* Marcas de puntos cardinales */
-        .compass-north {
-            position: absolute;
-            top: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            font-weight: bold;
-            color: #dc3545;
-            z-index: 10;
-        }
-        .compass-south {
-            position: absolute;
-            bottom: 5px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 10px;
-            font-weight: bold;
-            color: #007bff;
-            z-index: 10;
-        }
-        .compass-east {
-            position: absolute;
-            top: 50%;
-            right: 5px;
-            transform: translateY(-50%);
-            font-size: 10px;
-            font-weight: bold;
-            color: #28a745;
-            z-index: 10;
-        }
-        .compass-west {
-            position: absolute;
-            top: 50%;
-            left: 5px;
-            transform: translateY(-50%);
-            font-size: 10px;
-            font-weight: bold;
-            color: #6f42c1;
-            z-index: 10;
-        }
-        /* Líneas de dirección */
-        .compass-line {
-            position: absolute;
-            top: 0;
-            left: 50%;
-            width: 1px;
-            height: 100%;
-            background-color: #ddd;
-            transform: translateX(-50%);
-            z-index: 5;
-        }
-        .compass-line.horizontal {
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 1px;
-            transform: translateY(-50%);
-        }
-        /* Indicador de brújula activa/inactiva */
-        .compass-status {
-            position: absolute;
-            bottom: -20px;
-            left: 0;
-            width: 100%;
-            text-align: center;
-            font-size: 9px;
-            color: #666;
-        }
-        /* Marcadores personalizados */
-        .start-marker-icon {
-            background-color: rgba(49, 46, 204, 0.8);
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        .current-marker-icon {
-            background-color: rgba(231, 76, 60, 0.9);
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            color: white;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-        }
-        /* Marcador de kilómetro (para cada 1km) */
-        .km-marker {
-            background-color: rgba(52, 152, 219, 0.7);
-            color: white;
-            border-radius: 50%;
-            width: 28px;
-            height: 28px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.8);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-        }
-        /* Marcador de LAP (diferente color y estilo) */
-        .lap-marker {
-            background-color: rgba(155, 89, 182, 0.7);
-            color: white;
-            border-radius: 50%;
-            width: 32px;
-            height: 32px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            font-size: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.9);
-            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
-        }
-         /* Opcional: Estilo para el ícono de fullscreen */
-        .fullscreen-icon::before {
-            content: "\2921"; /* Código Unicode para un icono de fullscreen genérico */
-            /* Puedes usar una librería de iconos como Font Awesome aquí también */
-        }
-        /* Clase aplicada al cuerpo cuando está en fullscreen */
-        body.fullscreen-active {
-            overflow: hidden; /* Evita scroll en el documento principal */
-        }
-        /* Indicador de Auto Lap activo */
-        .auto-lap-active {
-            background: linear-gradient(135deg, #138496 0%, #0d6b7a 100%) !important;
-            box-shadow: 0 0 0 3px rgba(19, 132, 150, 0.3) !important;
-        }
-         /* Asegúrate de que el contenedor del mapa llene la pantalla completa */
-        #map:-webkit-full-screen { /* Chrome, Safari */
-            width: 100% !important;
-            height: 100% !important;
-            z-index: 9999; /* Asegura que esté arriba de todo */
-        }
-        #map:-moz-full-screen { /* Firefox */
-             width: 100% !important;
-             height: 100% !important;
-             z-index: 9999;
-         }
-         #map:-ms-fullscreen { /* IE/Edge */
-              width: 100% !important;
-              height: 100% !important;
-              z-index: 9999;
-          }
-         #map:fullscreen { /* Standard */
-             width: 100% !important;
-             height: 100% !important;
-             z-index: 9999;
-         }
-         /* Opcional: Oculta otros elementos en fullscreen */
-         body.fullscreen-active .stats-container,
-         body.fullscreen-active .laps-container,
-         body.fullscreen-active .compass-container {
-             display: none;
-         }
-         body.fullscreen-active .content-container {
-             flex-grow: 2; /* Hace que el mapa ocupe aún más espacio si otros elementos están ocultos */
-         }
-         /* NOTIFICACIÓN LAP VISIBLE EN PANTALLA COMPLETA */
-        body.fullscreen-active .lap-notification {
-            display: block !important;  /* FORZAR visible */
-            z-index: 9999 !important;  /* POR ENCIMA del mapa */
-            top: 20% !important;       /* POSICIÓN perfecta */
-            left: 50% !important;
-            transform: translate(-50%, -50%) !important;
-            max-width: 95vw !important;
-            font-size: 1.4em !important; /* MÁS GRANDE */
-            padding: 30px 40px !important;
-            border: 3px solid rgba(255,255,255,0.8) !important;
-            backdrop-filter: blur(10px) !important;
-            animation: lapNotificationFullscreen 5s ease forwards !important;        
-        }
-        /* Animación específica para fullscreen */
-        @keyframes lapNotificationFullscreen {
-            0% { 
-                opacity: 0; 
-                transform: translate(-50%, -50%) scale(0.8); 
-            }
-            10% { 
-                opacity: 1; 
-                transform: translate(-50%, -50%) scale(1.05); 
-            }
-            15% { 
-                transform: translate(-50%, -50%) scale(1); 
-            }
-            70% { 
-                opacity: 1; 
-                transform: translate(-50%, -50%) scale(1); 
-            }
-            100% { 
-                opacity: 0; 
-                transform: translate(-50%, -50%) scale(0.9); 
-            }
-        }
-
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>cronometro con GPS</title>
+<!-- Leaflet CSS para el mapa -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+crossorigin=""/>
+<style>
+/* Estilos generales */
+body {
+font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+margin: 0;
+padding: 0;
+background-color: #f0f2f5;
+color: #333;
+display: flex;
+flex-direction: column;
+height: 100vh;
+overflow: hidden;
+}
+/* Header */
+.header {
+background-color: #007bff;
+color: white;
+padding: 10px;
+text-align: center;
+box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+z-index: 2000;
+flex-shrink: 0;
+}
+.header h1 {
+margin: 0;
+font-size: 1.5em;
+}
+/* Contenedor principal */
+.main-container {
+display: flex;
+flex-direction: column;
+flex-grow: 1;
+overflow: hidden;
+}
+/* Panel de estadísticas - DISTRIBUCIÓN OPTIMIZADA */
+.stats-container {
+display: flex;
+flex-direction: column;
+padding: 10px;
+background-color: white;
+border-bottom: 1px solid #ddd;
+flex-shrink: 0;
+z-index: 1000;
+}
+/* PRIMERA LÍNEA: TIEMPO GRANDE */
+.time-row {
+display: flex;
+justify-content: center;
+align-items: center;
+font-size: 1.8em;
+margin-bottom: 8px;
+background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.time-container {
+text-align: center;
+width: 90%;
+}
+.stat-label {
+font-size: 0.75em;
+color: #666;
+text-transform: uppercase;
+letter-spacing: 1px;
+margin-bottom: 5px;
+font-weight: 600;
+}
+.stat-value {
+font-weight: bold;
+transition: color 0.5s ease;
+}
+/* TIEMPO - EXTRA GRANDE */
+#time {
+font-size: 2.5em;
+color: #2c3e50;
+font-weight: 800;
+letter-spacing: -1px;
+text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+/* SEGUNDA LÍNEA: Tres indicadores */
+.indicators-row {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 10px;
+margin-bottom: 10px;
+}
+.indicator-box {
+background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+border-radius: 10px;
+padding: 12px 8px;
+text-align: center;
+box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+border: 1px solid #e9ecef;
+cursor: pointer;
+transition: transform 0.1s ease;
+user-select: none;
+}
+.indicator-box:hover {
+transform: scale(1.02);
+}
+.indicator-box .stat-label {
+font-size: 0.8em;
+margin-bottom: 6px;
+color: #6c757d;
+}
+.indicator-value {
+font-size: 2em;
+font-weight: 700;
+color: #495057;
+}
+/* Colores específicos para cada indicador */
+#speed {
+color: #007bff; /* Azul para velocidad */
+}
+#distance-display {
+color: #28a745; /* Verde para distancia */
+}
+#pace {
+color: #dc3545; /* Rojo para ritmo */
+}
+/* Botón LAP con cronómetro MEJORADO */
+.lap-button-container {
+width: 98% !important;
+padding: 0 8px !important;
+margin: 12px 0 !important;
+display: block !important;
+}
+.lap-btn-label {
+font-size: 1.6em;
+white-space: nowrap;
+}
+.lap-partial-timer {
+font-size: 1.3em;
+font-weight: 800;
+background: rgba(0,0,0,0.6);
+padding: 6px 14px;
+border-radius: 10px;
+min-width: 95px;
+text-align: center;
+}
+.lap-partial-timer.running {
+animation: pulse 1.5s infinite;
+}
+#actionBtn {
+width: 100% !important;
+max-width: 100% !important;
+min-height: 65px !important;
+padding: 18px 24px !important;
+font-size: 1.4em !important;
+border-radius: 20px !important;
+margin: 12px 0 !important;
+box-shadow: 0 8px 25px rgba(255, 255, 255, 0.6) !important;
+letter-spacing: 1px !important;
+background: linear-gradient(135deg, #007bff 0%, #0056b3 100%) !important;
+color: white;
+}
+#actionBtn:hover {
+transform: translateY(-3px) !important;
+box-shadow: 0 8px 25px rgba(250, 234, 9, 0.986) !important;
+}
+.lap-partial-timer {
+font-size: 1.1em;
+font-weight: 800;
+margin-top: 8px;
+color: #ffffff;
+text-shadow: 1px 1px 3px rgba(0,0,0,0.5);
+letter-spacing: 0.5px;
+background-color: rgba(0, 0, 0, 0.6);
+padding: 5px 10px;
+border-radius: 8px;
+display: inline-block;
+pointer-events: none;
+}
+.lap-partial-timer.running {
+animation: pulseTimer 1.5s infinite;
+}
+@keyframes pulseTimer {
+0% { opacity: 1; }
+50% { opacity: 0.8; }
+100% { opacity: 1; }
+}
+/* Botones secundarios */
+.secondary-controls {
+display: grid;
+grid-template-columns: 1fr 1fr 1fr;
+gap: 10px;
+}
+.secondary-controls button {
+flex: 1 !important;
+min-height: 44px !important;
+padding: 12px 8px !important;
+font-size: 0.85em !important;
+}
+#stopBtn {
+background: linear-gradient(135deg, #fc394d 0%, #f7495a 100%);
+}
+#stopBtn:hover:not(:disabled) {
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+#stopBtn:disabled {
+background: linear-gradient(135deg, #ccc 0%, #bbb 100%);
+cursor: not-allowed;
+opacity: 0.7;
+}
+#autoLapBtn {
+background: linear-gradient(135deg, #94deeb 0%, #85e0ee 100%);
+}
+#autoLapBtn:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(59, 102, 243, 0.5);
+}
+#settingsBtn {
+background: linear-gradient(135deg, #dfe4e7 0%, #68b7f3 100%);
+}
+#settingsBtn:hover {
+transform: translateY(-2px);
+box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+}
+/* Modal de ajustes - MEJORADO */
+.modal-overlay {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background-color: rgba(0, 0, 0, 0.5);
+z-index: 4000;
+justify-content: center;
+align-items: center;
+}
+.modal-content {
+background-color: white;
+padding: 25px;
+border-radius: 12px;
+width: 90%;
+max-width: 400px;
+box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+.modal-header {
+display: flex;
+justify-content: space-between;
+align-items: center;
+margin-bottom: 20px;
+border-bottom: 1px solid #eee;
+padding-bottom: 10px;
+}
+.modal-header h3 {
+margin: 0;
+color: #2c3e50;
+}
+.close-modal {
+background: none;
+border: none;
+font-size: 1.5em;
+cursor: pointer;
+color: #666;
+padding: 0;
+width: 30px;
+height: 30px;
+display: flex;
+align-items: center;
+justify-content: center;
+border-radius: 50%;
+}
+.close-modal:hover {
+background-color: #f8f9fa;
+}
+.setting-group {
+margin-bottom: 20px;
+}
+.setting-group label {
+display: block;
+margin-bottom: 8px;
+font-weight: 600;
+color: #495057;
+}
+.setting-input {
+width: 100%;
+padding: 12px;
+border: 2px solid #dee2e6;
+border-radius: 8px;
+font-size: 1em;
+transition: border-color 0.3s;
+}
+.setting-input:focus {
+outline: none;
+border-color: #007bff;
+}
+.unit-selector {
+display: flex;
+gap: 10px;
+margin-top: 5px;
+}
+.unit-selector button {
+flex: 1;
+padding: 10px;
+border: 2px solid #dee2e6;
+background-color: white;
+border-radius: 6px;
+cursor: pointer;
+font-weight: 600;
+transition: all 0.3s;
+}
+.unit-selector button.active {
+background-color: #007bff;
+color: white;
+border-color: #007bff;
+}
+.modal-actions {
+display: flex;
+gap: 10px;
+margin-top: 25px;
+}
+.modal-actions button {
+flex: 1;
+padding: 12px;
+border: none;
+border-radius: 8px;
+cursor: pointer;
+font-weight: 600;
+font-size: 1em;
+}
+#saveSettings {
+background-color: #28a745;
+color: white;
+}
+#saveSettings:hover {
+background-color: #218838;
+}
+#cancelSettings {
+background-color: #6c757d;
+color: white;
+}
+#cancelSettings:hover {
+background-color: #5a6268;
+}
+.time-option {
+display: flex;
+align-items: center;
+gap: 10px;
+margin-top: 5px;
+}
+.time-option input[type="checkbox"] {
+width: 20px;
+height: 20px;
+}
+.time-option label {
+margin-bottom: 0;
+font-weight: normal;
+}
+.lap-notification {
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%) scale(0.9);
+background: linear-gradient(135deg, #9b59b6 0%, #8e44ad 100%);
+color: white;
+padding: 25px 35px;
+border-radius: 20px;
+z-index: 5000;
+font-weight: bold;
+text-align: center;
+animation: lapNotification 5s ease forwards;
+box-shadow: 0 10px 30px rgba(155, 89, 182, 0.4);
+min-width: 280px;
+max-width: 90%;
+border: 4px solid rgba(255, 255, 255, 0.3);
+}
+@keyframes lapNotification {
+0% {
+opacity: 0;
+transform: translate(-50%, -50%) scale(0.8);
+}
+10% {
+opacity: 1;
+transform: translate(-50%, -50%) scale(1.05);
+}
+15% {
+transform: translate(-50%, -50%) scale(1);
+}
+70% {
+opacity: 1;
+transform: translate(-50%, -50%) scale(1);
+}
+100% {
+opacity: 0;
+transform: translate(-50%, -50%) scale(0.9);
+}
+}
+.lap-notification h3 {
+margin: 0 0 15px 0;
+font-size: 1.8em;
+color: white;
+text-shadow: 1px 1px 3px rgba(0,0,0,0.3);
+}
+.lap-notification .lap-details {
+display: grid;
+grid-template-columns: 1fr 1fr;
+gap: 15px;
+margin-bottom: 20px;
+}
+.lap-notification .lap-detail {
+background-color: rgba(255, 255, 255, 0.2);
+padding: 12px;
+border-radius: 10px;
+}
+.lap-notification .lap-detail .label {
+font-size: 0.85em;
+opacity: 0.9;
+margin-bottom: 5px;
+display: block;
+}
+.lap-notification .lap-detail .value {
+font-size: 1.4em;
+font-weight: 800;
+}
+.lap-notification .lap-type {
+font-size: 0.9em;
+opacity: 0.9;
+padding: 8px 15px;
+background-color: rgba(255, 255, 255, 0.2);
+border-radius: 20px;
+display: inline-block;
+margin-top: 10px;
+}
+.activity-indicator {
+position: absolute;
+top: 10px;
+left: 10px;
+background-color: rgba(255, 255, 255, 0.95);
+padding: 8px 12px;
+border-radius: 20px;
+box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+z-index: 3000;
+display: flex;
+align-items: center;
+gap: 8px;
+font-size: 12px;
+font-weight: bold;
+transition: all 0.5s ease;
+}
+.activity-dot {
+width: 12px;
+height: 12px;
+border-radius: 50%;
+display: inline-block;
+transition: all 0.5s ease;
+}
+.walking {
+color: #22ee33 !important;
+}
+.running {
+color: #fa9006 !important;
+}
+.cycling {
+color: #f1210a !important;
+}
+.driving {
+color: #9b59b6 !important;
+}
+.stopped {
+color: #95a5a6 !important;
+}
+@keyframes pulse {
+0% { opacity: 1; }
+50% { opacity: 0.8; }
+100% { opacity: 1; }
+}
+.pulse {
+animation: pulse 1.5s infinite;
+}
+.laps-container {
+background-color: #fff;
+border-bottom: 1px solid #ddd;
+flex-shrink: 0;
+max-height: 180px;
+overflow-y: auto;
+z-index: 1000;
+}
+.laps-list {
+padding: 0 !important;
+margin: 0 !important;
+}
+.laps-container h3 {
+margin: 10px;
+font-size: 1em;
+color: #333;
+border-bottom: 1px solid #eee;
+padding-bottom: 5px;
+display: flex;
+justify-content: space-between;
+align-items: center;
+}
+.laps-container::-webkit-scrollbar {
+width: 6px;
+}
+.laps-container::-webkit-scrollbar-track {
+background: #f1f1f1;
+border-radius: 3px;
+}
+.laps-container::-webkit-scrollbar-thumb {
+background: linear-gradient(180deg, #007bff, #0056b3);
+border-radius: 3px;
+}
+.laps-container::-webkit-scrollbar-thumb:hover {
+background: linear-gradient(180deg, #0056b3, #004085);
+}
+@media (max-width: 768px) {
+.content-container { flex-grow: 4 !important; }
+.stats-container { padding: 6px !important; }
+}
+.lap-stats {
+grid-template-columns: 1fr !important;
+gap: 4px !important;
+}
+.laps-container::after {
+content: '';
+position: absolute;
+right: 0;
+top: 0;
+bottom: 0;
+width: 4px;
+background: linear-gradient(to top, transparent 0%, rgba(0,123,255,0.1) 50%, transparent 100%);
+pointer-events: none;
+z-index: 10;
+}
+.laps-list li {
+padding: 8px 12px !important;
+margin: 0 !important;
+border-bottom: 1px solid #e9ecef !important;
+font-size: 1.5em !important;
+}
+.lap-single-line {
+display: flex !important;
+justify-content: space-between !important;
+align-items: center !important;
+gap: 12px !important;
+padding: 8px !important;
+background: linear-gradient(90deg, #f8f9fa 0%, #e9ecef 100%) !important;
+border-radius: 8px !important;
+font-weight: 500 !important;
+}
+.lap-number {
+font-size: 1.5em !important;
+font-weight: 900 !important;
+color: #007bff !important;
+min-width: 80px !important;
+text-align: left !important;
+}
+.lap-inline-stats {
+display: flex !important;
+gap: 16px !important;
+flex: 1 !important;
+justify-content: flex-end !important;
+font-size: 1.5em !important;
+}
+.lap-stat-inline {
+white-space: nowrap;
+font-weight: 800;
+min-width: 70px !important;
+text-align: right !important;
+}
+.lap-time-inline {
+color: #2c3e50;
+font-size: 0.9em !important;
+}
+.lap-distance-inline {
+color: #28a745;
+font-size: 0.9em !important;
+}
+.lap-pace-inline {
+color: #dc3545;
+font-size: 0.9em !important;
+}
+.lap-type-inline {
+font-size: 0.9em !important;
+padding: 4px 8px !important;
+border-radius: 6px !important;
+font-weight: 800 !important;
+min-width: 25px !important;
+text-align: center !important;
+}
+.content-container {
+display: flex;
+flex-grow: 1;
+position: relative;
+min-height: 0;
+}
+#map {
+height: 100%;
+width: 100%;
+z-index: 1;
+}
+#fullscreen-btn {
+position: absolute;
+top: 10px;
+right: 10px;
+z-index: 400;
+padding: 8px;
+background-color: rgba(255, 255, 255, 0.8);
+border: 1px solid #ccc;
+cursor: pointer;
+font-size: 16px;
+border-radius: 4px;
+width: 36px;
+height: 36px;
+display: flex;
+align-items: center;
+justify-content: center;
+}
+#fullscreen-btn:hover {
+background-color: white;
+}
+.compass-container {
+position: absolute;
+top: 20px;
+right: 20px;
+width: 100px;
+height: 100px;
+background-color: rgba(255, 255, 255, 0.95);
+border-radius: 50%;
+box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+display: flex;
+justify-content: center;
+align-items: center;
+z-index: 2000;
+border: 2px solid #ddd;
+}
+.compass {
+width: 80px;
+height: 80px;
+position: relative;
+border-radius: 50%;
+background-color: #f8f9fa;
+}
+.compass-arrow {
+position: absolute;
+top: 50%;
+left: 50%;
+width: 0;
+height: 0;
+border-left: 6px solid transparent;
+border-right: 6px solid transparent;
+border-bottom: 25px solid #dc3545;
+transform: translate(-50%, -50%) rotate(0deg);
+transform-origin: 50% 50%;
+transition: transform 0.2s ease-out;
+z-index: 20;
+}
+.compass-center {
+position: absolute;
+top: 50%;
+left: 50%;
+width: 12px;
+height: 12px;
+background-color: #333;
+border-radius: 50%;
+transform: translate(-50%, -50%);
+z-index: 30;
+}
+.compass-north {
+position: absolute;
+top: 5px;
+left: 50%;
+transform: translateX(-50%);
+font-size: 12px;
+font-weight: bold;
+color: #dc3545;
+z-index: 10;
+}
+.compass-south {
+position: absolute;
+bottom: 5px;
+left: 50%;
+transform: translateX(-50%);
+font-size: 10px;
+font-weight: bold;
+color: #007bff;
+z-index: 10;
+}
+.compass-east {
+position: absolute;
+top: 50%;
+right: 5px;
+transform: translateY(-50%);
+font-size: 10px;
+font-weight: bold;
+color: #28a745;
+z-index: 10;
+}
+.compass-west {
+position: absolute;
+top: 50%;
+left: 5px;
+transform: translateY(-50%);
+font-size: 10px;
+font-weight: bold;
+color: #6f42c1;
+z-index: 10;
+}
+.compass-line {
+position: absolute;
+top: 0;
+left: 50%;
+width: 1px;
+height: 100%;
+background-color: #ddd;
+transform: translateX(-50%);
+z-index: 5;
+}
+.compass-line.horizontal {
+top: 50%;
+left: 0;
+width: 100%;
+height: 1px;
+transform: translateY(-50%);
+}
+.compass-status {
+position: absolute;
+bottom: -20px;
+left: 0;
+width: 100%;
+text-align: center;
+font-size: 9px;
+color: #666;
+}
+.start-marker-icon {
+background-color: rgba(49, 46, 204, 0.8);
+border-radius: 50%;
+width: 24px;
+height: 24px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: bold;
+font-size: 14px;
+color: white;
+border: 2px solid rgba(255, 255, 255, 0.9);
+box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.current-marker-icon {
+background-color: rgba(231, 76, 60, 0.9);
+border-radius: 50%;
+width: 28px;
+height: 28px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: bold;
+font-size: 14px;
+color: white;
+border: 2px solid rgba(255, 255, 255, 0.9);
+box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.km-marker {
+background-color: rgba(52, 152, 219, 0.7);
+color: white;
+border-radius: 50%;
+width: 28px;
+height: 28px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: bold;
+font-size: 12px;
+border: 2px solid rgba(255, 255, 255, 0.8);
+box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+.lap-marker {
+background-color: rgba(155, 89, 182, 0.7);
+color: white;
+border-radius: 50%;
+width: 32px;
+height: 32px;
+display: flex;
+align-items: center;
+justify-content: center;
+font-weight: bold;
+font-size: 14px;
+border: 2px solid rgba(255, 255, 255, 0.9);
+box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.fullscreen-icon::before {
+content: "\2921";
+}
+body.fullscreen-active {
+overflow: hidden;
+}
+#map:-webkit-full-screen {
+width: 100% !important;
+height: 100% !important;
+z-index: 9999;
+}
+#map:-moz-full-screen {
+width: 100% !important;
+height: 100% !important;
+z-index: 9999;
+}
+#map:-ms-fullscreen {
+width: 100% !important;
+height: 100% !important;
+z-index: 9999;
+}
+#map:fullscreen {
+width: 100% !important;
+height: 100% !important;
+z-index: 9999;
+}
+body.fullscreen-active .stats-container,
+body.fullscreen-active .laps-container,
+body.fullscreen-active .compass-container {
+display: none;
+}
+body.fullscreen-active .content-container {
+flex-grow: 2;
+}
+body.fullscreen-active .lap-notification {
+display: block !important;
+z-index: 9999 !important;
+top: 20% !important;
+left: 50% !important;
+transform: translate(-50%, -50%) !important;
+max-width: 95vw !important;
+font-size: 1.4em !important;
+padding: 30px 40px !important;
+border: 3px solid rgba(255,255,255,0.8) !important;
+backdrop-filter: blur(10px) !important;
+animation: lapNotificationFullscreen 5s ease forwards !important;
+}
+@keyframes lapNotificationFullscreen {
+0% {
+opacity: 0;
+transform: translate(-50%, -50%) scale(0.8);
+}
+10% {
+opacity: 1;
+transform: translate(-50%, -50%) scale(1.05);
+}
+15% {
+transform: translate(-50%, -50%) scale(1);
+}
+70% {
+opacity: 1;
+transform: translate(-50%, -50%) scale(1);
+}
+100% {
+opacity: 0;
+transform: translate(-50%, -50%) scale(0.9);
+}
+}
+</style>
 </head>
 <body>
-    <div class="header">
-        <h1>🏃‍♂️ Cronometro con GPS</h1>
-    </div>
-    <div class="main-container">
-        <!-- Panel de estadísticas optimizado -->
-        <div class="stats-container">
-            <!-- PRIMERA LÍNEA: Tiempo grande -->
-            <div class="time-row">
-                <div class="time-container">
-                    <div class="stat-value" id="time">00:00:00</div>
-                </div>
-            </div>
-            <!-- SEGUNDA LÍNEA: Tres indicadores -->
-            <div class="indicators-row">
-                <div class="indicator-box">
-                    <div class="stat-label">KM/H</div>
-                    <div class="indicator-value" id="speed">0.0</div>
-                </div>
-                <div class="indicator-box">
-                    <div class="stat-label">KM</div>
-                    <div class="indicator-value" id="distance-display">0.00</div>
-                </div>
-                <div class="indicator-box">
-                    <div class="stat-label">RITMO</div>
-                    <div class="indicator-value" id="pace">--:--</div>
-                </div>
-            </div>
-            <!-- Botón LAP con cronómetro parcial -->
-            <!-- Botón LAP EXTRA GRANDE -->
-            <div class="lap-button-container">
-            <button id="actionBtn" class="lap-btn">
-                <span id="actionBtnLabel" class="lap-btn-label">INICIAR</span>
-                <span id="lapPartialTimer" class="lap-partial-timer">00:00.0</span>
-            </button>
-            </div>
-            
-            <audio id="lapSound" preload="auto">
-                <source src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" type="audio/mpeg">
-            </audio>
-            <!-- Botones secundarios: Detener, Auto Lap, Ajustes -->
-            <div class="secondary-controls">
-                <button id="stopBtn" disabled>DETENER</button>
-                <button id="autoLapBtn">AUTO LAP</button>
-                <button id="settingsBtn">AJUSTES</button>
-            </div>
-        </div>
-        <!-- Indicador de actividad -->
-        <div class="activity-indicator" id="activity-indicator" style="display: none;">
-            <span class="activity-dot" id="activity-dot"></span>
-            <span id="activity-text">Detenido</span>
-        </div>
-        <!-- Contenedor de vueltas MEJORADO -->
-        <div class="laps-container" id="laps-container" style="display: none;">
-            <h3>
-                <span>Vueltas (Laps)</span>
-                <span class="total-time" id="total-lap-time">Total: 00:00:00</span>
-            </h3>
-            <ul id="laps-list"></ul>
-        </div>
-        <!-- Mapa y brújula -->
-        <div class="content-container">
-            <div id="map"></div>
-            <button id="fullscreen-btn" class="fullscreen-icon" title="Pantalla Completa / Salir"></button>
-            <div class="compass-container">
-                <div class="compass">
-                    <div class="compass-line"></div>
-                    <div class="compass-line horizontal"></div>
-                    <div class="compass-north" id="compass-north">N</div>
-                    <div class="compass-south" id="compass-south">S</div>
-                    <div class="compass-east" id="compass-east">E</div>
-                    <div class="compass-west" id="compass-west">O</div>
-                    <div class="compass-arrow" id="compass-arrow"></div>
-                    <div class="compass-center"></div>
-                </div>
-                <div class="compass-status" id="compass-status">Brújula activa</div>
-            </div>
-        </div>
-    </div>
-    <!-- Modal de ajustes MEJORADO -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>⚙️ Configurar Auto Lap</h3>
-                <button class="close-modal" id="closeModal">&times;</button>
-            </div>
-            <div class="setting-group">
-                <label for="lapDistance">Distancia para Auto Lap</label>
-                <input type="number" id="lapDistance" class="setting-input" min="0.01" max="100" step="0.01" value="1.00">
-                <small style="color: #666; font-size: 0.9em;">Distancia desde el último LAP registrado</small>
-            </div>
-            <div class="setting-group">
-                <label>Unidad de distancia</label>
-                <div class="unit-selector">
-                    <button id="unitKm" class="active">Kilómetros (km)</button>
-                    <button id="unitM">Metros (m)</button>
-                </div>
-            </div>
-            <div class="setting-group">
-                <div class="time-option">
-                    <input type="checkbox" id="enableTimeLap" checked>
-                    <label for="enableTimeLap">Activar Auto Lap por tiempo</label>
-                </div>
-                <input type="number" id="lapTime" class="setting-input" min="1" max="3600" step="1" value="120" placeholder="Segundos (ej: 120 para 2 min)">
-                <small style="color: #666; font-size: 0.9em;">Tiempo desde el último LAP registrado</small>
-            </div>
-            <div class="setting-group">
-                <div class="time-option">
-                    <input type="checkbox" id="enableSound" checked>
-                    <label for="enableSound">Sonido de notificación para LAP</label>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button id="cancelSettings">Cancelar</button>
-                <button id="saveSettings">Guardar</button>
-            </div>
-        </div>
-    </div>
-    <!-- Audio para sonido de LAP (oculto) -->
-    <audio id="lapSound" preload="auto">
-        <source src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" type="audio/mpeg">
-    </audio>
-    <!-- Leaflet JS para el mapa -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-            crossorigin=""></script>
-    <script>
-        // --- VARIABLES GLOBALES ---
-        let map;
-        let pathPolyline;
-        let startMarker;
-        let currentPositionMarker;
-        let watchPositionId;
-        let startTime;
-        let timeInterval;
-        let partialTimerInterval; // Intervalo para el cronómetro parcial
-        let routeCoordinates = [];
-        let isTracking = false;
-        let totalDistance = 0;
-        let laps = [];
-        let lastLapTimestamp = 0;
-        let lastLapDistance = 0;
-        let lastPos = null;
-        let speedKmh = 0;
-        let wakeLock = null;
-        let kmMarkers = []; // Marcadores de cada km
-        let lapMarkers = []; // Marcadores de cada lap
-        let nextKmMarker = 1;
-        let lastKmDistance = 0;
-        let isCompassSupported = false;
-        let compassCalibrated = false;
-        let speedHistory = [];
-        const MAX_HISTORY = 5;
-        // Configuración de Auto Lap - MEJORADA
-        let autoLapEnabled = false;
-        let autoLapDistance = 1.0; // 1 km por defecto
-        let autoLapUnit = 'km'; // 'km' o 'm'
-        let autoLapTime = 120; // 120 segundos por defecto (2 min)
-        let autoLapTimeEnabled = true; // Control separado para tiempo
-        let nextAutoLapDistance = 0; // Próxima distancia objetivo para AutoLap
-        let nextAutoLapTime = 0; // Próximo tiempo objetivo para AutoLap
-        let soundEnabled = true; // Sonido de notificación
-        // Variables para el cronómetro parcial
-        let partialTimerStart = 0; // Cuando inició el cronómetro parcial
-        let partialTimerRunning = false; // Si el cronómetro está corriendo
-        // Configuración de actividades por velocidad (km/h)
-        const ACTIVITY_THRESHOLDS = {
-            STOPPED: { max: 1.5, name: "Detenido", color: "#95a5a6", icon: "⏹️" },
-            WALKING: { max: 6, name: "Caminando", color: "#3498db", icon: "🚶" },
-            RUNNING: { max: 20, name: "Corriendo", color: "#2ecc71", icon: "🏃" },
-            CYCLING: { max: 40, name: "Bicicleta", color: "#e74c3c", icon: "🚴" },
-            DRIVING: { max: 200, name: "Conduciendo", color: "#9b59b6", icon: "🚗" }
-        };
-        // --- ELEMENTOS DEL DOM ---
-        const actionBtn = document.getElementById('actionBtn');
-        const stopBtn = document.getElementById('stopBtn');
-        const autoLapBtn = document.getElementById('autoLapBtn');
-        const settingsBtn = document.getElementById('settingsBtn');
-        const timeDisplay = document.getElementById('time');
-        const speedDisplay = document.getElementById('speed');
-        const distanceDisplay = document.getElementById('distance-display');
-        const paceDisplay = document.getElementById('pace');
-        const lapPartialTimer = document.getElementById('lapPartialTimer');
-        const compassArrow = document.getElementById('compass-arrow');
-        const compassStatus = document.getElementById('compass-status');
-        const lapsContainer = document.getElementById('laps-container');
-        const lapsList = document.getElementById('laps-list');
-        const totalLapTimeDisplay = document.getElementById('total-lap-time');
-        const activityIndicator = document.getElementById('activity-indicator');
-        const activityDot = document.getElementById('activity-dot');
-        const activityText = document.getElementById('activity-text');
-        const lapSound = document.getElementById('lapSound');
-        const actionBtnLabel = document.getElementById('actionBtnLabel');
-        // Elementos del modal MEJORADO
-        const settingsModal = document.getElementById('settingsModal');
-        const closeModal = document.getElementById('closeModal');
-        const cancelSettings = document.getElementById('cancelSettings');
-        const saveSettings = document.getElementById('saveSettings');
-        const lapDistanceInput = document.getElementById('lapDistance');
-        const lapTimeInput = document.getElementById('lapTime');
-        const enableTimeLapCheckbox = document.getElementById('enableTimeLap');
-        const enableSoundCheckbox = document.getElementById('enableSound');
-        const unitKmBtn = document.getElementById('unitKm');
-        const unitMBtn = document.getElementById('unitM');
-        // Elementos para el botón de pantalla completa
-        const mapContainer = document.getElementById('map');
-        const fullscreenButton = document.getElementById('fullscreen-btn');
-        let isFullscreen = false;
+<div class="header">
+<h1>🏃‍♂️ Cronometro con GPS</h1>
+</div>
+<div class="main-container">
+<div class="stats-container">
+<div class="time-row">
+<div class="time-container">
+<div class="stat-value" id="time">00:00:00</div>
+</div>
+</div>
+<div class="indicators-row">
+<div class="indicator-box" id="speed-box">
+<div class="stat-label">KM/H</div>
+<div class="indicator-value" id="speed">0.0</div>
+</div>
+<div class="indicator-box" id="distance-box">
+<div class="stat-label">KM</div>
+<div class="indicator-value" id="distance-display">0.00</div>
+</div>
+<div class="indicator-box" id="pace-box">
+<div class="stat-label">RITMO</div>
+<div class="indicator-value" id="pace">--:--</div>
+</div>
+</div>
+<div class="lap-button-container">
+<button id="actionBtn" class="lap-btn">
+<span id="actionBtnLabel" class="lap-btn-label">INICIAR</span>
+<span id="lapPartialTimer" class="lap-partial-timer">00:00.0</span>
+</button>
+</div>
+<audio id="lapSound" preload="auto">
+<source src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" type="audio/mpeg">
+</audio>
+<div class="secondary-controls">
+<button id="stopBtn" disabled>DETENER</button>
+<button id="autoLapBtn">AUTO LAP</button>
+<button id="settingsBtn">AJUSTES</button>
+</div>
+</div>
+<div class="activity-indicator" id="activity-indicator" style="display: none;">
+<span class="activity-dot" id="activity-dot"></span>
+<span id="activity-text">Detenido</span>
+</div>
+<div class="laps-container" id="laps-container" style="display: none;">
+<h3>
+<span>Vueltas (Laps)</span>
+<span class="total-time" id="total-lap-time">Total: 00:00:00</span>
+</h3>
+<ul id="laps-list"></ul>
+</div>
+<div class="content-container">
+<div id="map"></div>
+<button id="fullscreen-btn" class="fullscreen-icon" title="Pantalla Completa / Salir"></button>
+<div class="compass-container">
+<div class="compass">
+<div class="compass-line"></div>
+<div class="compass-line horizontal"></div>
+<div class="compass-north" id="compass-north">N</div>
+<div class="compass-south" id="compass-south">S</div>
+<div class="compass-east" id="compass-east">E</div>
+<div class="compass-west" id="compass-west">O</div>
+<div class="compass-arrow" id="compass-arrow"></div>
+<div class="compass-center"></div>
+</div>
+<div class="compass-status" id="compass-status">Brújula activa</div>
+</div>
+</div>
+</div>
+<div class="modal-overlay" id="settingsModal">
+<div class="modal-content">
+<div class="modal-header">
+<h3>⚙️ Configurar Auto Lap</h3>
+<button class="close-modal" id="closeModal">&times;</button>
+</div>
+<div class="setting-group">
+<label for="lapDistance">Distancia para Auto Lap</label>
+<input type="number" id="lapDistance" class="setting-input" min="0.01" max="100" step="0.01" value="1.00">
+<small style="color: #666; font-size: 0.9em;">Distancia desde el último LAP registrado</small>
+</div>
+<div class="setting-group">
+<label>Unidad de distancia</label>
+<div class="unit-selector">
+<button id="unitKm" class="active">Kilómetros (km)</button>
+<button id="unitM">Metros (m)</button>
+</div>
+</div>
+<div class="setting-group">
+<div class="time-option">
+<input type="checkbox" id="enableTimeLap" checked>
+<label for="enableTimeLap">Activar Auto Lap por tiempo</label>
+</div>
+<input type="number" id="lapTime" class="setting-input" min="1" max="3600" step="1" value="120" placeholder="Segundos (ej: 120 para 2 min)">
+<small style="color: #666; font-size: 0.9em;">Tiempo desde el último LAP registrado</small>
+</div>
+<div class="setting-group">
+<div class="time-option">
+<input type="checkbox" id="enableSound" checked>
+<label for="enableSound">Sonido de notificación para LAP</label>
+</div>
+</div>
+<div class="modal-actions">
+<button id="cancelSettings">Cancelar</button>
+<button id="saveSettings">Guardar</button>
+</div>
+</div>
+</div>
+<audio id="lapSound2" preload="auto">
+<source src="https://assets.mixkit.co/sfx/preview/mixkit-achievement-bell-600.mp3" type="audio/mpeg">
+</audio>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+crossorigin=""></script>
+<script>
+// --- VARIABLES GLOBALES ---
+let map;
+let pathPolyline;
+let startMarker;
+let currentPositionMarker;
+let watchPositionId;
+let startTime;
+let timeInterval;
+let partialTimerInterval;
+let routeCoordinates = [];
+let isTracking = false;
+let totalDistance = 0;
+let laps = [];
+let lastLapTimestamp = 0;
+let lastLapDistance = 0;
+let lastPos = null;
+let speedKmh = 0;
+let wakeLock = null;
+let kmMarkers = [];
+let lapMarkers = [];
+let nextKmMarker = 1;
+let lastKmDistance = 0;
+let isCompassSupported = false;
+let compassCalibrated = false;
+let speedHistory = [];
+const MAX_HISTORY = 5;
+let autoLapEnabled = false;
+let autoLapDistance = 1.0;
+let autoLapUnit = 'km';
+let autoLapTime = 120;
+let autoLapTimeEnabled = true;
+let nextAutoLapDistance = 0;
+let nextAutoLapTime = 0;
+let soundEnabled = true;
+let partialTimerStart = 0;
+let partialTimerRunning = false;
+const ACTIVITY_THRESHOLDS = {
+STOPPED: { max: 1.5, name: "Detenido", color: "#95a5a6", icon: "⏹️" },
+WALKING: { max: 6, name: "Caminando", color: "#3498db", icon: "🚶" },
+RUNNING: { max: 20, name: "Corriendo", color: "#2ecc71", icon: "🏃" },
+CYCLING: { max: 40, name: "Bicicleta", color: "#e74c3c", icon: "🚴" },
+DRIVING: { max: 200, name: "Conduciendo", color: "#9b59b6", icon: "🚗" }
+};
+// Nuevas variables para modos interactivos
+let speedMode = 'instant'; // 'instant' o 'average'
+let distanceUnit = 'km';   // 'km' o 'mi'
+let paceMode = 'average';  // 'average' o 'instant'
 
-        // --- INICIALIZACIÓN ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const LIMA_COORDINATES = [-12.046374, -77.042793];
-            map = L.map('map').setView(LIMA_COORDINATES, 13);
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(map);
+// --- ELEMENTOS DEL DOM ---
+const actionBtn = document.getElementById('actionBtn');
+const stopBtn = document.getElementById('stopBtn');
+const autoLapBtn = document.getElementById('autoLapBtn');
+const settingsBtn = document.getElementById('settingsBtn');
+const timeDisplay = document.getElementById('time');
+const speedDisplay = document.getElementById('speed');
+const distanceDisplay = document.getElementById('distance-display');
+const paceDisplay = document.getElementById('pace');
+const lapPartialTimer = document.getElementById('lapPartialTimer');
+const compassArrow = document.getElementById('compass-arrow');
+const compassStatus = document.getElementById('compass-status');
+const lapsContainer = document.getElementById('laps-container');
+const lapsList = document.getElementById('laps-list');
+const totalLapTimeDisplay = document.getElementById('total-lap-time');
+const activityIndicator = document.getElementById('activity-indicator');
+const activityDot = document.getElementById('activity-dot');
+const activityText = document.getElementById('activity-text');
+const lapSound = document.getElementById('lapSound');
+const actionBtnLabel = document.getElementById('actionBtnLabel');
+const settingsModal = document.getElementById('settingsModal');
+const closeModal = document.getElementById('closeModal');
+const cancelSettings = document.getElementById('cancelSettings');
+const saveSettings = document.getElementById('saveSettings');
+const lapDistanceInput = document.getElementById('lapDistance');
+const lapTimeInput = document.getElementById('lapTime');
+const enableTimeLapCheckbox = document.getElementById('enableTimeLap');
+const enableSoundCheckbox = document.getElementById('enableSound');
+const unitKmBtn = document.getElementById('unitKm');
+const unitMBtn = document.getElementById('unitM');
+const mapContainer = document.getElementById('map');
+const fullscreenButton = document.getElementById('fullscreen-btn');
+const speedBox = document.getElementById('speed-box');
+const distanceBox = document.getElementById('distance-box');
+const paceBox = document.getElementById('pace-box');
+let isFullscreen = false;
+let distanceInMiles = 0;
+let totalSpeedSum = 0;
+let speedCount = 0;
 
-            // Event listeners para botones
-            actionBtn.addEventListener('click', handleActionButton);
-            stopBtn.addEventListener('click', stopTracking);
-            autoLapBtn.addEventListener('click', toggleAutoLap);
-            settingsBtn.addEventListener('click', openSettings);
-            // Event listeners para el modal
-            closeModal.addEventListener('click', closeSettings);
-            cancelSettings.addEventListener('click', closeSettings);
-            saveSettings.addEventListener('click', saveSettingsConfig);
-            unitKmBtn.addEventListener('click', () => selectUnit('km'));
-            unitMBtn.addEventListener('click', () => selectUnit('m'));
-            // Control del checkbox de tiempo
-            enableTimeLapCheckbox.addEventListener('change', function() {
-                lapTimeInput.disabled = !this.checked;
-            });
+document.addEventListener('DOMContentLoaded', () => {
+const LIMA_COORDINATES = [-12.046374, -77.042793];
+map = L.map('map').setView(LIMA_COORDINATES, 13);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+}).addTo(map);
 
-            // Configurar brújula
-            setupCompass();
+actionBtn.addEventListener('click', handleActionButton);
+stopBtn.addEventListener('click', stopTracking);
+autoLapBtn.addEventListener('click', toggleAutoLap);
+settingsBtn.addEventListener('click', openSettings);
+closeModal.addEventListener('click', closeSettings);
+cancelSettings.addEventListener('click', closeSettings);
+saveSettings.addEventListener('click', saveSettingsConfig);
+unitKmBtn.addEventListener('click', () => selectUnit('km'));
+unitMBtn.addEventListener('click', () => selectUnit('m'));
+enableTimeLapCheckbox.addEventListener('change', function() {
+lapTimeInput.disabled = !this.checked;
+});
 
-            // Cargar configuración guardada
-            loadSavedSettings();
+// Nuevos listeners para los indicadores interactivos
+speedBox.addEventListener('click', () => toggleSpeedMode());
+distanceBox.addEventListener('click', () => toggleDistanceUnit());
+paceBox.addEventListener('click', () => togglePaceMode());
 
-            // Inicializar cronómetro parcial
-            resetPartialTimer();
+setupCompass();
+loadSavedSettings();
+resetPartialTimer();
+alert("¡Hola soy Alfredo Delgado, este en mi cronometro!");
+});
 
-            // Mostrar mensaje de bienvenida
-            alert("¡Hola soy Alfredo Delgado, este en mi cronometro!");
-        });
+// --- EVENTOS DE PANTALLA COMPLETA ---
+document.addEventListener('fullscreenchange', updateFullscreenStatus);
+document.addEventListener('webkitfullscreenchange', updateFullscreenStatus);
+document.addEventListener('mozfullscreenchange', updateFullscreenStatus);
+document.addEventListener('MSFullscreenChange', updateFullscreenStatus);
 
-        // Detecta cambios de estado de pantalla completa (salida vía teclado o botón nativo)
-        document.addEventListener('fullscreenchange', updateFullscreenStatus);
-        document.addEventListener('webkitfullscreenchange', updateFullscreenStatus); // Safari
-        document.addEventListener('mozfullscreenchange', updateFullscreenStatus); // Firefox
-        document.addEventListener('MSFullscreenChange', updateFullscreenStatus); // IE11
+fullscreenButton.addEventListener('click', toggleFullscreen);
 
-        function updateFullscreenStatus() {
-            isFullscreen = !!document.fullscreenElement ||      // Standard
-                        !!document.webkitFullscreenElement || // Safari
-                        !!document.mozFullScreenElement ||    // Firefox
-                        !!document.msFullscreenElement;       // IE11
-            // Opcional: Actualiza la clase del body para controlar otros elementos
-            if (isFullscreen) {
-                document.body.classList.add('fullscreen-active');
-            } else {
-                document.body.classList.remove('fullscreen-active');
-            }
-        }
+function updateFullscreenStatus() {
+isFullscreen = !!document.fullscreenElement || !!document.webkitFullscreenElement || !!document.mozFullScreenElement || !!document.msFullscreenElement;
+if (isFullscreen) {
+document.body.classList.add('fullscreen-active');
+} else {
+document.body.classList.remove('fullscreen-active');
+}
+}
 
-        // Asocia la función al clic del botón
-        fullscreenButton.addEventListener('click', toggleFullscreen);
+function toggleFullscreen() {
+if (!isFullscreen) {
+enterFullscreen();
+} else {
+exitFullscreen();
+}
+}
 
-        // Función para alternar el estado de pantalla completa
-        function toggleFullscreen() {
-            if (!isFullscreen) {
-                enterFullscreen();
-            } else {
-                exitFullscreen();
-            }
-        }
+function enterFullscreen() {
+if (mapContainer.requestFullscreen) mapContainer.requestFullscreen();
+else if (mapContainer.webkitRequestFullscreen) mapContainer.webkitRequestFullscreen();
+else if (mapContainer.msRequestFullscreen) mapContainer.msRequestFullscreen();
+else if (mapContainer.mozRequestFullScreen) mapContainer.mozRequestFullScreen();
+}
 
-        // Función para entrar en pantalla completa
-        function enterFullscreen() {
-            if (mapContainer.requestFullscreen) {
-                mapContainer.requestFullscreen();
-            } else if (mapContainer.webkitRequestFullscreen) { // Safari
-                mapContainer.webkitRequestFullscreen();
-            } else if (mapContainer.msRequestFullscreen) { // IE11
-                mapContainer.msRequestFullscreen();
-            } else if (mapContainer.mozRequestFullScreen) { // Firefox
-                mapContainer.mozRequestFullScreen();
-            }
-            // No hace nada si no hay soporte
-        }
+function exitFullscreen() {
+if (document.exitFullscreen) document.exitFullscreen();
+else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+else if (document.msExitFullscreen) document.msExitFullscreen();
+else if (document.mozCancelFullScreen) document.mozCancelFullScreen();
+}
 
-        // Función para salir de pantalla completa
-        function exitFullscreen() {
-            if (document.exitFullscreen) {
-                document.exitFullscreen();
-            } else if (document.webkitExitFullscreen) { // Safari
-                document.webkitExitFullscreen();
-            } else if (document.msExitFullscreen) { // IE11
-                document.msExitFullscreen();
-            } else if (document.mozCancelFullScreen) { // Firefox
-                document.mozCancelFullScreen();
-            }
-        }
+// --- CONFIGURACIÓN DE LA BRÚJULA ---
+function setupCompass() {
+if (window.DeviceOrientationEvent && 'ontouchstart' in window) {
+isCompassSupported = true;
+if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+DeviceOrientationEvent.requestPermission()
+.then(permissionState => {
+if (permissionState === 'granted') {
+window.addEventListener('deviceorientation', handleCompass);
+compassStatus.textContent = "Brújula activa";
+compassStatus.style.color = "#28a745";
+compassCalibrated = true;
+} else {
+compassStatus.textContent = "Permiso denegado";
+compassStatus.style.color = "#dc3545";
+}
+})
+.catch(console.error);
+} else {
+window.addEventListener('deviceorientation', handleCompass);
+compassStatus.textContent = "Brújula activa";
+compassStatus.style.color = "#28a745";
+compassCalibrated = true;
+}
+} else {
+compassStatus.textContent = "Brújula no disponible";
+compassStatus.style.color = "#dc3545";
+isCompassSupported = false;
+}
+}
 
-        // --- CONFIGURACIÓN DE LA BRÚJULA ---
-        function setupCompass() {
-            if (window.DeviceOrientationEvent && 'ontouchstart' in window) {
-                isCompassSupported = true;
-                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    DeviceOrientationEvent.requestPermission()
-                        .then(permissionState => {
-                            if (permissionState === 'granted') {
-                                window.addEventListener('deviceorientation', handleCompass);
-                                compassStatus.textContent = "Brújula activa";
-                                compassStatus.style.color = "#28a745";
-                                compassCalibrated = true;
-                            } else {
-                                compassStatus.textContent = "Permiso denegado";
-                                compassStatus.style.color = "#dc3545";
-                            }
-                        })
-                        .catch(console.error);
-                } else {
-                    window.addEventListener('deviceorientation', handleCompass);
-                    compassStatus.textContent = "Brújula activa";
-                    compassStatus.style.color = "#28a745";
-                    compassCalibrated = true;
-                }
-            } else {
-                compassStatus.textContent = "Brújula no disponible";
-                compassStatus.style.color = "#dc3545";
-                isCompassSupported = false;
-            }
-        }
-        // --- FUNCIÓN DE LA BRÚJULA ---
-        function handleCompass(event) {
-            if (!isCompassSupported || !compassCalibrated) return;
-            const { alpha } = event;
-            if (alpha !== null) {
-                const rotation = -alpha;
-                compassArrow.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
-            }
-        }
-        // --- CRONÓMETRO PARCIAL (en el botón LAP) ---
-        function startPartialTimer() {
-            partialTimerStart = Date.now();
-            lapPartialTimer.classList.add('running');
-            partialTimerInterval = setInterval(() => {
-                const elapsed = Date.now() - partialTimerStart;
-                lapPartialTimer.textContent = formatTimeWithDecimals(elapsed);
-            }, 100);
-        }
-        function stopPartialTimer() {
-            partialTimerRunning = false;
-            lapPartialTimer.classList.remove('running');
-            if (partialTimerInterval) {
-                clearInterval(partialTimerInterval);
-                partialTimerInterval = null;
-            }
-        }
-        function resetPartialTimer() {
-            clearInterval(partialTimerInterval);
-            partialTimerInterval = null;
-            lapPartialTimer.textContent = '00:00.0';
-            lapPartialTimer.classList.remove('running'); 
-        }
-        function updatePartialTimer() {
-            if (!partialTimerRunning || partialTimerStart === 0) return;
-            const elapsed = Date.now() - partialTimerStart;
-            lapPartialTimer.textContent = formatTimeWithDecimals(elapsed);
-        }
-        function formatTimeWithDecimals(milliseconds) {
-            const totalSeconds = milliseconds / 1000;
-            const minutes = Math.floor(totalSeconds / 60);
-            const seconds = Math.floor(totalSeconds % 60);
-            const deciseconds = Math.floor((milliseconds % 1000) / 100);
-            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${deciseconds}`;
-        }
-        // --- SONIDO DE NOTIFICACIÓN ---
-        function playLapSound() {
-           if (!soundEnabled) return;
-            // Forzar la carga y reproducción
-            lapSound.pause(); // Detener cualquier sonido previo
-            lapSound.currentTime = 0; // Reiniciar al segundo 0
-            let playPromise = lapSound.play();
-            if (playPromise !== undefined) {
-                playPromise.catch(error => {
-                    console.error("Error de reproducción de audio:", error);
-                    // Intento de fallback: recargar el audio si falla
-                    lapSound.load();
-                    playLapBeep(); // <-- Reproduce el beep al hacer LAP
-                });
-            }
-        }
-        // --- GESTIÓN DE AUTO LAP - CORREGIDA (DESDE ÚLTIMO LAP) ---
-        function toggleAutoLap() {
-            autoLapEnabled = !autoLapEnabled;
-            if (autoLapEnabled) {
-                autoLapBtn.classList.add('auto-lap-active');
-                autoLapBtn.textContent = 'AUTO LAP ✓';
-                // Calcular próximos objetivos basados en el último LAP
-                calculateNextAutoLapTargets();
-                // Actualizar título
-                updateAutoLapButtonTitle();
-                if (isTracking) {
-                    showSimpleNotification(`Auto Lap activado
+function handleCompass(event) {
+if (!isCompassSupported || !compassCalibrated) return;
+const { alpha } = event;
+if (alpha !== null) {
+const rotation = -alpha;
+compassArrow.style.transform = `translate(-50%, -50%) rotate(${rotation}deg)`;
+}
+}
+
+// --- MODOS INTERACTIVOS ---
+function toggleSpeedMode() {
+speedMode = speedMode === 'instant' ? 'average' : 'instant';
+updateSpeedDisplay();
+}
+function toggleDistanceUnit() {
+distanceUnit = distanceUnit === 'km' ? 'mi' : 'km';
+updateDistanceDisplay();
+}
+function togglePaceMode() {
+paceMode = paceMode === 'average' ? 'instant' : 'average';
+updatePaceDisplay();
+}
+
+function updateSpeedDisplay() {
+let speedText = '0.0';
+if (speedMode === 'instant') {
+speedText = (speedKmh || 0).toFixed(1);
+document.querySelector('#speed-box .stat-label').textContent = 'KM/H';
+} else {
+if (speedCount > 0) {
+const avgSpeed = totalSpeedSum / speedCount;
+speedText = avgSpeed.toFixed(1);
+} else {
+speedText = '0.0';
+}
+document.querySelector('#speed-box .stat-label').textContent = 'KM/H PROM';
+}
+speedDisplay.textContent = speedText;
+}
+
+function updateDistanceDisplay() {
+let displayValue = totalDistance;
+let unitLabel = 'KM';
+if (distanceUnit === 'mi') {
+displayValue = totalDistance * 0.621371;
+unitLabel = 'MI';
+}
+distanceDisplay.textContent = displayValue.toFixed(2);
+document.querySelector('#distance-box .stat-label').textContent = unitLabel;
+}
+
+function updatePaceDisplay() {
+let paceText = '--:--';
+if (paceMode === 'average') {
+if (totalDistance > 0.01 && startTime) {
+const elapsedTimeInSeconds = (Date.now() - startTime) / 1000;
+const paceInSecondsPerKm = elapsedTimeInSeconds / totalDistance;
+const paceMinutes = Math.floor(paceInSecondsPerKm / 60);
+const paceSeconds = Math.floor(paceInSecondsPerKm % 60);
+paceText = `${String(paceMinutes).padStart(2, '0')}:${String(paceSeconds).padStart(2, '0')}`;
+document.querySelector('#pace-box .stat-label').textContent = 'RITMO PROM';
+} else {
+paceText = '--:--';
+}
+} else {
+// Ritmo instantáneo: basado en los últimos datos de velocidad
+if (speedKmh > 0.1) {
+const paceSecondsPerKm = 3600 / speedKmh;
+const paceMinutes = Math.floor(paceSecondsPerKm / 60);
+const paceSeconds = Math.floor(paceSecondsPerKm % 60);
+paceText = `${String(paceMinutes).padStart(2, '0')}:${String(paceSeconds).padStart(2, '0')}`;
+document.querySelector('#pace-box .stat-label').textContent = 'RITMO ACT';
+} else {
+paceText = '--:--';
+}
+}
+paceDisplay.textContent = paceText;
+}
+
+// --- CRONÓMETRO PARCIAL ---
+function startPartialTimer() {
+partialTimerStart = Date.now();
+lapPartialTimer.classList.add('running');
+partialTimerInterval = setInterval(() => {
+const elapsed = Date.now() - partialTimerStart;
+lapPartialTimer.textContent = formatTimeWithDecimals(elapsed);
+}, 100);
+}
+function stopPartialTimer() {
+partialTimerRunning = false;
+lapPartialTimer.classList.remove('running');
+if (partialTimerInterval) {
+clearInterval(partialTimerInterval);
+partialTimerInterval = null;
+}
+}
+function resetPartialTimer() {
+clearInterval(partialTimerInterval);
+partialTimerInterval = null;
+lapPartialTimer.textContent = '00:00.0';
+lapPartialTimer.classList.remove('running');
+}
+function formatTimeWithDecimals(milliseconds) {
+const totalSeconds = milliseconds / 1000;
+const minutes = Math.floor(totalSeconds / 60);
+const seconds = Math.floor(totalSeconds % 60);
+const deciseconds = Math.floor((milliseconds % 1000) / 100);
+return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${deciseconds}`;
+}
+
+// --- SONIDO ---
+function playLapSound() {
+if (!soundEnabled) return;
+lapSound.pause();
+lapSound.currentTime = 0;
+let playPromise = lapSound.play();
+if (playPromise !== undefined) {
+playPromise.catch(error => {
+console.error("Error de reproducción de audio:", error);
+lapSound.load();
+});
+}
+}
+
+// --- AUTO LAP ---
+function toggleAutoLap() {
+autoLapEnabled = !autoLapEnabled;
+if (autoLapEnabled) {
+autoLapBtn.classList.add('auto-lap-active');
+autoLapBtn.textContent = 'AUTO LAP ✓';
+calculateNextAutoLapTargets();
+updateAutoLapButtonTitle();
+if (isTracking) {
+showSimpleNotification(`Auto Lap activado
 Próximo LAP por distancia: ${nextAutoLapDistance.toFixed(2)} km
 Próximo LAP por tiempo: ${formatTime(nextAutoLapTime * 1000)}`);
-                }
-            } else {
-                autoLapBtn.classList.remove('auto-lap-active');
-                autoLapBtn.textContent = 'AUTO LAP';
-                autoLapBtn.title = 'Activar Auto Lap';
-            }
-            localStorage.setItem('autoLapEnabled', autoLapEnabled);
-        }
-        function calculateNextAutoLapTargets() {
-            // Calcular próxima distancia objetivo DESDE el último LAP
-            if (autoLapDistance > 0) {
-                nextAutoLapDistance = lastLapDistance + autoLapDistance;
-            } else {
-                nextAutoLapDistance = Infinity; // Nunca se alcanzará
-            }
-            // Calcular próximo tiempo objetivo DESDE el último LAP
-            if (autoLapTimeEnabled && autoLapTime > 0) {
-                const timeSinceLastLap = lastLapTimestamp === 0 ? 0 : Date.now() - lastLapTimestamp;
-                nextAutoLapTime = lastLapTimestamp + (autoLapTime * 1000);
-            } else {
-                nextAutoLapTime = Infinity; // Nunca se alcanzará
-            }
-        }
-        function updateAutoLapButtonTitle() {
-            let titleText = 'Auto Lap activado';
-            if (autoLapDistance > 0) {
-                titleText += `
-• Próximo LAP distancia: ${nextAutoLapDistance.toFixed(2)} km`;
-            }
-            if (autoLapTimeEnabled && autoLapTime > 0) {
-                titleText += `
-• Próximo LAP tiempo: ${formatTime(nextAutoLapTime - (lastLapTimestamp || Date.now()))}`;
-            }
-            autoLapBtn.title = titleText;
-        }
-        function checkAutoLap() {
-            if (!autoLapEnabled || !isTracking) return;
-            const currentTime = Date.now();
-            const currentDistance = totalDistance;
-            let shouldRecordLap = false;
-            let lapType = '';
-            // Verificar Auto Lap por DISTANCIA (desde último LAP)
-            if (autoLapDistance > 0 && currentDistance >= nextAutoLapDistance) {
-                shouldRecordLap = true;
-                lapType = 'distance';
-            }
-            // Verificar Auto Lap por TIEMPO (desde último LAP)
-            if (autoLapTimeEnabled && autoLapTime > 0 && currentTime >= nextAutoLapTime) {
-                shouldRecordLap = true;
-                lapType = lapType ? 'both' : 'time';
-            }
-            if (shouldRecordLap) {
-                recordAutoLap(lapType);
-            }
-        }
-        function recordAutoLap(type) {
-            const currentTime = Date.now();
-            const lapTime = currentTime - lastLapTimestamp;
-            const lapDistance = totalDistance - lastLapDistance;
-            // Solo registrar si hay distancia recorrida (evitar LAPs de 0km)
-            if (lapDistance < 0.001) {
-                // Recalcular próximos objetivos si no hubo movimiento
-                calculateNextAutoLapTargets();
-                return;
-            }
-            const lap = {
-                number: laps.length + 1,
-                time: lapTime,
-                distance: lapDistance,
-                type: type, // 'distance', 'time', 'both' o 'manual'
-                pace: calculatePace(lapTime, lapDistance),
-                timestamp: currentTime
-            };
-            laps.push(lap);
-            displayLap(lap);
-            updateTotalLapTime();
-            // Reiniciar cronómetro parcial
-            resetPartialTimer();
-            startPartialTimer();
-            // Marcar LAP en el mapa
-            const lastCoord = routeCoordinates[routeCoordinates.length - 1];
-            if (lastCoord) {
-                createLapMarker(lastCoord[0], lastCoord[1], lap.number, type, lap.pace ? lap.pace.formatted : '--:--');
-            }
-            // Reproducir sonido
-            playLapSound();
-            // 2. Reiniciar el cronómetro parcial del botón
-            resetPartialTimer(); 
-            startPartialTimer();
-            // 3. Actualizar los marcadores de tiempo para el próximo objetivo
-            lastLapTimestamp = Date.now();
-            lastLapDistance = totalDistance;
-            // Mostrar notificación MEJORADA
-            showLapNotification(lap);
-            // Actualizar tiempos para el próximo LAP
-            lastLapTimestamp = currentTime;
-            lastLapDistance = totalDistance;
-            // Recalcular próximos objetivos para AutoLap
-            calculateNextAutoLapTargets();
-            updateAutoLapButtonTitle();
-        }
-        function calculatePace(lapTimeMs, lapDistanceKm) {
-            if (lapDistanceKm <= 0) return null;
-            const paceSecondsPerKm = (lapTimeMs / 1000) / lapDistanceKm;
-            const paceMinutes = Math.floor(paceSecondsPerKm / 60);
-            const paceSeconds = Math.floor(paceSecondsPerKm % 60);
-            return {
-                minutes: paceMinutes,
-                seconds: paceSeconds,
-                formatted: `${String(paceMinutes).padStart(2, '0')}:${String(paceSeconds).padStart(2, '0')}`
-            };
-        }
-        // --- NOTIFICACIÓN DE LAP MEJORADA ---
-        function showLapNotification(lap) {
-            const notification = document.createElement('div');
-            notification.className = 'lap-notification';
-            let typeText, typeClass;
-            if (lap.type === 'distance') {
-                typeText = '📏 Por Distancia';
-                typeClass = 'lap-type-distance';
-            } else if (lap.type === 'time') {
-                typeText = '⏱️ Por Tiempo';
-                typeClass = 'lap-type-time';
-            } else if (lap.type === 'both') {
-                typeText = '📏⏱️ Por Distancia y Tiempo';
-                typeClass = 'lap-type-distance';
-            } else {
-                typeText = '👆 Manual';
-                typeClass = 'lap-type-manual';
-            }
-            notification.innerHTML = `
-                <h3>🏁 LAP ${lap.number} COMPLETADO!</h3>
-                <div class="lap-details">
-                    <div class="lap-detail">
-                        <span class="label">TIEMPO DEL LAP</span>
-                        <span class="value">${formatTime(lap.time)}</span>
-                    </div>
-                    <div class="lap-detail">
-                        <span class="label">DISTANCIA</span>
-                        <span class="value">${lap.distance.toFixed(2)} km</span>
-                    </div>
-                    <div class="lap-detail">
-                        <span class="label">RITMO PROMEDIO</span>
-                        <span class="value">${lap.pace ? lap.pace.formatted : '--:--'}</span>
-                    </div>
-                    <div class="lap-detail">
-                        <span class="label">DISTANCIA TOTAL</span>
-                        <span class="value">${totalDistance.toFixed(2)} km</span>
-                    </div>
-                </div>
-                <div class="lap-type ${typeClass}">${typeText}</div>
-            `;
-            document.body.appendChild(notification);
-            // Remover después de 5 segundos
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    document.body.removeChild(notification);
-                }
-            }, 5000);
-        }
-        // --- MARCAR CADA KILÓMETRO EN EL MAPA ---
-        function checkAndPlaceKmMarker() {
-            if (totalDistance - lastKmDistance >= 1.0) {
-                const lastCoord = routeCoordinates[routeCoordinates.length - 1];
-                if (lastCoord) {
-                    createKmMarker(lastCoord[0], lastCoord[1], nextKmMarker);
-                    lastKmDistance = Math.floor(totalDistance);
-                    nextKmMarker++;
-                }
-            }
-        }
-        function createKmMarker(lat, lng, kmNumber) {
-            const kmIcon = L.divIcon({
-                html: `<div class="km-marker">${kmNumber}</div>`,
-                className: 'km-marker-div',
-                iconSize: [30, 30],
-                iconAnchor: [15, 15]
-            });
-            const kmMarker = L.marker([lat, lng], {
-                icon: kmIcon,
-                title: `Kilómetro ${kmNumber}`,
-                opacity: 0.7
-            }).addTo(map)
-              .bindPopup(`<div style="font-size: 11px; color: #2c3e50;">📏 Kilómetro ${kmNumber}<br>Distancia: ${totalDistance.toFixed(2)} km</div>`);
-            kmMarkers.push(kmMarker);
-        }
-        // --- MARCAR CADA LAP EN EL MAPA ---
-        function createLapMarker(lat, lng, lapNumber, type, pace) {
-            const lapIcon = L.divIcon({
-                html: `<div class="lap-marker">L${lapNumber}</div>`,
-                className: 'lap-marker-div',
-                iconSize: [34, 34],
-                iconAnchor: [17, 17]
-            });
-            const lapTypeText = type === 'distance' ? 'Distancia' :
-                                type === 'time' ? 'Tiempo' :
-                                type === 'both' ? 'Distancia y Tiempo' : 'Manual';
-            const popupContent = `
-                <div style="font-size: 11px; color: #2c3e50;">
-                🏁 LAP ${lapNumber}<br>
-                Tipo: ${lapTypeText}<br>
-                Distancia: ${(totalDistance).toFixed(2)} km<br>
-                Ritmo: ${pace} min/km
-                </div>`;
-            const lapMarker = L.marker([lat, lng], {
-                icon: lapIcon,
-                title: `LAP ${lapNumber} (${lapTypeText})`,
-                opacity: 0.8
-            }).addTo(map).bindPopup(popupContent);
-            lapMarkers.push(lapMarker);
-        }
-        // --- GESTIÓN DE AJUSTES MEJORADA ---
-        function openSettings() {
-            // Cargar valores actuales en el formulario
-            if (autoLapUnit === 'm') {
-                lapDistanceInput.value = (autoLapDistance * 1000).toFixed(0);
-                selectUnit('m');
-            } else {
-                lapDistanceInput.value = autoLapDistance.toFixed(2);
-                selectUnit('km');
-            }
-            lapTimeInput.value = autoLapTime;
-            enableTimeLapCheckbox.checked = autoLapTimeEnabled;
-            enableSoundCheckbox.checked = soundEnabled;
-            lapTimeInput.disabled = !autoLapTimeEnabled;
-            settingsModal.style.display = 'flex';
-        }
-        function closeSettings() {
-            settingsModal.style.display = 'none';
-        }
-        function selectUnit(unit) {
-            autoLapUnit = unit;
-            if (unit === 'km') {
-                unitKmBtn.classList.add('active');
-                unitMBtn.classList.remove('active');
-                lapDistanceInput.step = '0.01';
-                lapDistanceInput.placeholder = 'Ej: 2.0 para 2 km';
-            } else {
-                unitKmBtn.classList.remove('active');
-                unitMBtn.classList.add('active');
-                lapDistanceInput.step = '1';
-                lapDistanceInput.placeholder = 'Ej: 2000 para 2 km';
-            }
-        }
-        function saveSettingsConfig() {
-            const distance = parseFloat(lapDistanceInput.value);
-            const time = parseInt(lapTimeInput.value) || 0;
-            const timeEnabled = enableTimeLapCheckbox.checked;
-            const sound = enableSoundCheckbox.checked;
-            // Validar distancia
-            if (isNaN(distance) || distance <= 0) {
-                alert('Por favor ingresa una distancia válida (mayor a 0)');
-                return;
-            }
-            // Validar tiempo si está habilitado
-            if (timeEnabled && (isNaN(time) || time <= 0 || time > 3600)) {
-                alert('Por favor ingresa un tiempo válido (1-3600 segundos)');
-                return;
-            }
-            // Convertir a la unidad correcta
-            if (autoLapUnit === 'm') {
-                autoLapDistance = distance / 1000;
-            } else {
-                autoLapDistance = distance;
-            }
-            autoLapTime = timeEnabled ? time : 0;
-            autoLapTimeEnabled = timeEnabled;
-            soundEnabled = sound;
-            // Guardar en localStorage
-            localStorage.setItem('autoLapDistance', autoLapDistance);
-            localStorage.setItem('autoLapUnit', autoLapUnit);
-            localStorage.setItem('autoLapTime', autoLapTime);
-            localStorage.setItem('autoLapTimeEnabled', autoLapTimeEnabled);
-            localStorage.setItem('soundEnabled', soundEnabled);
-            // Recalcular objetivos si AutoLap está activo
-            if (autoLapEnabled) {
-                calculateNextAutoLapTargets();
-                updateAutoLapButtonTitle();
-            }
-            alert(`Configuración guardada:
-${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}
-` : ''}${autoLapTimeEnabled && autoLapTime > 0 ? `• Tiempo: ${autoLapTime} segundos
-` : ''}• Sonido: ${sound ? 'Activado' : 'Desactivado'}`);
-            closeSettings();
-        }
-        function loadSavedSettings() {
-            const savedDistance = localStorage.getItem('autoLapDistance');
-            const savedUnit = localStorage.getItem('autoLapUnit');
-            const savedTime = localStorage.getItem('autoLapTime');
-            const savedTimeEnabled = localStorage.getItem('autoLapTimeEnabled');
-            const savedSound = localStorage.getItem('soundEnabled');
-            const savedEnabled = localStorage.getItem('autoLapEnabled');
-            if (savedDistance) autoLapDistance = parseFloat(savedDistance);
-            if (savedUnit) autoLapUnit = savedUnit;
-            if (savedTime) autoLapTime = parseInt(savedTime);
-            if (savedTimeEnabled) autoLapTimeEnabled = (savedTimeEnabled === 'true');
-            if (savedSound !== null) soundEnabled = (savedSound === 'true');
-            if (savedEnabled) autoLapEnabled = (savedEnabled === 'true');
-            if (autoLapEnabled) {
-                autoLapBtn.classList.add('auto-lap-active');
-                autoLapBtn.textContent = 'AUTO LAP ✓';
-                updateAutoLapButtonTitle();
-            }
-        }
-        // --- DETECCIÓN DE ACTIVIDAD ---
-        function detectActivity(speed) {
-            if (speed <= ACTIVITY_THRESHOLDS.STOPPED.max) {
-                return ACTIVITY_THRESHOLDS.STOPPED;
-            } else if (speed <= ACTIVITY_THRESHOLDS.WALKING.max) {
-                return ACTIVITY_THRESHOLDS.WALKING;
-            } else if (speed <= ACTIVITY_THRESHOLDS.RUNNING.max) {
-                return ACTIVITY_THRESHOLDS.RUNNING;
-            } else if (speed <= ACTIVITY_THRESHOLDS.CYCLING.max) {
-                return ACTIVITY_THRESHOLDS.CYCLING;
-            } else {
-                return ACTIVITY_THRESHOLDS.DRIVING;
-            }
-        }
-        function updateActivityIndicator(speed) {
-            const activity = detectActivity(speed);
-            activityIndicator.style.display = 'flex';
-            activityDot.style.backgroundColor = activity.color;
-            activityText.textContent = `${activity.icon} ${activity.name}`;
-            activityIndicator.className = 'activity-indicator';
-            activityIndicator.classList.add(activity.name.toLowerCase());
-            if (speed > ACTIVITY_THRESHOLDS.STOPPED.max) {
-                activityDot.classList.add('pulse');
-            } else {
-                activityDot.classList.remove('pulse');
-            }
-            updateSpeedColor(activity);
-        }
-        function updateSpeedColor(activity) {
-            speedDisplay.className = 'indicator-value';
-            speedDisplay.classList.add(activity.name.toLowerCase());
-        }
-        // --- MANEJO DE BOTONES ---
-        function handleActionButton() {
-            if (!isTracking) {
-                startTracking();
-            } else {
-                recordManualLap();
-                playLapBeep(); // <-- Reproduce el beep al hacer LAP
-            }
-        }
-        // --- FUNCIÓN PARA REPRODUCIR EL BEEP DE LAP ---
-        function playLapBeep() {
-            const ctx = new (window.AudioContext || window.webkitAudioContext)();
-            const oscillator = ctx.createOscillator();
-            const gainNode = ctx.createGain();
-            oscillator.connect(gainNode);
-            gainNode.connect(ctx.destination);
-            oscillator.type = 'sine'; // O 'square' para un beep más fuerte/perceptible
-            oscillator.frequency.value = 880; // Frecuencia en Hz (A5 = 880 Hz, es muy audible)
-            gainNode.gain.value = 0.5; // Volumen (ajusta si es muy bajo o muy alto)
-            oscillator.start();
-            oscillator.stop(ctx.currentTime + 0.2); // Duración del beep: 200 ms
-        }
-        function recordManualLap() {
-            const currentTime = Date.now();
-            const lapTime = currentTime - lastLapTimestamp;
-            const lapDistance = totalDistance - lastLapDistance;
-            // Solo registrar si hay distancia recorrida
-            if (lapDistance < 0.001) {
-                showSimpleNotification("Espera a moverte antes de marcar un LAP");
-                return;
-            }
-            const lap = {
-                number: laps.length + 1,
-                time: lapTime,
-                distance: lapDistance,
-                type: 'manual',
-                pace: calculatePace(lapTime, lapDistance),
-                timestamp: currentTime
-            };
-            laps.push(lap);
-            displayLap(lap);
-            updateTotalLapTime();
-            // Reiniciar cronómetro parcial
-            resetPartialTimer();
-            startPartialTimer();
-            // Marcar LAP en el mapa
-            const lastCoord = routeCoordinates[routeCoordinates.length - 1];
-            if (lastCoord) {
-                createLapMarker(lastCoord[0], lastCoord[1], lap.number, 'manual');
-            }
-            // Reproducir sonido
-            playLapBeep(); // <-- Reproduce el beep al hacer LAP
-            // 2. Reiniciar el cronómetro parcial del botón
-            // 3. Actualizar los marcadores de tiempo para el próximo objetivo
-            lastLapTimestamp = Date.now();
-            lastLapDistance = totalDistance;
-            // Mostrar notificación
-            showLapNotification(lap);
-            // Actualizar tiempos para el próximo LAP
-            lastLapTimestamp = currentTime;
-            lastLapDistance = totalDistance;
-            // Si AutoLap está activo, recalcular objetivos
-            if (autoLapEnabled) {
-                calculateNextAutoLapTargets();
-                updateAutoLapButtonTitle();
-            }
-        }
-        // --- MOSTRAR LISTA DE LAPS MEJORADA ---
-        function displayLap(lap) {
-            const li = document.createElement('li');
-            let typeText, typeClass;
-            if (lap.type === 'distance') { typeText = 'D'; typeClass = 'lap-type-distance'; }
-            else if (lap.type === 'time') { typeText = 'T'; typeClass = 'lap-type-time'; }
-            else if (lap.type === 'both') { typeText = 'DT'; typeClass = 'lap-type-distance'; }
-            else { typeText = 'M'; typeClass = 'lap-type-manual'; }
-  
-            li.innerHTML = `
-                <div class="lap-single-line">
-                <span class="lap-number">LAP ${lap.number}</span>
-                <span class="lap-inline-stats">
-                    <span class="lap-stat-inline lap-time-inline">T: ${formatTime(lap.time)}</span>
-                    <span class="lap-stat-inline lap-distance-inline">D: ${lap.distance.toFixed(2)}km</span>
-                    <span class="lap-stat-inline lap-pace-inline">R: ${lap.pace ? lap.pace.formatted : '----'}</span>
-                    <span class="lap-type-inline ${typeClass}">${typeText}</span>
-                </span>
-                </div>
-            `;
-            lapsList.prepend(li);  // SIN limitVisibleLaps()            
-        }
-        
-        function updateTotalLapTime() {
-            if (laps.length === 0) {
-                totalLapTimeDisplay.textContent = 'Total: 00:00:00';
-                return;
-            }
-            const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
-            totalLapTimeDisplay.textContent = `Total: ${formatTime(totalLapTime)}`;
-            // Ocultar título si solo 2 LAPs
-            if (laps.length <= 2) {
-                lapsContainer.querySelector('h3').style.display = 'none';
-            }
-        }
-        
-        function showSimpleNotification(message) {
-            const notification = document.createElement('div');
-            notification.style.cssText = `
-                position: fixed;
-                top: 50%;
-                left: 50%;
-                transform: translate(-50%, -50%);
-                background-color: rgba(0, 0, 0, 0.8);
-                color: white;
-                padding: 15px 25px;
-                border-radius: 10px;
-                z-index: 5000;
-                font-weight: bold;
-                animation: fadeInOut 2s ease;
-                text-align: center;
-                max-width: 80%;
-            `;
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    document.body.removeChild(notification);
-                }
-            }, 2000);
-        }
-        // --- FUNCIONES DE SEGUIMIENTO ---
-        function startTracking() {
-            resetData();
-            if (isTracking) return;
-            isTracking = true;
-            startTime = Date.now();
-            lastLapTimestamp = startTime; // Inicializa el tiempo para el primer LAP
-            lastLapDistance = 0;
-            actionBtnLabel.textContent = 'LAP';
-            stopBtn.disabled = false;
-            lapsContainer.style.display = 'block';
-            navigator.geolocation.getCurrentPosition((position) => {
-                const { latitude, longitude } = position.coords;
-                routeCoordinates.push([latitude, longitude]);
-                map.setView([latitude, longitude], 17);
-                const startIcon = L.divIcon({
-                    html: '<div class="start-marker-icon">🏁</div>',
-                    className: 'start-marker-div',
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 15]
-                });
-                startMarker = L.marker([latitude, longitude], {
-                    icon: startIcon,
-                    title: 'Inicio',
-                    opacity: 0.8
-                }).addTo(map)
-                    .bindPopup('<div style="font-size: 12px; font-weight: bold; color: #27ae60;">🏁 Inicio</div>')
-                    .openPopup();
-                watchPositionId = navigator.geolocation.watchPosition(updatePosition, handleError, {
-                    enableHighAccuracy: true,
-                    timeout: 10000,
-                    maximumAge: 0
-                });
-                activarWakeLock();
-                document.addEventListener('visibilitychange', handleVisibilityChange);
-                startTime = Date.now();
-                lastLapTimestamp = startTime;
-                timeInterval = setInterval(updateTime, 1000);
-                // Iniciar cronómetro parcial
-                startPartialTimer();
-                // Calcular objetivos iniciales para AutoLap
-                calculateNextAutoLapTargets();
-                lastPos = { 
-                    lat: latitude, 
-                    lng: longitude, 
-                    time: Date.now(),
-                    timestamp: Date.now()
-                };
-                updateActivityIndicator(0);
-                if (isCompassSupported && !compassCalibrated) {
-                    compassStatus.textContent = "Calibrando brújula...";
-                    compassStatus.style.color = "#ffc107";
-                    setTimeout(() => {
-                        compassStatus.textContent = "Brújula activa";
-                        compassStatus.style.color = "#28a745";
-                        compassCalibrated = true;
-                    }, 3000);
-                }
-                if (autoLapEnabled) {
-                    let configMsg = "Auto Lap activado";
-                    if (autoLapDistance > 0) {
-                        configMsg += `
-• Próximo LAP distancia: ${nextAutoLapDistance.toFixed(2)} km`;
-                    }
-                    if (autoLapTimeEnabled && autoLapTime > 0) {
-                        configMsg += `
-• Próximo LAP tiempo: ${formatTime(nextAutoLapTime - startTime)}`;
-                    }
-                    showSimpleNotification(configMsg);
-                    updateAutoLapButtonTitle();
-                }
-            }, handleError, {
-                enableHighAccuracy: true,
-                timeout: 10000,
-                maximumAge: 0
-            });
-            resetPartialTimer();
-            startPartialTimer(); 
-            calculateNextAutoLapTargets();
-        }
-        function stopTracking() {
-            if (isTracking) {
-                // Registrar LAP final si hay distancia
-                if (totalDistance - lastLapDistance > 0.001) {
-                    recordManualLap();
-                }
-            }
-            liberarWakeLock();
-            document.removeEventListener('visibilitychange', handleVisibilityChange);
-            isTracking = false;
-            if (watchPositionId) {
-                navigator.geolocation.clearWatch(watchPositionId);
-                watchPositionId = null;
-            }
-            clearInterval(timeInterval);
-            timeInterval = null;
-            // Detener cronómetro parcial
-            stopPartialTimer();
-            actionBtnLabel.textContent = 'INICIAR';
-            stopBtn.disabled = true;
-            activityIndicator.style.display = 'none';
-            const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
-            const totalTime = Date.now() - startTime;
-            alert(`🏁 RECORRIDO FINALIZADO
+}
+} else {
+autoLapBtn.classList.remove('auto-lap-active');
+autoLapBtn.textContent = 'AUTO LAP';
+autoLapBtn.title = 'Activar Auto Lap';
+}
+}
+function calculateNextAutoLapTargets() {
+if (autoLapDistance > 0) {
+nextAutoLapDistance = lastLapDistance + autoLapDistance;
+} else {
+nextAutoLapDistance = Infinity;
+}
+if (autoLapTimeEnabled && autoLapTime > 0) {
+const timeSinceLastLap = lastLapTimestamp === 0 ? 0 : Date.now() - lastLapTimestamp;
+nextAutoLapTime = lastLapTimestamp + (autoLapTime * 1000);
+} else {
+nextAutoLapTime = Infinity;
+}
+}
+function updateAutoLapButtonTitle() {
+let titleText = 'Auto Lap activado';
+if (autoLapDistance > 0) {
+titleText += `\n• Próximo LAP distancia: ${nextAutoLapDistance.toFixed(2)} km`;
+}
+if (autoLapTimeEnabled && autoLapTime > 0) {
+titleText += `\n• Próximo LAP tiempo: ${formatTime(nextAutoLapTime - (lastLapTimestamp || Date.now()))}`;
+}
+autoLapBtn.title = titleText;
+}
+function checkAutoLap() {
+if (!autoLapEnabled || !isTracking) return;
+const currentTime = Date.now();
+const currentDistance = totalDistance;
+let shouldRecordLap = false;
+let lapType = '';
+if (autoLapDistance > 0 && currentDistance >= nextAutoLapDistance) {
+shouldRecordLap = true;
+lapType = 'distance';
+}
+if (autoLapTimeEnabled && autoLapTime > 0 && currentTime >= nextAutoLapTime) {
+shouldRecordLap = true;
+lapType = lapType ? 'both' : 'time';
+}
+if (shouldRecordLap) {
+recordAutoLap(lapType);
+}
+}
+function recordAutoLap(type) {
+const currentTime = Date.now();
+const lapTime = currentTime - lastLapTimestamp;
+const lapDistance = totalDistance - lastLapDistance;
+if (lapDistance < 0.001) {
+calculateNextAutoLapTargets();
+return;
+}
+const lap = {
+number: laps.length + 1,
+time: lapTime,
+distance: lapDistance,
+type: type,
+pace: calculatePace(lapTime, lapDistance),
+timestamp: currentTime
+};
+laps.push(lap);
+displayLap(lap);
+updateTotalLapTime();
+resetPartialTimer();
+startPartialTimer();
+const lastCoord = routeCoordinates[routeCoordinates.length - 1];
+if (lastCoord) {
+createLapMarker(lastCoord[0], lastCoord[1], lap.number, type, lap.pace ? lap.pace.formatted : '--:--');
+}
+playLapSound();
+lastLapTimestamp = Date.now();
+lastLapDistance = totalDistance;
+showLapNotification(lap);
+lastLapTimestamp = currentTime;
+lastLapDistance = totalDistance;
+calculateNextAutoLapTargets();
+updateAutoLapButtonTitle();
+}
+function calculatePace(lapTimeMs, lapDistanceKm) {
+if (lapDistanceKm <= 0) return null;
+const paceSecondsPerKm = (lapTimeMs / 1000) / lapDistanceKm;
+const paceMinutes = Math.floor(paceSecondsPerKm / 60);
+const paceSeconds = Math.floor(paceSecondsPerKm % 60);
+return {
+minutes: paceMinutes,
+seconds: paceSeconds,
+formatted: `${String(paceMinutes).padStart(2, '0')}:${String(paceSeconds).padStart(2, '0')}`
+};
+}
+function showLapNotification(lap) {
+const notification = document.createElement('div');
+notification.className = 'lap-notification';
+let typeText, typeClass;
+if (lap.type === 'distance') {
+typeText = '📏 Por Distancia';
+typeClass = 'lap-type-distance';
+} else if (lap.type === 'time') {
+typeText = '⏱️ Por Tiempo';
+typeClass = 'lap-type-time';
+} else if (lap.type === 'both') {
+typeText = '📏⏱️ Por Distancia y Tiempo';
+typeClass = 'lap-type-distance';
+} else {
+typeText = '👆 Manual';
+typeClass = 'lap-type-manual';
+}
+notification.innerHTML = `
+<h3>🏁 LAP ${lap.number} COMPLETADO!</h3>
+<div class="lap-details">
+<div class="lap-detail">
+<span class="label">TIEMPO DEL LAP</span>
+<span class="value">${formatTime(lap.time)}</span>
+</div>
+<div class="lap-detail">
+<span class="label">DISTANCIA</span>
+<span class="value">${lap.distance.toFixed(2)} km</span>
+</div>
+<div class="lap-detail">
+<span class="label">RITMO PROMEDIO</span>
+<span class="value">${lap.pace ? lap.pace.formatted : '--:--'}</span>
+</div>
+<div class="lap-detail">
+<span class="label">DISTANCIA TOTAL</span>
+<span class="value">${totalDistance.toFixed(2)} km</span>
+</div>
+</div>
+<div class="lap-type ${typeClass}">${typeText}</div>
+`;
+document.body.appendChild(notification);
+setTimeout(() => {
+if (notification.parentNode) {
+document.body.removeChild(notification);
+}
+}, 5000);
+}
+
+// --- MARCADORES ---
+function checkAndPlaceKmMarker() {
+if (totalDistance - lastKmDistance >= 1.0) {
+const lastCoord = routeCoordinates[routeCoordinates.length - 1];
+if (lastCoord) {
+createKmMarker(lastCoord[0], lastCoord[1], nextKmMarker);
+lastKmDistance = Math.floor(totalDistance);
+nextKmMarker++;
+}
+}
+}
+function createKmMarker(lat, lng, kmNumber) {
+const kmIcon = L.divIcon({
+html: `<div class="km-marker">${kmNumber}</div>`,
+className: 'km-marker-div',
+iconSize: [30, 30],
+iconAnchor: [15, 15]
+});
+const kmMarker = L.marker([lat, lng], {
+icon: kmIcon,
+title: `Kilómetro ${kmNumber}`,
+opacity: 0.7
+}).addTo(map)
+.bindPopup(`<div style="font-size: 11px; color: #2c3e50;">📏 Kilómetro ${kmNumber}<br>Distancia: ${totalDistance.toFixed(2)} km</div>`);
+kmMarkers.push(kmMarker);
+}
+function createLapMarker(lat, lng, lapNumber, type, pace) {
+const lapIcon = L.divIcon({
+html: `<div class="lap-marker">L${lapNumber}</div>`,
+className: 'lap-marker-div',
+iconSize: [34, 34],
+iconAnchor: [17, 17]
+});
+const lapTypeText = type === 'distance' ? 'Distancia' :
+type === 'time' ? 'Tiempo' :
+type === 'both' ? 'Distancia y Tiempo' : 'Manual';
+const popupContent = `
+<div style="font-size: 11px; color: #2c3e50;">
+🏁 LAP ${lapNumber}<br>
+Tipo: ${lapTypeText}<br>
+Distancia: ${(totalDistance).toFixed(2)} km<br>
+Ritmo: ${pace} min/km
+</div>`;
+const lapMarker = L.marker([lat, lng], {
+icon: lapIcon,
+title: `LAP ${lapNumber} (${lapTypeText})`,
+opacity: 0.8
+}).addTo(map).bindPopup(popupContent);
+lapMarkers.push(lapMarker);
+}
+
+// --- AJUSTES ---
+function openSettings() {
+if (autoLapUnit === 'm') {
+lapDistanceInput.value = (autoLapDistance * 1000).toFixed(0);
+selectUnit('m');
+} else {
+lapDistanceInput.value = autoLapDistance.toFixed(2);
+selectUnit('km');
+}
+lapTimeInput.value = autoLapTime;
+enableTimeLapCheckbox.checked = autoLapTimeEnabled;
+enableSoundCheckbox.checked = soundEnabled;
+lapTimeInput.disabled = !autoLapTimeEnabled;
+settingsModal.style.display = 'flex';
+}
+function closeSettings() {
+settingsModal.style.display = 'none';
+}
+function selectUnit(unit) {
+autoLapUnit = unit;
+if (unit === 'km') {
+unitKmBtn.classList.add('active');
+unitMBtn.classList.remove('active');
+lapDistanceInput.step = '0.01';
+lapDistanceInput.placeholder = 'Ej: 2.0 para 2 km';
+} else {
+unitKmBtn.classList.remove('active');
+unitMBtn.classList.add('active');
+lapDistanceInput.step = '1';
+lapDistanceInput.placeholder = 'Ej: 2000 para 2 km';
+}
+}
+function saveSettingsConfig() {
+const distance = parseFloat(lapDistanceInput.value);
+const time = parseInt(lapTimeInput.value) || 0;
+const timeEnabled = enableTimeLapCheckbox.checked;
+const sound = enableSoundCheckbox.checked;
+if (isNaN(distance) || distance <= 0) {
+alert('Por favor ingresa una distancia válida (mayor a 0)');
+return;
+}
+if (timeEnabled && (isNaN(time) || time <= 0 || time > 3600)) {
+alert('Por favor ingresa un tiempo válido (1-3600 segundos)');
+return;
+}
+if (autoLapUnit === 'm') {
+autoLapDistance = distance / 1000;
+} else {
+autoLapDistance = distance;
+}
+autoLapTime = timeEnabled ? time : 0;
+autoLapTimeEnabled = timeEnabled;
+soundEnabled = sound;
+if (autoLapEnabled) {
+calculateNextAutoLapTargets();
+updateAutoLapButtonTitle();
+}
+alert(`Configuración guardada:
+${autoLapDistance > 0 ? `• Distancia: ${distance} ${autoLapUnit}\n` : ''}${autoLapTimeEnabled && autoLapTime > 0 ? `• Tiempo: ${autoLapTime} segundos\n` : ''}• Sonido: ${sound ? 'Activado' : 'Desactivado'}`);
+closeSettings();
+}
+function loadSavedSettings() {
+const savedDistance = localStorage.getItem('autoLapDistance');
+const savedUnit = localStorage.getItem('autoLapUnit');
+const savedTime = localStorage.getItem('autoLapTime');
+const savedTimeEnabled = localStorage.getItem('autoLapTimeEnabled');
+const savedSound = localStorage.getItem('soundEnabled');
+const savedEnabled = localStorage.getItem('autoLapEnabled');
+if (savedDistance) autoLapDistance = parseFloat(savedDistance);
+if (savedUnit) autoLapUnit = savedUnit;
+if (savedTime) autoLapTime = parseInt(savedTime);
+if (savedTimeEnabled) autoLapTimeEnabled = (savedTimeEnabled === 'true');
+if (savedSound !== null) soundEnabled = (savedSound === 'true');
+if (savedEnabled) autoLapEnabled = (savedEnabled === 'true');
+if (autoLapEnabled) {
+autoLapBtn.classList.add('auto-lap-active');
+autoLapBtn.textContent = 'AUTO LAP ✓';
+updateAutoLapButtonTitle();
+}
+}
+
+// --- ACTIVIDAD ---
+function detectActivity(speed) {
+if (speed <= ACTIVITY_THRESHOLDS.STOPPED.max) {
+return ACTIVITY_THRESHOLDS.STOPPED;
+} else if (speed <= ACTIVITY_THRESHOLDS.WALKING.max) {
+return ACTIVITY_THRESHOLDS.WALKING;
+} else if (speed <= ACTIVITY_THRESHOLDS.RUNNING.max) {
+return ACTIVITY_THRESHOLDS.RUNNING;
+} else if (speed <= ACTIVITY_THRESHOLDS.CYCLING.max) {
+return ACTIVITY_THRESHOLDS.CYCLING;
+} else {
+return ACTIVITY_THRESHOLDS.DRIVING;
+}
+}
+function updateActivityIndicator(speed) {
+const activity = detectActivity(speed);
+activityIndicator.style.display = 'flex';
+activityDot.style.backgroundColor = activity.color;
+activityText.textContent = `${activity.icon} ${activity.name}`;
+activityIndicator.className = 'activity-indicator';
+activityIndicator.classList.add(activity.name.toLowerCase());
+if (speed > ACTIVITY_THRESHOLDS.STOPPED.max) {
+activityDot.classList.add('pulse');
+} else {
+activityDot.classList.remove('pulse');
+}
+updateSpeedColor(activity);
+}
+function updateSpeedColor(activity) {
+speedDisplay.className = 'indicator-value';
+speedDisplay.classList.add(activity.name.toLowerCase());
+}
+
+// --- BOTONES ---
+function handleActionButton() {
+if (!isTracking) {
+startTracking();
+} else {
+recordManualLap();
+}
+}
+function playLapBeep() {
+const ctx = new (window.AudioContext || window.webkitAudioContext)();
+const oscillator = ctx.createOscillator();
+const gainNode = ctx.createGain();
+oscillator.connect(gainNode);
+gainNode.connect(ctx.destination);
+oscillator.type = 'sine';
+oscillator.frequency.value = 880;
+gainNode.gain.value = 0.5;
+oscillator.start();
+oscillator.stop(ctx.currentTime + 0.2);
+}
+function recordManualLap() {
+const currentTime = Date.now();
+const lapTime = currentTime - lastLapTimestamp;
+const lapDistance = totalDistance - lastLapDistance;
+if (lapDistance < 0.001) {
+showSimpleNotification("Espera a moverte antes de marcar un LAP");
+return;
+}
+const lap = {
+number: laps.length + 1,
+time: lapTime,
+distance: lapDistance,
+type: 'manual',
+pace: calculatePace(lapTime, lapDistance),
+timestamp: currentTime
+};
+laps.push(lap);
+displayLap(lap);
+updateTotalLapTime();
+resetPartialTimer();
+startPartialTimer();
+const lastCoord = routeCoordinates[routeCoordinates.length - 1];
+if (lastCoord) {
+createLapMarker(lastCoord[0], lastCoord[1], lap.number, 'manual');
+}
+playLapBeep();
+lastLapTimestamp = Date.now();
+lastLapDistance = totalDistance;
+showLapNotification(lap);
+lastLapTimestamp = currentTime;
+lastLapDistance = totalDistance;
+if (autoLapEnabled) {
+calculateNextAutoLapTargets();
+updateAutoLapButtonTitle();
+}
+}
+
+// --- LAPS ---
+function displayLap(lap) {
+const li = document.createElement('li');
+let typeText, typeClass;
+if (lap.type === 'distance') { typeText = 'D'; typeClass = 'lap-type-distance'; }
+else if (lap.type === 'time') { typeText = 'T'; typeClass = 'lap-type-time'; }
+else if (lap.type === 'both') { typeText = 'DT'; typeClass = 'lap-type-distance'; }
+else { typeText = 'M'; typeClass = 'lap-type-manual'; }
+li.innerHTML = `
+<div class="lap-single-line">
+<span class="lap-number">LAP ${lap.number}</span>
+<span class="lap-inline-stats">
+<span class="lap-stat-inline lap-time-inline">T: ${formatTime(lap.time)}</span>
+<span class="lap-stat-inline lap-distance-inline">D: ${lap.distance.toFixed(2)}km</span>
+<span class="lap-stat-inline lap-pace-inline">R: ${lap.pace ? lap.pace.formatted : '----'}</span>
+<span class="lap-type-inline ${typeClass}">${typeText}</span>
+</span>
+</div>
+`;
+lapsList.prepend(li);
+}
+function updateTotalLapTime() {
+if (laps.length === 0) {
+totalLapTimeDisplay.textContent = 'Total: 00:00:00';
+return;
+}
+const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
+totalLapTimeDisplay.textContent = `Total: ${formatTime(totalLapTime)}`;
+if (laps.length <= 2) {
+lapsContainer.querySelector('h3').style.display = 'none';
+}
+}
+function showSimpleNotification(message) {
+const notification = document.createElement('div');
+notification.style.cssText = `
+position: fixed;
+top: 50%;
+left: 50%;
+transform: translate(-50%, -50%);
+background-color: rgba(0, 0, 0, 0.8);
+color: white;
+padding: 15px 25px;
+border-radius: 10px;
+z-index: 5000;
+font-weight: bold;
+animation: fadeInOut 2s ease;
+text-align: center;
+max-width: 80%;
+`;
+notification.textContent = message;
+document.body.appendChild(notification);
+setTimeout(() => {
+if (notification.parentNode) {
+document.body.removeChild(notification);
+}
+}, 2000);
+}
+
+// --- SEGUIMIENTO ---
+function startTracking() {
+resetData();
+if (isTracking) return;
+isTracking = true;
+startTime = Date.now();
+lastLapTimestamp = startTime;
+lastLapDistance = 0;
+actionBtnLabel.textContent = 'LAP';
+stopBtn.disabled = false;
+lapsContainer.style.display = 'block';
+navigator.geolocation.getCurrentPosition((position) => {
+const { latitude, longitude } = position.coords;
+routeCoordinates.push([latitude, longitude]);
+map.setView([latitude, longitude], 17);
+const startIcon = L.divIcon({
+html: '<div class="start-marker-icon">🏁</div>',
+className: 'start-marker-div',
+iconSize: [30, 30],
+iconAnchor: [15, 15]
+});
+startMarker = L.marker([latitude, longitude], {
+icon: startIcon,
+title: 'Inicio',
+opacity: 0.8
+}).addTo(map)
+.bindPopup('<div style="font-size: 12px; font-weight: bold; color: #27ae60;">🏁 Inicio</div>')
+.openPopup();
+watchPositionId = navigator.geolocation.watchPosition(updatePosition, handleError, {
+enableHighAccuracy: true,
+timeout: 10000,
+maximumAge: 0
+});
+activarWakeLock();
+document.addEventListener('visibilitychange', handleVisibilityChange);
+startTime = Date.now();
+lastLapTimestamp = startTime;
+timeInterval = setInterval(updateTime, 1000);
+startPartialTimer();
+calculateNextAutoLapTargets();
+lastPos = {
+lat: latitude,
+lng: longitude,
+time: Date.now(),
+timestamp: Date.now()
+};
+updateActivityIndicator(0);
+if (isCompassSupported && !compassCalibrated) {
+compassStatus.textContent = "Calibrando brújula...";
+compassStatus.style.color = "#ffc107";
+setTimeout(() => {
+compassStatus.textContent = "Brújula activa";
+compassStatus.style.color = "#28a745";
+compassCalibrated = true;
+}, 3000);
+}
+if (autoLapEnabled) {
+let configMsg = "Auto Lap activado";
+if (autoLapDistance > 0) {
+configMsg += `\n• Próximo LAP distancia: ${nextAutoLapDistance.toFixed(2)} km`;
+}
+if (autoLapTimeEnabled && autoLapTime > 0) {
+configMsg += `\n• Próximo LAP tiempo: ${formatTime(nextAutoLapTime - startTime)}`;
+}
+showSimpleNotification(configMsg);
+updateAutoLapButtonTitle();
+}
+}, handleError, {
+enableHighAccuracy: true,
+timeout: 10000,
+maximumAge: 0
+});
+resetPartialTimer();
+startPartialTimer();
+calculateNextAutoLapTargets();
+}
+function stopTracking() {
+if (isTracking) {
+if (totalDistance - lastLapDistance > 0.001) {
+recordManualLap();
+}
+}
+liberarWakeLock();
+document.removeEventListener('visibilitychange', handleVisibilityChange);
+isTracking = false;
+if (watchPositionId) {
+navigator.geolocation.clearWatch(watchPositionId);
+watchPositionId = null;
+}
+clearInterval(timeInterval);
+timeInterval = null;
+stopPartialTimer();
+actionBtnLabel.textContent = 'INICIAR';
+stopBtn.disabled = true;
+activityIndicator.style.display = 'none';
+const totalLapTime = laps.reduce((sum, lap) => sum + lap.time, 0);
+const totalTime = Date.now() - startTime;
+alert(`🏁 RECORRIDO FINALIZADO
 📏 Distancia: ${totalDistance.toFixed(2)} km
 ⏱️ Tiempo total: ${formatTime(totalTime)}
 🏁 Vueltas: ${laps.length}
 ⏱️ Tiempo en LAPs: ${formatTime(totalLapTime)}
 📍 Marcadores: ${kmMarkers.length} km + ${lapMarkers.length} LAPs`);
-        }
-        function updatePosition(position) {
-            const { latitude, longitude } = position.coords;
-            const newLatLng = L.latLng(latitude, longitude);
-            routeCoordinates.push([latitude, longitude]);
-            if (currentPositionMarker) {
-                currentPositionMarker.setLatLng(newLatLng);
-            } else {
-                const currentIcon = L.divIcon({
-                    html: '<div class="current-marker-icon">📍</div>',
-                    className: 'current-marker-div',
-                    iconSize: [30, 30],
-                    iconAnchor: [15, 15]
-                });
-                currentPositionMarker = L.marker([latitude, longitude], {
-                    icon: currentIcon,
-                    title: 'Tu posición',
-                    opacity: 0.9
-                }).addTo(map)
-                    .bindPopup('<div style="font-size: 12px; font-weight: bold; color: #e74c3c;">📍 Tu posición actual</div>');
-            }
-            if (pathPolyline) {
-                pathPolyline.addLatLng(newLatLng);
-            } else {
-                pathPolyline = L.polyline(routeCoordinates, { 
-                    color: '#3498db',
-                    weight: 4,
-                    opacity: 0.8,
-                    lineJoin: 'round'
-                }).addTo(map);
-            }
-            // Cálculo de velocidad
-            if (lastPos && lastPos.lat && lastPos.lng) {
-                const distKm = calculateDistance(
-                    lastPos.lat, lastPos.lng,
-                    latitude, longitude
-                );
-                const currentTime = position.timestamp || Date.now();
-                const timeS = (currentTime - lastPos.time) / 1000;
-                if (timeS > 0) {
-                    const instantSpeed = (distKm / timeS) * 3600;
-                    speedHistory.push(instantSpeed);
-                    if (speedHistory.length > MAX_HISTORY) {
-                        speedHistory.shift();
-                    }
-                    const sum = speedHistory.reduce((a, b) => a + b, 0);
-                    speedKmh = sum / speedHistory.length;
-                    if (speedKmh >= 0 && speedKmh < 200) {
-                        speedDisplay.textContent = speedKmh.toFixed(1) + ' ';
-                        updateActivityIndicator(speedKmh);
-                    } else {
-                        speedDisplay.textContent = '0.0';
-                        updateActivityIndicator(0);
-                    }
-                } else {
-                    speedDisplay.textContent = '0.0';
-                    updateActivityIndicator(0);
-                }
-            } else {
-                speedDisplay.textContent = '0.0';
-                updateActivityIndicator(0);
-            }
-            lastPos = { 
-                lat: latitude, 
-                lng: longitude, 
-                time: position.timestamp || Date.now(),
-                timestamp: position.timestamp || Date.now()
-            };
-            map.panTo(newLatLng);
-            updateDistance();
-            // Verificar Auto Lap y marcadores de km
-            checkAutoLap();
-            checkAndPlaceKmMarker();
-        }
-        // --- FUNCIONES DE ESTADÍSTICAS ---
-        function updateDistance() {
-            if (routeCoordinates.length < 2) {
-                totalDistance = 0;
-                distanceDisplay.textContent = "0.00 km";
-                return;
-            }
-            let newDistance = 0;
-            for (let i = 0; i < routeCoordinates.length - 1; i++) {
-                newDistance += calculateDistance(
-                    routeCoordinates[i][0], routeCoordinates[i][1],
-                    routeCoordinates[i+1][0], routeCoordinates[i+1][1]
-                );
-            }
-            totalDistance = newDistance;
-            distanceDisplay.textContent = totalDistance.toFixed(2);
-            updatePace();
-        }
-        function updateTime() {
-            if (!startTime) return;
-            const elapsedTime = Date.now() - startTime;
-            const totalSeconds = Math.floor(elapsedTime / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            timeDisplay.textContent = formattedTime;
-            updatePace();
-        }
-        function updatePace() {
-            if (totalDistance > 0.01 && startTime) {
-                const elapsedTimeInSeconds = (Date.now() - startTime) / 1000;
-                const paceInSecondsPerKm = elapsedTimeInSeconds / totalDistance;
-                const paceMinutes = Math.floor(paceInSecondsPerKm / 60);
-                const paceSeconds = Math.floor(paceInSecondsPerKm % 60);
-                paceDisplay.textContent = `${String(paceMinutes).padStart(2, '0')}:${String(paceSeconds).padStart(2, '0')}`;
-            } else {
-                paceDisplay.textContent = '--:--';
-            }
-        }
-        // --- FUNCIONES AUXILIARES ---
-        function resetData() {
-            // Limpiar marcadores y líneas
-            if (pathPolyline) {
-                map.removeLayer(pathPolyline);
-                pathPolyline = null;
-            }
-            if (startMarker) {
-                map.removeLayer(startMarker);
-                startMarker = null;
-            }
-            if (currentPositionMarker) {
-                map.removeLayer(currentPositionMarker);
-                currentPositionMarker = null;
-            }
-            // Limpiar marcadores de km y laps
-            kmMarkers.forEach(marker => {
-                if (marker && marker.remove) {
-                    map.removeLayer(marker);
-                }
-            });
-            kmMarkers = [];
-            lapMarkers.forEach(marker => {
-                if (marker && marker.remove) {
-                    map.removeLayer(marker);
-                }
-            });
-            lapMarkers = [];
-            nextKmMarker = 1;
-            lastKmDistance = 0;
-            nextAutoLapDistance = 0;
-            nextAutoLapTime = 0;
-            routeCoordinates = [];
-            totalDistance = 0;
-            laps = [];
-            lastLapTimestamp = 0;
-            lastLapDistance = 0;
-            lastPos = null;
-            speedKmh = 0;
-            speedHistory = [];
-            lapsList.innerHTML = '';
-            totalLapTimeDisplay.textContent = 'Total: 00:00:00';
-            distanceDisplay.textContent = "0.00 km";
-            timeDisplay.textContent = "00:00:00";
-            paceDisplay.textContent = "--:--";
-            speedDisplay.textContent = "0.0";
-            speedDisplay.className = 'indicator-value';
-            activityIndicator.style.display = 'none';
-            // Reiniciar cronómetro parcial
-            resetPartialTimer();
-        }
-        function formatTime(milliseconds) {
-            const totalSeconds = Math.floor(milliseconds / 1000);
-            const hours = Math.floor(totalSeconds / 3600);
-            const minutes = Math.floor((totalSeconds % 3600) / 60);
-            const seconds = totalSeconds % 60;
-            if (hours > 0) {
-                return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            } else {
-                return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-            }
-        }
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371;
-            const dLat = toRad(lat2 - lat1);
-            const dLon = toRad(lon2 - lon1);
-            const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-        function toRad(deg) {
-            return deg * (Math.PI / 180);
-        }
-        // --- FUNCIONES DE WAKE LOCK ---
-        async function activarWakeLock() {
-            if ('wakeLock' in navigator) {
-                try {
-                    wakeLock = await navigator.wakeLock.request('screen');
-                } catch (err) {
-                    console.error(`Error al solicitar Wake Lock: ${err.name}, ${err.message}`);
-                }
-            }
-        }
-        function liberarWakeLock() {
-            if (wakeLock) {
-                wakeLock.release()
-                    .then(() => {
-                        wakeLock = null;
-                    })
-                    .catch((err) => {
-                        console.error(`Error al liberar Wake Lock: ${err.name}, ${err.message}`);
-                    });
-            }
-        }
-        function handleVisibilityChange() {
-            if (wakeLock !== null && document.visibilityState === 'visible') {
-                activarWakeLock();
-            }
-        }
-        function handleError(error) {
-            console.error("Error de Geolocalización: ", error);
-            alert("No se pudo obtener tu ubicación. Asegúrate de que el GPS esté activado y hayas dado los permisos necesarios.");
-            stopTracking();
-        }
-    </script>
+}
+function updatePosition(position) {
+const { latitude, longitude } = position.coords;
+const newLatLng = L.latLng(latitude, longitude);
+routeCoordinates.push([latitude, longitude]);
+if (currentPositionMarker) {
+currentPositionMarker.setLatLng(newLatLng);
+} else {
+const currentIcon = L.divIcon({
+html: '<div class="current-marker-icon">📍</div>',
+className: 'current-marker-div',
+iconSize: [30, 30],
+iconAnchor: [15, 15]
+});
+currentPositionMarker = L.marker([latitude, longitude], {
+icon: currentIcon,
+title: 'Tu posición',
+opacity: 0.9
+}).addTo(map)
+.bindPopup('<div style="font-size: 12px; font-weight: bold; color: #e74c3c;">📍 Tu posición actual</div>');
+}
+if (pathPolyline) {
+pathPolyline.addLatLng(newLatLng);
+} else {
+pathPolyline = L.polyline(routeCoordinates, {
+color: '#3498db',
+weight: 4,
+opacity: 0.8,
+lineJoin: 'round'
+}).addTo(map);
+}
+// Cálculo de velocidad
+if (lastPos && lastPos.lat && lastPos.lng) {
+const distKm = calculateDistance(
+lastPos.lat, lastPos.lng,
+latitude, longitude
+);
+const currentTime = position.timestamp || Date.now();
+const timeS = (currentTime - lastPos.time) / 1000;
+if (timeS > 0) {
+const instantSpeed = (distKm / timeS) * 3600;
+speedHistory.push(instantSpeed);
+if (speedHistory.length > MAX_HISTORY) {
+speedHistory.shift();
+}
+const sum = speedHistory.reduce((a, b) => a + b, 0);
+speedKmh = sum / speedHistory.length;
+// Actualizar promedio de velocidad
+totalSpeedSum += speedKmh;
+speedCount++;
+} else {
+speedKmh = 0;
+}
+} else {
+speedKmh = 0;
+}
+// Actualizar todas las vistas
+updateSpeedDisplay();
+updateDistanceDisplay();
+updatePaceDisplay();
+updateActivityIndicator(speedKmh);
+lastPos = {
+lat: latitude,
+lng: longitude,
+time: position.timestamp || Date.now(),
+timestamp: position.timestamp || Date.now()
+};
+map.panTo(newLatLng);
+updateDistance();
+checkAutoLap();
+checkAndPlaceKmMarker();
+}
+function updateDistance() {
+if (routeCoordinates.length < 2) {
+totalDistance = 0;
+} else {
+let newDistance = 0;
+for (let i = 0; i < routeCoordinates.length - 1; i++) {
+newDistance += calculateDistance(
+routeCoordinates[i][0], routeCoordinates[i][1],
+routeCoordinates[i+1][0], routeCoordinates[i+1][1]
+);
+}
+totalDistance = newDistance;
+}
+updateDistanceDisplay();
+updatePaceDisplay();
+}
+function updateTime() {
+if (!startTime) return;
+const elapsedTime = Date.now() - startTime;
+const totalSeconds = Math.floor(elapsedTime / 1000);
+const hours = Math.floor(totalSeconds / 3600);
+const minutes = Math.floor((totalSeconds % 3600) / 60);
+const seconds = totalSeconds % 60;
+const formattedTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+timeDisplay.textContent = formattedTime;
+}
+function updatePace() {
+// Se maneja ahora en updatePaceDisplay
+}
+
+// --- AUXILIARES ---
+function resetData() {
+if (pathPolyline) {
+map.removeLayer(pathPolyline);
+pathPolyline = null;
+}
+if (startMarker) {
+map.removeLayer(startMarker);
+startMarker = null;
+}
+if (currentPositionMarker) {
+map.removeLayer(currentPositionMarker);
+currentPositionMarker = null;
+}
+kmMarkers.forEach(marker => {
+if (marker && marker.remove) {
+map.removeLayer(marker);
+}
+});
+kmMarkers = [];
+lapMarkers.forEach(marker => {
+if (marker && marker.remove) {
+map.removeLayer(marker);
+}
+});
+lapMarkers = [];
+nextKmMarker = 1;
+lastKmDistance = 0;
+nextAutoLapDistance = 0;
+nextAutoLapTime = 0;
+routeCoordinates = [];
+totalDistance = 0;
+laps = [];
+lastLapTimestamp = 0;
+lastLapDistance = 0;
+lastPos = null;
+speedKmh = 0;
+speedHistory = [];
+totalSpeedSum = 0;
+speedCount = 0;
+lapsList.innerHTML = '';
+totalLapTimeDisplay.textContent = 'Total: 00:00:00';
+distanceDisplay.textContent = "0.00";
+timeDisplay.textContent = "00:00:00";
+paceDisplay.textContent = "--:--";
+speedDisplay.textContent = "0.0";
+speedDisplay.className = 'indicator-value';
+activityIndicator.style.display = 'none';
+resetPartialTimer();
+// Restablecer modos
+speedMode = 'instant';
+distanceUnit = 'km';
+paceMode = 'average';
+document.querySelector('#speed-box .stat-label').textContent = 'KM/H';
+document.querySelector('#distance-box .stat-label').textContent = 'KM';
+document.querySelector('#pace-box .stat-label').textContent = 'RITMO';
+}
+function formatTime(milliseconds) {
+const totalSeconds = Math.floor(milliseconds / 1000);
+const hours = Math.floor(totalSeconds / 3600);
+const minutes = Math.floor((totalSeconds % 3600) / 60);
+const seconds = totalSeconds % 60;
+if (hours > 0) {
+return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+} else {
+return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+}
+function calculateDistance(lat1, lon1, lat2, lon2) {
+const R = 6371;
+const dLat = toRad(lat2 - lat1);
+const dLon = toRad(lon2 - lon1);
+const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+Math.sin(dLon / 2) * Math.sin(dLon / 2);
+const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+return R * c;
+}
+function toRad(deg) {
+return deg * (Math.PI / 180);
+}
+// --- WAKE LOCK ---
+async function activarWakeLock() {
+if ('wakeLock' in navigator) {
+try {
+wakeLock = await navigator.wakeLock.request('screen');
+} catch (err) {
+console.error(`Error al solicitar Wake Lock: ${err.name}, ${err.message}`);
+}
+}
+}
+function liberarWakeLock() {
+if (wakeLock) {
+wakeLock.release()
+.then(() => {
+wakeLock = null;
+})
+.catch((err) => {
+console.error(`Error al liberar Wake Lock: ${err.name}, ${err.message}`);
+});
+}
+}
+function handleVisibilityChange() {
+if (wakeLock !== null && document.visibilityState === 'visible') {
+activarWakeLock();
+}
+}
+function handleError(error) {
+console.error("Error de Geolocalización: ", error);
+alert("No se pudo obtener tu ubicación. Asegúrate de que el GPS esté activado y hayas dado los permisos necesarios.");
+stopTracking();
+}
+</script>
 </body>
 </html>
-```
+
