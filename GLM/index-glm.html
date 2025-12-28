@@ -11,11 +11,11 @@
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
-            --primary-color: #04ff86; /* Verde Neón */
+            --primary-color: #00e676; /* Verde Neón */
             --secondary-color: #2979ff; /* Azul Eléctrico */
             --danger-color: #ff1744;
             --text-main: #ffffff;
-            --text-dim: #fbff00;
+            --text-dim: #f8fc02;
             --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --font-mono: 'Courier New', Courier, monospace;
         }
@@ -28,25 +28,21 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: var(--font-main);
-            /* CAMBIO IMPORTANTE: Usamos dvh para adaptarse a la barra de navegación móvil */
-            height: 100dvh;
-            height: 100vh; /* Fallback para navegadores antiguos */
+            height: 100vh;
             display: flex;
             flex-direction: column;
-            /* overflow: hidden;  Evitamos que el body entero haga scroll */
+            overflow: hidden;
         }
 
         /* --- Header & Status --- */
         header {
             padding: 10px 15px;
-            padding-top: max(10px, env(safe-area-inset-top)); /* Espacio seguro para notch/cámara */
             background-color: var(--surface-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #333;
-            height: auto; /* Altura automática para adaptarse al padding */
-            flex-shrink: 0; /* No permitir que se encoja */            
+            height: 60px;
         }
 
         .status-badge {
@@ -78,12 +74,11 @@
 
         /* --- Main Dashboard --- */
         main {
-            flex: 1; /* Ocupa todo el espacio disponible entre header y footer */
+            flex: 1;
             display: flex;
             flex-direction: column;
-            overflow-y: auto; /* Permite scroll solo en esta parte si el contenido es largo */
+            overflow-y: auto;
             position: relative;
-            min-height: 0; /* Necesario para que el scroll flex funcione en algunos navegadores */
         }
 
         /* Grid de Estadísticas */
@@ -92,7 +87,6 @@
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             padding: 15px;
-            flex-shrink: 0; /* Mantiene el grid fijo */
         }
 
         .stat-card {
@@ -125,8 +119,6 @@
             transition: height 0.3s ease;
             position: relative;
             z-index: 1;
-            flex-shrink: 0;
-            margin-top: auto; /* Empuja el mapa hacia abajo si hay espacio extra */
         }
         #map-container.expanded { height: 60vh; }
         #map { width: 100%; height: 100%; }
@@ -137,7 +129,7 @@
             right: 10px;
             z-index: 500;
             background: var(--surface-color);
-            border: 1px solid #fffdfd;
+            border: 1px solid #555;
             color: white;
             padding: 5px 10px;
             border-radius: 4px;
@@ -149,21 +141,19 @@
         /* --- Controles Inferiores --- */
         .controls-area {
             background-color: var(--surface-color);
-            /* CAMBIO IMPORTANTE: Padding bottom ajustado para el indicador de inicio de iOS */
-            padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+            padding: 15px 20px 30px;
             display: flex;
-            gap: 10px; /* Reducido ligeramente el gap */
+            gap: 15px;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
-            flex-shrink: 0; /* Siempre visible */
         }
 
         .btn-big {
             border: none;
             border-radius: 50px;
-            padding: 10px 0; /* Reducido de 15px a 10px para que quepa mejor */
-            font-size: 1rem;
+            padding: 15px 0;
+            font-size: 1.1rem;
             font-weight: bold;
             text-transform: uppercase;
             flex: 1;
@@ -173,12 +163,11 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            height: 70px; /* Altura fija para consistencia */
         }
         .btn-big:active { transform: scale(0.96); }
         
-        .btn-lap { background-color: #5c5b5b; color: white; border: 2px solid #0159fc; }
-        .btn-lap small { font-size: 0.65rem; font-weight: normal; opacity: 0.9; margin-top: 2px; display: block;}
+        .btn-lap { background-color: #333; color: white; border: 2px solid #444; }
+        .btn-lap small { font-size: 0.65rem; font-weight: normal; opacity: 0.7; margin-top: 2px; display: block;}
 
         .btn-action { background-color: var(--primary-color); color: black; }
         .btn-action.paused { background-color: var(--text-main); color: black; }
@@ -214,8 +203,6 @@
             display: none;
             justify-content: center;
             align-items: center;
-            /* Aseguramos que el modal respete el safe area inferior */
-            padding-bottom: env(safe-area-inset-bottom);
         }
         .modal.open { display: flex; }
         .modal-content {
@@ -230,7 +217,6 @@
         }
         .modal-header {
             padding: 15px;
-            padding-top: max(15px, env(safe-area-inset-top)); /* Safe area arriba */
             border-bottom: 1px solid #333;
             display: flex;
             justify-content: space-between;
@@ -490,17 +476,21 @@
             },
 
             initMap: function() {
-                // Inicializar mapa centrado en un punto neutro o la ubicación si se permite ya
+                // Inicializar mapa centrado
                 this.map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                // CAMBIO DE MAPA: Usamos 'voyager' (Claro/Legible) en lugar de 'dark_all' (Oscuro)
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
                     attribution: '&copy; OpenStreetMap &copy; CARTO',
                     subdomains: 'abcd',
                     maxZoom: 19
                 }).addTo(this.map);
                 
                 // Capas para las rutas
-                this.polylineTotal = L.polyline([], { color: '#00e676', weight: 4 }).addTo(this.map);
-                this.polylineLap = L.polyline([], { color: '#ff1744', weight: 4, dashArray: '10, 10' }).addTo(this.map);
+                // Ruta Total: Azul (#2979ff) para contraste sobre mapa claro, grosor 5px
+                this.polylineTotal = L.polyline([], { color: '#2979ff', weight: 5 }).addTo(this.map);
+                
+                // Lap Actual: Rojo (#ff1744) y punteada para diferenciar
+                this.polylineLap = L.polyline([], { color: '#ff1744', weight: 5, dashArray: '10, 10' }).addTo(this.map);
             },
 
             // --- Gestión de Estado ---
