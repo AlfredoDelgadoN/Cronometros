@@ -11,11 +11,11 @@
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
-            --primary-color: #00e676; /* Verde Neón */
+            --primary-color: #04ff86; /* Verde Neón */
             --secondary-color: #2979ff; /* Azul Eléctrico */
             --danger-color: #ff1744;
             --text-main: #ffffff;
-            --text-dim: #a0a0a0;
+            --text-dim: #fbff00;
             --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --font-mono: 'Courier New', Courier, monospace;
         }
@@ -33,7 +33,7 @@
             height: 100vh; /* Fallback para navegadores antiguos */
             display: flex;
             flex-direction: column;
-            overflow: hidden; /* Evitamos que el body entero haga scroll */
+            /* overflow: hidden;  Evitamos que el body entero haga scroll */
         }
 
         /* --- Header & Status --- */
@@ -115,7 +115,7 @@
             text-align: center;
             padding: 10px 0;
         }
-        .timer-value { font-size: 3.5rem; font-family: var(--font-mono); font-weight: 700; letter-spacing: -2px; line-height: 1; }
+        .timer-value { font-size: 4rem; font-family: var(--font-mono); font-weight: 700; letter-spacing: -2px; line-height: 1; }
         
         /* Mapa */
         #map-container {
@@ -137,7 +137,7 @@
             right: 10px;
             z-index: 500;
             background: var(--surface-color);
-            border: 1px solid #555;
+            border: 1px solid #fffdfd;
             color: white;
             padding: 5px 10px;
             border-radius: 4px;
@@ -177,8 +177,8 @@
         }
         .btn-big:active { transform: scale(0.96); }
         
-        .btn-lap { background-color: #333; color: white; border: 2px solid #444; }
-        .btn-lap small { font-size: 0.65rem; font-weight: normal; opacity: 0.7; margin-top: 2px; display: block;}
+        .btn-lap { background-color: #5c5b5b; color: white; border: 2px solid #0159fc; }
+        .btn-lap small { font-size: 0.65rem; font-weight: normal; opacity: 0.9; margin-top: 2px; display: block;}
 
         .btn-action { background-color: var(--primary-color); color: black; }
         .btn-action.paused { background-color: var(--text-main); color: black; }
