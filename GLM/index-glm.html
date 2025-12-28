@@ -28,21 +28,25 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: var(--font-main);
-            height: 100vh;
+            /* CAMBIO IMPORTANTE: Usamos dvh para adaptarse a la barra de navegación móvil */
+            height: 100dvh;
+            height: 100vh; /* Fallback para navegadores antiguos */
             display: flex;
             flex-direction: column;
-            overflow: hidden;
+            overflow: hidden; /* Evitamos que el body entero haga scroll */
         }
 
         /* --- Header & Status --- */
         header {
             padding: 10px 15px;
+            padding-top: max(10px, env(safe-area-inset-top)); /* Espacio seguro para notch/cámara */
             background-color: var(--surface-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #333;
-            height: 60px;
+            height: auto; /* Altura automática para adaptarse al padding */
+            flex-shrink: 0; /* No permitir que se encoja */            
         }
 
         .status-badge {
@@ -74,11 +78,12 @@
 
         /* --- Main Dashboard --- */
         main {
-            flex: 1;
+            flex: 1; /* Ocupa todo el espacio disponible entre header y footer */
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
+            overflow-y: auto; /* Permite scroll solo en esta parte si el contenido es largo */
             position: relative;
+            min-height: 0; /* Necesario para que el scroll flex funcione en algunos navegadores */
         }
 
         /* Grid de Estadísticas */
@@ -87,6 +92,7 @@
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             padding: 15px;
+            flex-shrink: 0; /* Mantiene el grid fijo */
         }
 
         .stat-card {
@@ -119,6 +125,8 @@
             transition: height 0.3s ease;
             position: relative;
             z-index: 1;
+            flex-shrink: 0;
+            margin-top: auto; /* Empuja el mapa hacia abajo si hay espacio extra */
         }
         #map-container.expanded { height: 60vh; }
         #map { width: 100%; height: 100%; }
@@ -141,19 +149,21 @@
         /* --- Controles Inferiores --- */
         .controls-area {
             background-color: var(--surface-color);
-            padding: 15px 20px 30px;
+            /* CAMBIO IMPORTANTE: Padding bottom ajustado para el indicador de inicio de iOS */
+            padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
             display: flex;
-            gap: 15px;
+            gap: 10px; /* Reducido ligeramente el gap */
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            flex-shrink: 0; /* Siempre visible */
         }
 
         .btn-big {
             border: none;
             border-radius: 50px;
-            padding: 15px 0;
-            font-size: 1.1rem;
+            padding: 10px 0; /* Reducido de 15px a 10px para que quepa mejor */
+            font-size: 1rem;
             font-weight: bold;
             text-transform: uppercase;
             flex: 1;
@@ -163,6 +173,7 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            height: 70px; /* Altura fija para consistencia */
         }
         .btn-big:active { transform: scale(0.96); }
         
@@ -203,6 +214,8 @@
             display: none;
             justify-content: center;
             align-items: center;
+            /* Aseguramos que el modal respete el safe area inferior */
+            padding-bottom: env(safe-area-inset-bottom);
         }
         .modal.open { display: flex; }
         .modal-content {
@@ -217,6 +230,7 @@
         }
         .modal-header {
             padding: 15px;
+            padding-top: max(15px, env(safe-area-inset-top)); /* Safe area arriba */
             border-bottom: 1px solid #333;
             display: flex;
             justify-content: space-between;
