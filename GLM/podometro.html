@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Podómetro Web Pro</title>
+    <style>
+        :root {
+            --primary: #00e676;
+            --primary-dark: #00b248;
+            --accent: #2979ff;
+            --bg: #121212;
+            --surface: #1e1e1e;
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --danger: #ff5252;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; /* Evitar scroll innecesario */
+        }
+
+        /* Cabecera */
+        header {
+            padding: 20px;
+            text-align: center;
+            background: var(--surface);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        h1 {
+            font-size: 1.2rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        /* Área Principal */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Contador Grande */
+        .counter-container {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 30px;
+        }
+
+        .circle-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 10px solid #2c2c2c;
+            box-shadow: 0 0 20px rgba(0, 230, 118, 0.1);
+        }
+
+        .circle-progress {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 10px solid transparent;
+            border-top-color: var(--primary);
+            border-right-color: var(--primary);
+            transform: rotate(-45deg);
+            transition: transform 0.3s ease-out;
+            opacity: 0.5;
+        }
+
+        .step-count {
+            font-size: 4.5rem;
+            font-weight: 700;
+            z-index: 2;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .step-label {
+            position: absolute;
+            bottom: 50px;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .stat-card {
+            background: var(--surface);
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            min-height: 90px;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* Visualizador de Sensor */
+        .sensor-viz {
+            width: 100%;
+            height: 60px;
+            margin-top: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+        }
+
+        .sensor-bar {
+            height: 4px;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.1s linear;
+            border-radius: 2px;
+        }
+
+        .sensor-status {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+            text-align: right;
+            width: 100%;
+        }
+
+        /* Controles */
+        .controls {
+            background: var(--surface);
+            padding: 25px 20px;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            z-index: 20;
+        }
+
+        .mode-selector {
+            display: flex;
+            background: #121212;
+            padding: 5px;
+            border-radius: 10px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: var(--surface);
+            color: var(--text);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .mode-btn.active.walking { color: var(--primary); }
+        .mode-btn.active.running { color: var(--accent); }
+
+        .action-buttons {
+            display: flex;
+            gap: 15px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.1s;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+            flex: 2;
+        }
+
+        .btn-primary.stop {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: #fff;
+            flex: 1;
+        }
+
+        /* Animación de paso */
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .stepping .circle-progress {
+            transform: rotate(-45deg) scale(1.05);
+            border-color: #fff;
+        }
+
+        /* Toast / Mensaje de estado */
+        #status-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(41, 121, 255, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+            z-index: 100;
+            width: 80%;
+            text-align: center;
+        }
+
+        .hidden { display: none !important; }
+
+    </style>
+</head>
+<body>
+
+    <div id="status-toast">Mensaje del sistema</div>
+
+    <header>
+        <h1>Podómetro Web</h1>
+    </header>
+
+    <main>
+        <div class="counter-container" id="counter-ui">
+            <div class="circle-bg"></div>
+            <div class="circle-progress" id="progress-ring"></div>
+            <div class="step-count" id="step-display">0</div>
+            <div class="step-label">Pasos</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="dist-display">0.00</div>
+                <div class="stat-label">Kilómetros</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="kcal-display">0</div>
+                <div class="stat-label">Kcal</div>
+            </div>
+        </div>
+
+        <div class="sensor-viz">
+            <div class="sensor-bar" id="sensor-bar"></div>
+        </div>
+        <div class="sensor-status" id="sensor-status">Esperando inicio...</div>
+    </main>
+
+    <section class="controls">
+        <div class="mode-selector">
+            <button class="mode-btn walking active" onclick="setMode('walk')">🚶 Caminar</button>
+            <button class="mode-btn running" onclick="setMode('run')">🏃 Correr</button>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-secondary" onclick="resetCounter()">Reset</button>
+            <button class="btn btn-primary" id="toggle-btn" onclick="toggleTracking()">Iniciar</button>
+        </div>
+    </section>
+
+    <script>
+        // Configuración y Estado
+        const state = {
+            isRunning: false,
+            mode: 'walk', // 'walk' o 'run'
+            steps: 0,
+            lastX: 0,
+            lastY: 0,
+            lastZ: 0,
+            lastStepTime: 0,
+            shakeThreshold: 12, // Sensibilidad base
+            stepDelay: 400,     // Tiempo mínimo entre pasos (ms) para evitar rebote
+            distance: 0,
+            calories: 0
+        };
+
+        // Configuraciones por modo
+        const config = {
+            walk: {
+                strideLength: 0.75, // metros por paso
+                kcalPerStep: 0.04,
+                threshold: 11.5,    // Sensibilidad al movimiento
+                minDelay: 350       // ms
+            },
+            run: {
+                strideLength: 1.2,  // metros por paso
+                kcalPerStep: 0.08,
+                threshold: 15,      // Requiere más impacto
+                minDelay: 250       // Pasos más rápidos
+            }
+        };
+
+        // Referencias DOM
+        const ui = {
+            steps: document.getElementById('step-display'),
+            dist: document.getElementById('dist-display'),
+            kcal: document.getElementById('kcal-display'),
+            toggleBtn: document.getElementById('toggle-btn'),
+            status: document.getElementById('sensor-status'),
+            sensorBar: document.getElementById('sensor-bar'),
+            toast: document.getElementById('status-toast'),
+            modeBtns: document.querySelectorAll('.mode-btn'),
+            counterContainer: document.getElementById('counter-ui')
+        };
+
+        // Manejo de Permisos (iOS 13+)
+        function requestPermission() {
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            startListening();
+                            showToast('Sensores activados');
+                        } else {
+                            showToast('Permiso denegado. No se pueden contar pasos.');
+                            stopTracking();
+                        }
+                    })
+                    .catch(console.error);
+            } else {
+                // Android o iOS viejo no requiere permiso explícito
+                startListening();
+            }
+        }
+
+        // Iniciar / Detener rastreo
+        function toggleTracking() {
+            if (!state.isRunning) {
+                state.isRunning = true;
+                ui.toggleBtn.textContent = "Detener";
+                ui.toggleBtn.classList.add('stop');
+                ui.status.textContent = "Leyendo acelerómetro...";
+                requestPermission();
+            } else {
+                stopTracking();
+            }
+        }
+
+        function stopTracking() {
+            state.isRunning = false;
+            ui.toggleBtn.textContent = "Iniciar";
+            ui.toggleBtn.classList.remove('stop');
+            ui.status.textContent = "Pausado";
+            window.removeEventListener('devicemotion', handleMotion);
+        }
+
+        function resetCounter() {
+            state.steps = 0;
+            state.distance = 0;
+            state.calories = 0;
+            updateUI();
+            showToast("Contador reiniciado");
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            // Actualizar botones UI
+            ui.modeBtns.forEach(btn => btn.classList.remove('active'));
+            if(mode === 'walk') document.querySelector('.walking').classList.add('active');
+            else document.querySelector('.running').classList.add('active');
+            
+            showToast(`Modo cambiado a: ${mode === 'walk' ? 'Caminar' : 'Correr'}`);
+        }
+
+        // Lógica del Podómetro
+        function startListening() {
+            window.addEventListener('devicemotion', handleMotion, true);
+        }
+
+        function handleMotion(event) {
+            if (!state.isRunning) return;
+
+            const currentMode = config[state.mode];
+            const acceleration = event.accelerationIncludingGravity;
+            
+            if (!acceleration) {
+                ui.status.textContent = "Acelerómetro no disponible";
+                return;
+            }
+
+            const x = acceleration.x;
+            const y = acceleration.y;
+            const z = acceleration.z;
+
+            // Calcular magnitud del vector de aceleración
+            // Usamos la diferencia con la lectura anterior para detectar "cambios bruscos" (el golpe del pie)
+            const deltaX = Math.abs(x - state.lastX);
+            const deltaY = Math.abs(y - state.lastY);
+            const deltaZ = Math.abs(z - state.lastZ);
+            
+            const speed = deltaX + deltaY + deltaZ;
+
+            // Visualización simple de la actividad
+            const barWidth = Math.min((speed / 30) * 100, 100);
+            ui.sensorBar.style.width = `${barWidth}%`;
+
+            // Algoritmo de detección de paso
+            const now = Date.now();
+            
+            if (speed > currentMode.threshold) {
+                if ((now - state.lastStepTime) > currentMode.minDelay) {
+                    registerStep();
+                    state.lastStepTime = now;
+                }
+            }
+
+            // Actualizar últimas lecturas
+            state.lastX = x;
+            state.lastY = y;
+            state.lastZ = z;
+        }
+
+        function registerStep() {
+            state.steps++;
+            const currentMode = config[state.mode];
+            
+            // Calcular métricas
+            state.distance += currentMode.strideLength;
+            state.calories += currentMode.kcalPerStep;
+
+            updateUI();
+            triggerVisualFeedback();
+        }
+
+        function updateUI() {
+            ui.steps.textContent = state.steps;
+            ui.dist.textContent = (state.distance / 1000).toFixed(2);
+            ui.kcal.textContent = Math.round(state.calories);
+        }
+
+        function triggerVisualFeedback() {
+            // Animación sutil del contador
+            ui.counterContainer.classList.add('stepping');
+            setTimeout(() => {
+                ui.counterContainer.classList.remove('stepping');
+            }, 100);
+
+            // Vibración si el dispositivo lo soporta
+            if (navigator.vibrate) {
+                navigator.vibrate(20); // Vibración muy corta
+            }
+        }
+
+        function showToast(message) {
+            ui.toast.textContent = message;
+            ui.toast.style.opacity = 1;
+            setTimeout(() => {
+                ui.toast.style.opacity = 0;
+            }, 3000);
+        }
+
+        // Inicialización
+        // Verificar compatibilidad básica al cargar
+        window.addEventListener('load', () => {
+            if (!window.DeviceMotionEvent) {
+                ui.status.textContent = "Tu dispositivo no soporta sensores de movimiento.";
+                ui.toggleBtn.disabled = true;
+                ui.toggleBtn.style.opacity = 0.5;
+            } else {
+                // Reintentar permiso iOS si el usuario ya lo dio antes pero recargó
+                // (Notar que iOS requiere interacción de usuario cada vez que se inicia la sesion de sensores)
+                ui.status.textContent = "Listo para iniciar.";
+            }
+        });
+
+    </script>
+</body>
+</html>
