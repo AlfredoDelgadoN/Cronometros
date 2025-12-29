@@ -7,17 +7,24 @@
     <!-- Leaflet CSS para el mapa -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
+    <!-- Importar Fuentes de Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;700&family=Roboto+Mono:wght@500&family=Teko:wght@500;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
-            --primary-color: #00e676; /* Verde Neón */
+            --primary-color: #04ff86; /* Verde Neón */
             --secondary-color: #2979ff; /* Azul Eléctrico */
             --danger-color: #ff1744;
             --text-main: #ffffff;
-            --text-dim: #f8fc02;
+            --text-dim: #fbff00;
             --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            --font-mono: 'Courier New', Courier, monospace;
+            
+            /* Variables de Fuente Dinámica */
+            --font-numbers: 'Teko', sans-serif; 
         }
 
         * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
@@ -28,21 +35,23 @@
             background-color: var(--bg-color);
             color: var(--text-main);
             font-family: var(--font-main);
+            height: 100dvh;
             height: 100vh;
             display: flex;
             flex-direction: column;
-            overflow: hidden;
         }
 
         /* --- Header & Status --- */
         header {
             padding: 10px 15px;
+            padding-top: max(10px, env(safe-area-inset-top));
             background-color: var(--surface-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #333;
-            height: 60px;
+            height: auto;
+            flex-shrink: 0;            
         }
 
         .status-badge {
@@ -79,6 +88,7 @@
             flex-direction: column;
             overflow-y: auto;
             position: relative;
+            min-height: 0;
         }
 
         /* Grid de Estadísticas */
@@ -87,6 +97,49 @@
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             padding: 15px;
+            flex-shrink: 0;
+        }
+
+        /* --- Fila Secundaria de Métricas --- */
+        .stats-row-secondary {
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 15px;
+            background-color: #181818;
+            border-top: 1px solid #333;
+            border-bottom: 1px solid #333;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .mini-stat {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .mini-label {
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            margin-bottom: 2px;
+        }
+
+        .mini-val {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            font-family: var(--font-numbers);
+            line-height: 0.9;
+        }
+
+        .mini-unit {
+            font-size: 0.8rem;
+            color: var(--text-dim);
+            margin-left: 2px;
+            font-family: var(--font-main);
         }
 
         .stat-card {
@@ -100,25 +153,45 @@
         }
 
         .stat-label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .stat-value { font-size: 1.8rem; font-weight: 700; font-family: var(--font-mono); color: var(--primary-color); }
-        .stat-unit { font-size: 0.9rem; color: var(--text-dim); }
+        
+        /* Aquí aplicamos la fuente seleccionada a los números grandes */
+        .stat-value { 
+            font-size: 2.2rem; 
+            font-weight: 700; 
+            font-family: var(--font-numbers); 
+            color: var(--primary-color); 
+            line-height: 0.9;
+            /* Ajuste específico para cada fuente para que se alinee bien */
+            transform-origin: center;
+        }
+        
+        .stat-unit { font-size: 0.9rem; color: var(--text-dim); font-family: var(--font-main); }
         .stat-sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
 
         /* Cronómetro Central */
         .timer-display {
             text-align: center;
-            padding: 10px 0;
+            padding: 5px 0;
         }
-        .timer-value { font-size: 4rem; font-family: var(--font-mono); font-weight: 700; letter-spacing: -2px; line-height: 1; }
+        .timer-value { 
+            font-size: 4.5rem; 
+            font-family: var(--font-numbers); 
+            font-weight: 500; 
+            letter-spacing: -1px; 
+            line-height: 0.85; 
+            color: var(--primary-color); 
+        }
         
         /* Mapa */
         #map-container {
-            height: 200px; /* Altura inicial pequeña */
+            height: 200px;
             width: 100%;
             background: #000;
             transition: height 0.3s ease;
             position: relative;
             z-index: 1;
+            flex-shrink: 0;
+            margin-top: auto;
         }
         #map-container.expanded { height: 60vh; }
         #map { width: 100%; height: 100%; }
@@ -129,7 +202,7 @@
             right: 10px;
             z-index: 500;
             background: var(--surface-color);
-            border: 1px solid #555;
+            border: 1px solid #fffdfd;
             color: white;
             padding: 5px 10px;
             border-radius: 4px;
@@ -141,19 +214,20 @@
         /* --- Controles Inferiores --- */
         .controls-area {
             background-color: var(--surface-color);
-            padding: 15px 20px 30px;
+            padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
             display: flex;
-            gap: 15px;
+            gap: 10px;
             justify-content: space-between;
             align-items: center;
             box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            flex-shrink: 0;
         }
 
         .btn-big {
             border: none;
             border-radius: 50px;
-            padding: 15px 0;
-            font-size: 1.1rem;
+            padding: 10px 0;
+            font-size: 1rem;
             font-weight: bold;
             text-transform: uppercase;
             flex: 1;
@@ -163,11 +237,12 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
+            height: 70px;
         }
         .btn-big:active { transform: scale(0.96); }
         
-        .btn-lap { background-color: #333; color: white; border: 2px solid #444; }
-        .btn-lap small { font-size: 0.65rem; font-weight: normal; opacity: 0.7; margin-top: 2px; display: block;}
+        .btn-lap { background-color: #5c5b5b; color: white; border: 2px solid #0159fc; }
+        .btn-lap small { font-size: 0.65rem; font-weight: normal; opacity: 0.9; margin-top: 2px; display: block;}
 
         .btn-action { background-color: var(--primary-color); color: black; }
         .btn-action.paused { background-color: var(--text-main); color: black; }
@@ -191,7 +266,7 @@
             box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
         #lap-toast h3 { margin: 0 0 10px; font-size: 1rem; color: var(--primary-color); }
-        #lap-toast .lap-toast-data { font-size: 1.5rem; font-family: var(--font-mono); font-weight: bold; }
+        #lap-toast .lap-toast-data { font-size: 2rem; font-family: var(--font-numbers); font-weight: bold; line-height: 0.9; }
         #lap-toast .lap-toast-label { font-size: 0.8rem; color: var(--text-dim); }
 
         /* --- Modales --- */
@@ -203,6 +278,7 @@
             display: none;
             justify-content: center;
             align-items: center;
+            padding-bottom: env(safe-area-inset-bottom);
         }
         .modal.open { display: flex; }
         .modal-content {
@@ -217,6 +293,7 @@
         }
         .modal-header {
             padding: 15px;
+            padding-top: max(15px, env(safe-area-inset-top));
             border-bottom: 1px solid #333;
             display: flex;
             justify-content: space-between;
@@ -233,7 +310,7 @@
         table.laps-table th { text-align: left; color: var(--text-dim); padding: 8px; border-bottom: 1px solid #444; }
         table.laps-table td { padding: 10px 8px; border-bottom: 1px solid #2a2a2a; }
         table.laps-table tr:last-child td { border-bottom: none; }
-        table.laps-table td.highlight { color: var(--primary-color); font-weight: bold; }
+        table.laps-table td.highlight { color: var(--primary-color); font-weight: bold; font-family: var(--font-numbers); font-size: 1.2rem; }
 
         /* Form Settings */
         .form-group { margin-bottom: 15px; }
@@ -302,6 +379,28 @@
             </div>
         </div>
 
+        <!-- NUEVA FILA DE INFORMACIÓN SECUNDARIA -->
+        <div class="stats-row-secondary">
+            <div class="mini-stat">
+                <div class="mini-label">Altitud</div>
+                <div>
+                    <span class="mini-val" id="val-alt">--</span> 
+                    <span class="mini-unit" id="unit-alt">m</span>
+                </div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-label">Hora</div>
+                <div class="mini-val" id="val-clock">--:--</div>
+            </div>
+            <div class="mini-stat">
+                <div class="mini-label">GPS Error</div>
+                <div>
+                    <span class="mini-val" id="val-gps-acc">--</span> 
+                    <span class="mini-unit">m</span>
+                </div>
+            </div>
+        </div>
+
         <!-- Mapa -->
         <div id="map-container">
             <div id="map"></div>
@@ -366,6 +465,18 @@
                 <button class="close-btn" onclick="app.closeModals()">&times;</button>
             </div>
             <div class="modal-body">
+                
+                <!-- NUEVO: Selector de Fuente -->
+                <div class="form-group">
+                    <label>Tipo de Letra</label>
+                    <select id="set-font" class="form-control" onchange="app.changeFont(this.value)">
+                        <option value="'Teko', sans-serif">Teko (Deportiva/Alta)</option>
+                        <option value="'Oswald', sans-serif">Oswald (Moderna/Negra)</option>
+                        <option value="'Anton', sans-serif">Anton (Gruesa/Impacto)</option>
+                        <option value="'Roboto Mono', monospace">Roboto Mono (Técnica)</option>
+                    </select>
+                </div>
+
                 <div class="toggle-row">
                     <span>Auto Laps</span>
                     <label class="switch">
@@ -421,6 +532,8 @@
                 currentSpeed: 0, // m/s
                 avgSpeed: 0, // m/s
                 lastPos: null,
+                altitude: 0,
+                accuracy: 0,
                 path: [], // Array de [lat, lng]
                 laps: [],
                 currentLap: {
@@ -428,13 +541,14 @@
                     distance: 0,
                     path: []
                 },
-                activity: 'stopped', // stopped, walking, running, cycling, driving
+                activity: 'stopped',
                 watchId: null,
                 timerInterval: null,
                 units: 'metric', // 'metric' (km) o 'imperial' (mi)
+                font: "'Teko', sans-serif", // NUEVO: Fuente seleccionada
                 settings: {
                     autoLap: false,
-                    lapType: 'distance', // 'distance' or 'time'
+                    lapType: 'distance',
                     lapDistValue: 1000, // metros
                     lapTimeValue: 600, // segundos
                     audio: true
@@ -472,24 +586,19 @@
             init: function() {
                 this.initMap();
                 this.loadSettings();
+                this.changeFont(this.state.font); // Aplicar fuente al inicio
                 this.updateUI();
             },
 
             initMap: function() {
-                // Inicializar mapa centrado
                 this.map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
-                // CAMBIO DE MAPA: Usamos 'voyager' (Claro/Legible) en lugar de 'dark_all' (Oscuro)
-                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {                
                     attribution: '&copy; OpenStreetMap &copy; CARTO',
                     subdomains: 'abcd',
                     maxZoom: 19
                 }).addTo(this.map);
                 
-                // Capas para las rutas
-                // Ruta Total: Azul (#2979ff) para contraste sobre mapa claro, grosor 5px
                 this.polylineTotal = L.polyline([], { color: '#2979ff', weight: 5 }).addTo(this.map);
-                
-                // Lap Actual: Rojo (#ff1744) y punteada para diferenciar
                 this.polylineLap = L.polyline([], { color: '#ff1744', weight: 5, dashArray: '10, 10' }).addTo(this.map);
             },
 
@@ -497,30 +606,23 @@
 
             handleRightButton: function() {
                 if (!this.state.isRunning && !this.state.isPaused) {
-                    // INICIAR
                     this.startTracking();
                 } else if (this.state.isRunning) {
-                    // PAUSAR
                     this.pauseTracking();
                 } else if (this.state.isPaused) {
-                    // DETENER (Y GUARDAR)
                     this.stopTracking();
                 }
             },
 
             handleLeftButton: function() {
                 if (!this.state.isRunning && this.state.isPaused) {
-                    // Si está pausado, el botón izquierdo podría ser "Descartar" o nada
-                    // Pero el usuario quiere ver Laps. Abrimos el historial.
                     this.openLaps();
                     return;
                 }
                 
                 if (this.state.isRunning) {
-                    // Registrar LAP Manual
                     this.recordLap(true);
                 } else {
-                    // Ver Historial
                     this.openLaps();
                 }
             },
@@ -530,18 +632,15 @@
                 this.state.isPaused = false;
                 this.state.startTime = Date.now() - this.state.totalElapsed;
                 
-                // Iniciar Lap inicial
                 this.state.currentLap.startTime = Date.now();
                 this.state.currentLap.distance = 0;
                 this.state.currentLap.path = [];
 
-                // UI
                 this.ui.btnAction.textContent = "Pausar";
                 this.ui.btnAction.classList.remove('stopped');
                 this.ui.status.classList.add('active');
                 this.ui.status.classList.remove('paused');
                 
-                // GPS Loop
                 if ("geolocation" in navigator) {
                     this.state.watchId = navigator.geolocation.watchPosition(
                         (pos) => this.onPositionUpdate(pos),
@@ -552,7 +651,6 @@
                     alert("GPS no soportado en este navegador.");
                 }
 
-                // Timer Loop
                 this.state.timerInterval = setInterval(() => this.tick(), 1000);
                 this.updateStatusText("Iniciando GPS...");
             },
@@ -576,14 +674,10 @@
                 clearInterval(this.state.timerInterval);
                 navigator.geolocation.clearWatch(this.state.watchId);
                 
-                // Reset UI
                 this.ui.btnAction.textContent = "Iniciar";
                 this.ui.btnAction.classList.remove('paused');
                 this.ui.status.classList.remove('paused');
                 this.updateStatusText("Terminado");
-
-                // Guardar resumen o preguntar (Aquí solo reseteamos variables para este demo, pero mantenemos mapa)
-                // Para una app real, aquí preguntaríamos "Guardar actividad?"
             },
 
             // --- Lógica GPS y Cálculos ---
@@ -591,34 +685,34 @@
             onPositionUpdate: function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
+                const altitude = position.coords.altitude;
                 const accuracy = position.coords.accuracy;
-                const speed = position.coords.speed; // m/s
+                const speed = position.coords.speed;
+                
+                this.state.accuracy = Math.round(accuracy);
+                this.state.altitude = altitude ? Math.round(altitude) : 0; 
 
-                if (!speed && speed !== 0) return; // Esperar dato real
+                if (!speed && speed !== 0) return;
 
                 this.state.currentSpeed = speed;
                 this.detectActivity(speed);
-                this.updateStatusText(); // Actualizar texto de actividad
+                this.updateStatusText();
                 
                 const newPoint = [lat, lng];
                 
                 if (this.state.lastPos) {
-                    // Calcular distancia Haversine
                     const dist = this.getDistanceFromLatLonInM(this.state.lastPos[0], this.state.lastPos[1], lat, lng);
                     
-                    // Filtrar ruido GPS (saltos muy grandes o sin precisión)
                     if (accuracy < 50 && dist > 2) {
                         this.state.distance += dist;
                         this.state.currentLap.distance += dist;
                         this.state.path.push(newPoint);
                         this.state.currentLap.path.push(newPoint);
                         
-                        // Actualizar Mapa
                         this.polylineTotal.setLatLngs(this.state.path);
                         this.polylineLap.setLatLngs(this.state.currentLap.path);
-                        this.map.panTo(newPoint); // Centrar mapa en usuario
+                        this.map.panTo(newPoint);
 
-                        // Verificar Auto Lap
                         if (this.state.settings.autoLap) {
                             this.checkAutoLap();
                         }
@@ -631,18 +725,19 @@
             tick: function() {
                 const now = Date.now();
                 this.state.totalElapsed = now - this.state.startTime;
+
+                const dateObj = new Date();
+                const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                document.getElementById('val-clock').textContent = timeString;
                 
-                // Velocidad Promedio
                 if (this.state.totalElapsed > 0) {
-                    // m/s -> km/h
                     this.state.avgSpeed = (this.state.distance / this.state.totalElapsed) * 1000 * 3.6; 
                 }
 
-                // Verificar Auto Lap por Tiempo
                 if (this.state.settings.autoLap && this.state.settings.lapType === 'time') {
                     const currentLapDuration = (now - this.state.currentLap.startTime) / 1000;
                     if (currentLapDuration >= this.state.settings.lapTimeValue) {
-                        this.recordLap(false); // Auto
+                        this.recordLap(false);
                     }
                 }
 
@@ -661,10 +756,8 @@
 
             recordLap: function(isManual) {
                 const now = Date.now();
-                const lapDuration = now - this.state.currentLap.startTime; // ms
+                const lapDuration = now - this.state.currentLap.startTime;
                 
-                // Calcular ritmo (Pace): min/km o min/mi
-                // distance en metros
                 let paceSecPerUnit = 0;
                 if (this.state.currentLap.distance > 0) {
                     paceSecPerUnit = (lapDuration / 1000) / (this.state.currentLap.distance / 1000);
@@ -672,7 +765,6 @@
                     paceSecPerUnit = 0;
                 }
 
-                // Guardar objeto Lap
                 const lapData = {
                     index: this.state.laps.length + 1,
                     duration: lapDuration,
@@ -682,17 +774,14 @@
                 
                 this.state.laps.push(lapData);
                 
-                // Feedback
                 if (this.state.settings.audio) this.playBeep();
                 this.showToast(lapData);
                 this.updateLapsTable();
 
-                // Resetear Lap actual
                 this.state.currentLap.startTime = now;
                 this.state.currentLap.distance = 0;
-                this.state.currentLap.path = [this.state.lastPos]; // Empezar desde donde estamos
+                this.state.currentLap.path = [this.state.lastPos];
                 
-                // Reset visual linea lap
                 this.polylineLap.setLatLngs([]);
             },
 
@@ -725,10 +814,10 @@
                 this.ui.statusText.textContent = map[this.state.activity] || '...';
             },
 
-            // --- Utilidades Matemáticas y Formato ---
+            // --- Utilidades ---
 
             getDistanceFromLatLonInM: function(lat1, lon1, lat2, lon2) {
-                var R = 6371; // Radio de la tierra en km
+                var R = 6371;
                 var dLat = this.deg2rad(lat2-lat1);  
                 var dLon = this.deg2rad(lon2-lon1); 
                 var a = 
@@ -736,8 +825,8 @@
                     Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
                     Math.sin(dLon/2) * Math.sin(dLon/2); 
                 var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-                var d = R * c; // Distancia en km
-                return d * 1000; // Metros
+                var d = R * c;
+                return d * 1000;
             },
 
             deg2rad: function(deg) {
@@ -763,40 +852,53 @@
                 return `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
             },
 
+            // --- Fuente (NUEVO) ---
+
+            changeFont: function(fontFamily) {
+                this.state.font = fontFamily;
+                // Actualizar variable CSS
+                document.documentElement.style.setProperty('--font-numbers', fontFamily);
+                
+                // Guardar en preferencias (podríamos guardarlo en localStorage, por ahora solo en memoria state)
+            },
+
             // --- Interfaz de Usuario ---
 
             updateUI: function() {
-                // Timer
                 this.ui.timer.textContent = this.formatTime(this.state.totalElapsed);
 
-                // Conversión de unidades
                 const isMetric = this.state.units === 'metric';
                 const unitDist = isMetric ? 'km' : 'mi';
                 const unitSpeed = isMetric ? 'km/h' : 'mph';
+                const altUnit = isMetric ? 'm' : 'ft';
                 const factorDist = isMetric ? 1 : 0.621371;
-                const factorSpeed = isMetric ? 3.6 : 2.23694; // m/s a target unit
+                const factorSpeed = isMetric ? 3.6 : 2.23694;
 
-                // Valores
+                const displayAlt = isMetric ? this.state.altitude : Math.round(this.state.altitude * 3.28084);
+                document.getElementById('val-alt').textContent = displayAlt;
+                document.getElementById('unit-alt').textContent = altUnit;
+
                 const displayDist = (this.state.distance / 1000) * factorDist;
                 const displaySpeed = this.state.currentSpeed * factorSpeed;
-                const displayAvgSpeed = this.state.avgSpeed * factorSpeed; // Promedio global en m/s convertido
+                const displayAvgSpeed = this.state.avgSpeed * factorSpeed;
 
-                // Distancia
                 this.ui.dist.textContent = displayDist.toFixed(2);
                 this.ui.distUnit.textContent = unitDist;
 
-                // Velocidad
                 this.ui.speed.textContent = displaySpeed.toFixed(1);
                 this.ui.speedUnit.textContent = unitSpeed;
                 this.ui.avgSpeed.textContent = displayAvgSpeed.toFixed(1);
 
-                // Ritmo (Pace)
-                // Pace global
+                if(this.state.accuracy > 5000 || this.state.accuracy === 0) {
+                     document.getElementById('val-gps-acc').textContent = "--";
+                } else {
+                     document.getElementById('val-gps-acc').textContent = this.state.accuracy;
+                }
+
                 let globalPace = 0;
                 if (this.state.distance > 0) {
-                    globalPace = (this.state.totalElapsed / 1000) / ((this.state.distance / 1000) * factorDist); // min por unit
+                    globalPace = (this.state.totalElapsed / 1000) / ((this.state.distance / 1000) * factorDist);
                 }
-                // Si no hay velocidad, no mostrar ritmo
                 if (displaySpeed < 0.5) {
                     this.ui.pace.textContent = "--:--";
                 } else {
@@ -804,10 +906,9 @@
                 }
                 this.ui.pace.nextElementSibling.textContent = `min/${unitDist}`;
 
-                // Último Lap
                 const lastLap = this.state.laps[this.state.laps.length - 1];
                 if (lastLap) {
-                    const lapPace = lastLap.pace * (isMetric ? 1 : (1/0.621371)); // Ajustar pace a unidad actual
+                    const lapPace = lastLap.pace * (isMetric ? 1 : (1/0.621371));
                     this.ui.lastLap.textContent = this.formatPace(lapPace);
                 } else {
                     this.ui.lastLap.textContent = "--:--";
@@ -817,8 +918,7 @@
             toggleUnits: function() {
                 this.state.units = this.state.units === 'metric' ? 'imperial' : 'metric';
                 this.updateUI();
-                this.showToastPace(); // Refresca info si está visible
-                this.updateLapsTable(); // Refresca tabla con nuevas unidades
+                this.updateLapsTable();
             },
 
             // --- Mapa y Overlay ---
@@ -827,7 +927,6 @@
                 this.ui.mapContainer.classList.toggle('expanded');
                 setTimeout(() => {
                     this.map.invalidateSize();
-                    // Centrar en la ruta completa
                     if (this.state.path.length > 0) {
                         this.map.fitBounds(this.polylineTotal.getBounds(), { padding: [50, 50] });
                     }
@@ -837,7 +936,6 @@
             showToast: function(lapData) {
                 this.ui.toast.style.display = 'block';
                 
-                // Formatear datos
                 this.ui.toastTime.textContent = this.formatTime(lapData.duration);
                 
                 const isMetric = this.state.units === 'metric';
@@ -846,7 +944,6 @@
                 
                 this.ui.toastPace.textContent = this.formatPace(paceVal) + ` /${isMetric ? 'km' : 'mi'}`;
 
-                // Ocultar después de 6s
                 if (this.toastTimeout) clearTimeout(this.toastTimeout);
                 this.toastTimeout = setTimeout(() => {
                     this.ui.toast.style.display = 'none';
@@ -855,13 +952,12 @@
 
             // --- Audio ---
             playBeep: function() {
-                // Generar beep con Web Audio API para no depender de archivos
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator();
                 const gain = ctx.createGain();
 
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime); // A5
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
                 
                 gain.gain.setValueAtTime(0.5, ctx.currentTime);
@@ -883,18 +979,17 @@
 
             openSettings: function() {
                 document.getElementById('modal-settings').classList.add('open');
-                // Cargar valores actuales en inputs
                 document.getElementById('set-autolap').checked = this.state.settings.autoLap;
                 document.getElementById('set-lap-type').value = this.state.settings.lapType;
                 document.getElementById('set-lap-dist').value = (this.state.settings.lapDistValue / 1000).toFixed(1);
                 document.getElementById('set-lap-time').value = (this.state.settings.lapTimeValue / 60).toFixed(0);
                 document.getElementById('set-audio').checked = this.state.settings.audio;
+                document.getElementById('set-font').value = this.state.font;
                 this.toggleLapInputs();
             },
 
             closeModals: function() {
                 document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
-                // Guardar settings al cerrar
                 this.saveSettings();
             },
 
@@ -910,6 +1005,7 @@
                 this.state.settings.lapDistValue = parseFloat(document.getElementById('set-lap-dist').value) * 1000;
                 this.state.settings.lapTimeValue = parseFloat(document.getElementById('set-lap-time').value) * 60;
                 this.state.settings.audio = document.getElementById('set-audio').checked;
+                // Fuente se guarda inmediatamente al cambiar en el evento onchange, pero aquí podríamos persistirla
             },
 
             loadSettings: function() {
@@ -925,7 +1021,6 @@
                     return;
                 }
 
-                // Ordenar: El más reciente arriba
                 const reversedLaps = [...this.state.laps].reverse();
 
                 const isMetric = this.state.units === 'metric';
@@ -936,7 +1031,6 @@
                     const row = document.createElement('tr');
                     
                     const distDisplay = (lap.distance * factor).toFixed(2);
-                    // Pace ajustado a unidad
                     const paceVal = lap.pace * (isMetric ? 1 : (1/0.621371));
 
                     row.innerHTML = `
