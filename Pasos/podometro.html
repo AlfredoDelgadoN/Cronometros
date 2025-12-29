@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Podómetro Web Pro</title>
+    <title>Entrenador Web Multideporte</title>
     <style>
         :root {
-            --primary: #00e676;
+            --primary: #00e676; /* Caminar */
             --primary-dark: #00b248;
-            --accent: #2979ff;
+            --accent: #2979ff;  /* Correr */
+            --jump: #ff9100;    /* Saltar (Naranja) */
             --bg: #121212;
             --surface: #1e1e1e;
             --text: #ffffff;
@@ -31,10 +32,9 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            /* overflow: hidden;  Evitar scroll innecesario */
+            overflow: hidden;
         }
 
-        /* Cabecera */
         header {
             padding: 20px;
             text-align: center;
@@ -51,7 +51,6 @@
             text-transform: uppercase;
         }
 
-        /* Área Principal */
         main {
             flex: 1;
             display: flex;
@@ -62,11 +61,11 @@
             position: relative;
         }
 
-        /* Contador Grande */
+        /* Contador Principal */
         .counter-container {
             position: relative;
-            width: 200px;
-            height: 200px;
+            width: 260px;
+            height: 260px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -80,6 +79,7 @@
             border-radius: 50%;
             border: 10px solid #2c2c2c;
             box-shadow: 0 0 20px rgba(0, 230, 118, 0.1);
+            transition: border-color 0.3s;
         }
 
         .circle-progress {
@@ -91,7 +91,7 @@
             border-top-color: var(--primary);
             border-right-color: var(--primary);
             transform: rotate(-45deg);
-            transition: transform 0.3s ease-out;
+            transition: transform 0.3s ease-out, border-color 0.3s;
             opacity: 0.5;
         }
 
@@ -129,21 +129,24 @@
             flex-direction: column;
             justify-content: center;
             min-height: 90px;
+            transition: transform 0.2s;
         }
 
         .stat-value {
             font-size: 1.5rem;
             font-weight: 600;
             color: var(--accent);
+            transition: color 0.3s;
         }
 
         .stat-label {
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             color: var(--text-secondary);
             margin-top: 5px;
+            line-height: 1.2;
         }
 
-        /* Visualizador de Sensor */
+        /* Visualizador de Fuerza */
         .sensor-viz {
             width: 100%;
             height: 60px;
@@ -160,7 +163,7 @@
             height: 4px;
             background: var(--primary);
             width: 0%;
-            transition: width 0.1s linear;
+            transition: width 0.1s linear, background-color 0.3s;
             border-radius: 2px;
         }
 
@@ -189,18 +192,24 @@
             background: #121212;
             padding: 5px;
             border-radius: 10px;
+            gap: 5px;
         }
 
         .mode-btn {
             flex: 1;
-            padding: 10px;
+            padding: 10px 5px;
             border: none;
             background: transparent;
             color: var(--text-secondary);
             font-weight: 600;
+            font-size: 0.85rem;
             cursor: pointer;
             border-radius: 8px;
             transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
         }
 
         .mode-btn.active {
@@ -211,6 +220,7 @@
 
         .mode-btn.active.walking { color: var(--primary); }
         .mode-btn.active.running { color: var(--accent); }
+        .mode-btn.active.jumping { color: var(--jump); }
 
         .action-buttons {
             display: flex;
@@ -237,21 +247,17 @@
             flex: 2;
         }
 
-        .btn-primary.stop {
-            background: var(--danger);
-            color: #fff;
-        }
-
+        .btn-primary.stop { background: var(--danger); color: #fff; }
+        
         .btn-secondary {
             background: #333;
             color: #fff;
             flex: 1;
         }
 
-        /* Animación de paso */
         @keyframes pulse {
             0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
+            50% { transform: scale(1.05); }
             100% { transform: scale(1); }
         }
 
@@ -260,7 +266,6 @@
             border-color: #fff;
         }
 
-        /* Toast / Mensaje de estado */
         #status-toast {
             position: fixed;
             top: 20px;
@@ -279,8 +284,6 @@
             text-align: center;
         }
 
-        .hidden { display: none !important; }
-
     </style>
 </head>
 <body>
@@ -288,25 +291,25 @@
     <div id="status-toast">Mensaje del sistema</div>
 
     <header>
-        <h1>Podómetro Web</h1>
+        <h1>Entrenador Web</h1>
     </header>
 
     <main>
         <div class="counter-container" id="counter-ui">
-            <div class="circle-bg"></div>
+            <div class="circle-bg" id="circle-bg"></div>
             <div class="circle-progress" id="progress-ring"></div>
             <div class="step-count" id="step-display">0</div>
-            <div class="step-label">Pasos</div>
+            <div class="step-label" id="main-label">Pasos</div>
         </div>
 
         <div class="stats-grid">
             <div class="stat-card">
-                <div class="stat-value" id="dist-display">0.00</div>
-                <div class="stat-label">Kilómetros</div>
+                <div class="stat-value" id="stat-1-val">0.00</div>
+                <div class="stat-label" id="stat-1-label">Kilómetros</div>
             </div>
             <div class="stat-card">
-                <div class="stat-value" id="kcal-display">0</div>
-                <div class="stat-label">Kcal</div>
+                <div class="stat-value" id="stat-2-val">0</div>
+                <div class="stat-label" id="stat-2-label">Kcal</div>
             </div>
         </div>
 
@@ -320,6 +323,7 @@
         <div class="mode-selector">
             <button class="mode-btn walking active" onclick="setMode('walk')">🚶 Caminar</button>
             <button class="mode-btn running" onclick="setMode('run')">🏃 Correr</button>
+            <button class="mode-btn jumping" onclick="setMode('jump')">⬆️ Saltar</button>
         </div>
 
         <div class="action-buttons">
@@ -329,51 +333,78 @@
     </section>
 
     <script>
-        // Configuración y Estado
+        // --- ESTADO DEL SISTEMA ---
         const state = {
             isRunning: false,
-            mode: 'walk', // 'walk' o 'run'
-            steps: 0,
-            lastX: 0,
-            lastY: 0,
-            lastZ: 0,
-            lastStepTime: 0,
-            shakeThreshold: 12, // Sensibilidad base
-            stepDelay: 400,     // Tiempo mínimo entre pasos (ms) para evitar rebote
+            mode: 'walk', // 'walk', 'run', 'jump'
+            count: 0,
             distance: 0,
-            calories: 0
+            calories: 0,
+            maxPower: 0,
+            sumPower: 0, // Suma de potencias para calcular media
+            lastX: 0, lastY: 0, lastZ: 0,
+            lastEventTime: 0,
+            // Variables específicas para saltos
+            jumpState: 'IDLE', // IDLE, LAUNCH, AIR, LAND
+            jumpLaunchPeak: 0,
+            jumpAirTimeStart: 0
         };
 
-        // Configuraciones por modo
+        // --- CONFIGURACIÓN POR MODO ---
         const config = {
             walk: {
-                strideLength: 0.75, // metros por paso
+                color: '#00e676',
+                label: 'Pasos',
+                stat1Label: 'Kilómetros', stat1Unit: '',
+                stat2Label: 'Kcal', stat2Unit: '',
+                strideLength: 0.75,
                 kcalPerStep: 0.04,
-                threshold: 11.5,    // Sensibilidad al movimiento
-                minDelay: 350       // ms
+                threshold: 11.5,
+                minDelay: 350
             },
             run: {
-                strideLength: 1.2,  // metros por paso
+                color: '#2979ff',
+                label: 'Pasos',
+                stat1Label: 'Kilómetros', stat1Unit: '',
+                stat2Label: 'Kcal', stat2Unit: '',
+                strideLength: 1.2,
                 kcalPerStep: 0.08,
-                threshold: 15,      // Requiere más impacto
-                minDelay: 250       // Pasos más rápidos
+                threshold: 15,
+                minDelay: 250
+            },
+            jump: {
+                color: '#ff9100',
+                label: 'Saltos',
+                stat1Label: 'Pico Máx', stat1Unit: ' G',
+                stat2Label: 'Media', stat2Unit: ' G',
+                // Umbrales para salto
+                launchThreshold: 2.5, // Gs para detectar impulso
+                gravityThreshold: 1.2, // Por debajo de esto se considera "aire"
+                minAirTime: 100, // Mínimo ms en el aire para ser salto
+                landThreshold: 2.0, // Gs para detectar aterrizaje
+                cooldown: 600 // Tiempo mínimo entre saltos
             }
         };
 
-        // Referencias DOM
+        // --- REFERENCIAS UI ---
         const ui = {
-            steps: document.getElementById('step-display'),
-            dist: document.getElementById('dist-display'),
-            kcal: document.getElementById('kcal-display'),
+            count: document.getElementById('step-display'),
+            label: document.getElementById('main-label'),
+            s1Val: document.getElementById('stat-1-val'),
+            s1Lab: document.getElementById('stat-1-label'),
+            s2Val: document.getElementById('stat-2-val'),
+            s2Lab: document.getElementById('stat-2-label'),
             toggleBtn: document.getElementById('toggle-btn'),
             status: document.getElementById('sensor-status'),
             sensorBar: document.getElementById('sensor-bar'),
             toast: document.getElementById('status-toast'),
             modeBtns: document.querySelectorAll('.mode-btn'),
-            counterContainer: document.getElementById('counter-ui')
+            container: document.getElementById('counter-ui'),
+            ring: document.getElementById('progress-ring'),
+            bg: document.getElementById('circle-bg')
         };
 
-        // Manejo de Permisos (iOS 13+)
+        // --- PERMISOS ---
         function requestPermission() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission()
@@ -382,24 +413,23 @@
                             startListening();
                             showToast('Sensores activados');
                         } else {
-                            showToast('Permiso denegado. No se pueden contar pasos.');
+                            showToast('Permiso denegado');
                             stopTracking();
                         }
                     })
                     .catch(console.error);
             } else {
-                // Android o iOS viejo no requiere permiso explícito
                 startListening();
             }
         }
 
-        // Iniciar / Detener rastreo
+        // --- CONTROL PRINCIPAL ---
         function toggleTracking() {
             if (!state.isRunning) {
                 state.isRunning = true;
                 ui.toggleBtn.textContent = "Detener";
                 ui.toggleBtn.classList.add('stop');
-                ui.status.textContent = "Leyendo acelerómetro...";
+                ui.status.textContent = `Midiendo ${getModeName()}...`;
                 requestPermission();
             } else {
                 stopTracking();
@@ -415,24 +445,52 @@
         }
 
         function resetCounter() {
-            state.steps = 0;
+            state.count = 0;
             state.distance = 0;
             state.calories = 0;
+            state.maxPower = 0;
+            state.sumPower = 0;
+            state.jumpState = 'IDLE';
             updateUI();
-            showToast("Contador reiniciado");
+            showToast("Contadores reiniciados");
         }
 
         function setMode(mode) {
             state.mode = mode;
-            // Actualizar botones UI
+            // Actualizar botones
             ui.modeBtns.forEach(btn => btn.classList.remove('active'));
             if(mode === 'walk') document.querySelector('.walking').classList.add('active');
-            else document.querySelector('.running').classList.add('active');
+            if(mode === 'run') document.querySelector('.running').classList.add('active');
+            if(mode === 'jump') document.querySelector('.jumping').addClass('active'); // Fix
             
-            showToast(`Modo cambiado a: ${mode === 'walk' ? 'Caminar' : 'Correr'}`);
+            // Re-assign class properly
+            ui.modeBtns.forEach(b => b.classList.remove('active'));
+            document.querySelector(`.mode-btn.${mode === 'jump' ? 'jumping' : mode === 'run' ? 'running' : 'walking'}`).classList.add('active');
+
+            const currentConfig = config[mode];
+            
+            // Actualizar UI estática
+            ui.label.textContent = currentConfig.label;
+            ui.s1Lab.textContent = currentConfig.stat1Label;
+            ui.s2Lab.textContent = currentConfig.stat2Label;
+            
+            // Colores
+            ui.ring.style.borderColor = `var(--${mode === 'jump' ? 'jump' : mode === 'run' ? 'accent' : 'primary'})`;
+            ui.ring.style.borderTopColor = currentConfig.color;
+            ui.ring.style.borderRightColor = currentConfig.color;
+            ui.sensorBar.style.backgroundColor = currentConfig.color;
+
+            showToast(`Modo: ${getModeName()}`);
+            updateUI();
+        }
+        
+        function getModeName() {
+            if(state.mode === 'walk') return 'Caminar';
+            if(state.mode === 'run') return 'Correr';
+            return 'Saltar';
         }
 
-        // Lógica del Podómetro
+        // --- LÓGICA DE SENSORES ---
         function startListening() {
             window.addEventListener('devicemotion', handleMotion, true);
         }
@@ -440,99 +498,162 @@
         function handleMotion(event) {
             if (!state.isRunning) return;
 
-            const currentMode = config[state.mode];
-            const acceleration = event.accelerationIncludingGravity;
-            
-            if (!acceleration) {
-                ui.status.textContent = "Acelerómetro no disponible";
-                return;
+            const acc = event.accelerationIncludingGravity;
+            if (!acc) return;
+
+            const x = acc.x;
+            const y = acc.y;
+            const z = acc.z;
+
+            // Calcular magnitud total de la aceleración (Vector)
+            const currentAcc = Math.sqrt(x*x + y*y + z*z);
+
+            // Visualización (0 a 30Gs aprox para normalizar la barra)
+            const barPct = Math.min((currentAcc / 30) * 100, 100);
+            ui.sensorBar.style.width = `${barPct}%`;
+
+            if (state.mode === 'jump') {
+                processJump(currentAcc);
+            } else {
+                processWalkRun(currentAcc);
             }
 
-            const x = acceleration.x;
-            const y = acceleration.y;
-            const z = acceleration.z;
-
-            // Calcular magnitud del vector de aceleración
-            // Usamos la diferencia con la lectura anterior para detectar "cambios bruscos" (el golpe del pie)
-            const deltaX = Math.abs(x - state.lastX);
-            const deltaY = Math.abs(y - state.lastY);
-            const deltaZ = Math.abs(z - state.lastZ);
-            
-            const speed = deltaX + deltaY + deltaZ;
-
-            // Visualización simple de la actividad
-            const barWidth = Math.min((speed / 30) * 100, 100);
-            ui.sensorBar.style.width = `${barWidth}%`;
-
-            // Algoritmo de detección de paso
-            const now = Date.now();
-            
-            if (speed > currentMode.threshold) {
-                if ((now - state.lastStepTime) > currentMode.minDelay) {
-                    registerStep();
-                    state.lastStepTime = now;
-                }
-            }
-
-            // Actualizar últimas lecturas
-            state.lastX = x;
-            state.lastY = y;
-            state.lastZ = z;
+            // Actualizar lecturas anteriores
+            state.lastX = x; state.lastY = y; state.lastZ = z;
         }
 
-        function registerStep() {
-            state.steps++;
-            const currentMode = config[state.mode];
+        // 1. Lógica para Caminar y Correr
+        function processWalkRun(currentAcc) {
+            const now = Date.now();
+            const conf = config[state.mode];
+
+            // Calcular delta (cambio brusco)
+            const deltaX = Math.abs(state.lastX - state.lastX); // Simplificado por magnitud directa
+            const delta = Math.abs(currentAcc - 9.8); // Aproximación de movimiento (9.8 es gravedad estática)
+
+            // Usamos la magnitud total simplificada vs umbral
+            // La magnitud total suele oscilar entre 8 y 12 al caminar
+            // Si sube por encima del umbral...
             
-            // Calcular métricas
-            state.distance += currentMode.strideLength;
-            state.calories += currentMode.kcalPerStep;
+            // Algoritmo de cruce de cero o pico simple
+            // Para simplificar en web: Detectamos picos altos
+            
+            if (currentAcc > conf.threshold) {
+                if ((now - state.lastEventTime) > conf.minDelay) {
+                    registerStep();
+                    state.lastEventTime = now;
+                }
+            }
+        }
+
+        // 2. Lógica para Saltos (Máquina de Estados)
+        function processJump(currentAcc) {
+            const now = Date.now();
+            const conf = config.jump;
+
+            switch (state.jumpState) {
+                case 'IDLE':
+                    // Esperar un impulso fuerte hacia arriba (aceleración > umbral)
+                    if (currentAcc > conf.launchThreshold) {
+                        state.jumpState = 'LAUNCH';
+                        state.jumpLaunchPeak = currentAcc;
+                        ui.status.textContent = "¡Despegue!";
+                    }
+                    break;
+
+                case 'LAUNCH':
+                    // Registramos el pico máximo del despegue (nuestra "potencia")
+                    if (currentAcc > state.jumpLaunchPeak) {
+                        state.jumpLaunchPeak = currentAcc;
+                    }
+                    
+                    // Si la fuerza cae (entrando al aire)
+                    if (currentAcc < conf.gravityThreshold) {
+                        state.jumpState = 'AIR';
+                        state.jumpAirTimeStart = now;
+                    }
+                    
+                    // Si tarda mucho en entrar al aire, resetear (no fue salto)
+                    if (now - state.lastEventTime > 500) state.jumpState = 'IDLE';
+                    break;
+
+                case 'AIR':
+                    // Estamos en el aire si la gravedad se siente baja (caída libre)
+                    if (currentAcc > conf.gravityThreshold) {
+                        // La gravedad volvió -> probablemente aterrizamos o nos movimos mal
+                        // Chequear si estuvimos el mínimo tiempo en el aire
+                        const airDuration = now - state.jumpAirTimeStart;
+                        
+                        if (airDuration > conf.minAirTime) {
+                            // Validar aterrizaje (debe haber impacto)
+                            // Aunque en este momento ya estamos post-air, asumimos salto válido
+                            // por la duración del aire
+                            registerJump(state.jumpLaunchPeak);
+                            ui.status.textContent = `¡Salto! Pico: ${state.jumpLaunchPeak.toFixed(1)}G`;
+                            state.jumpState = 'IDLE';
+                            state.lastEventTime = now; // Cooldown
+                        } else {
+                            state.jumpState = 'IDLE';
+                        }
+                    }
+                    
+                    // Timeout de seguridad por si se queda "en el aire" mucho tiempo o cae suave
+                    if (now - state.jumpAirTimeStart > 1000) state.jumpState = 'IDLE';
+                    break;
+            }
+        }
+
+        // --- REGISTRO DE EVENTOS ---
+        function registerStep() {
+            const conf = config[state.mode];
+            state.count++;
+            state.distance += conf.strideLength;
+            state.calories += conf.kcalPerStep;
+            updateUI();
+            triggerFeedback();
+        }
+
+        function registerJump(power) {
+            state.count++;
+            
+            // Actualizar potencias
+            if (power > state.maxPower) state.maxPower = power;
+            
+            // Media: (Media Anterior * (N-1) + Nuevo) / N
+            // O acumulativo: sumPower / count
+            state.sumPower += power;
 
             updateUI();
-            triggerVisualFeedback();
+            triggerFeedback();
         }
 
         function updateUI() {
-            ui.steps.textContent = state.steps;
-            ui.dist.textContent = (state.distance / 1000).toFixed(2);
-            ui.kcal.textContent = Math.round(state.calories);
-        }
-
-        function triggerVisualFeedback() {
-            // Animación sutil del contador
-            ui.counterContainer.classList.add('stepping');
-            setTimeout(() => {
-                ui.counterContainer.classList.remove('stepping');
-            }, 100);
-
-            // Vibración si el dispositivo lo soporta
-            if (navigator.vibrate) {
-                navigator.vibrate(20); // Vibración muy corta
-            }
-        }
-
-        function showToast(message) {
-            ui.toast.textContent = message;
-            ui.toast.style.opacity = 1;
-            setTimeout(() => {
-                ui.toast.style.opacity = 0;
-            }, 3000);
-        }
-
-        // Inicialización
-        // Verificar compatibilidad básica al cargar
-        window.addEventListener('load', () => {
-            if (!window.DeviceMotionEvent) {
-                ui.status.textContent = "Tu dispositivo no soporta sensores de movimiento.";
-                ui.toggleBtn.disabled = true;
-                ui.toggleBtn.style.opacity = 0.5;
+            ui.count.textContent = state.count;
+            
+            if (state.mode === 'jump') {
+                const avg = state.count > 0 ? (state.sumPower / state.count) : 0;
+                ui.s1Val.textContent = state.maxPower.toFixed(1);
+                ui.s2Val.textContent = avg.toFixed(1);
             } else {
-                // Reintentar permiso iOS si el usuario ya lo dio antes pero recargó
-                // (Notar que iOS requiere interacción de usuario cada vez que se inicia la sesion de sensores)
-                ui.status.textContent = "Listo para iniciar.";
+                ui.s1Val.textContent = (state.distance / 1000).toFixed(2);
+                ui.s2Val.textContent = Math.round(state.calories);
             }
-        });
+        }
 
+        function triggerFeedback() {
+            ui.container.classList.add('stepping');
+            if (navigator.vibrate) navigator.vibrate(30);
+            setTimeout(() => ui.container.classList.remove('stepping'), 100);
+        }
+
+        function showToast(msg) {
+            ui.toast.textContent = msg;
+            ui.toast.style.opacity = 1;
+            setTimeout(() => ui.toast.style.opacity = 0, 2500);
+        }
+
+        // Inicialización de colores
+        setMode('walk');
     </script>
 </body>
 </html>
