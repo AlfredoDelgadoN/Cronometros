@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Entrenador Pro v4</title>
+    <title>Entrenador Pro v5</title>
     <style>
         :root {
-            --primary: #00e676; /* Caminar */
-            --accent: #2979ff;  /* Correr */
-            --jump: #ff9100;    /* Saltar */
+            --primary: #00e676;
+            --accent: #2979ff;
+            --jump: #ff9100;
             --bg: #121212;
             --surface: #1e1e1e;
+            --surface-light: #2c2c2c;
             --text: #ffffff;
             --text-secondary: #b0b0b0;
             --danger: #ff5252;
@@ -31,7 +32,7 @@
             overflow: hidden;
         }
 
-        /* Cabecera */
+        /* --- HEADER --- */
         header {
             padding: 10px 20px;
             display: flex;
@@ -42,18 +43,18 @@
             height: 60px;
         }
         h1 { font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-        .btn-icon { background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
+        .btn-icon { background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; padding: 5px; }
 
-        /* Área Principal */
+        /* --- MAIN --- */
         main {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 10px 20px;
+            position: relative;
         }
 
-        /* CRONÓMETRO */
         .timer-container { text-align: center; margin-bottom: 10px; width: 100%; }
         .main-time {
             font-family: var(--font-digital);
@@ -62,48 +63,26 @@
             color: var(--text);
             transition: opacity 0.3s;
         }
-        .main-time.paused { opacity: 0.4; color: #666; } /* Estilo para pausa automática */
+        .main-time.paused { opacity: 0.4; color: #666; }
         .lap-time { font-family: var(--font-digital); font-size: 1rem; color: var(--warn); min-height: 1.5rem; }
-
-        /* Indicador de Ritmo (SPM) */
         .spm-display {
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: var(--accent);
-            margin-bottom: 10px;
-            background: rgba(41, 121, 255, 0.1);
-            padding: 4px 12px;
-            border-radius: 12px;
-            border: 1px solid rgba(41, 121, 255, 0.3);
+            font-size: 1.1rem; font-weight: 700; color: var(--accent);
+            background: rgba(41, 121, 255, 0.1); padding: 4px 12px; border-radius: 12px;
+            border: 1px solid rgba(41, 121, 255, 0.3); margin-bottom: 10px;
         }
 
-        /* Contador Circular */
         .counter-container {
-            width: 130px;
-            height: 130px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            border-radius: 50%;
-            background: #181818;
-            border: 3px solid #333;
-            margin-bottom: 15px;
-            box-shadow: 0 0 25px rgba(0,0,0,0.6);
+            width: 130px; height: 130px; position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 50%; background: #181818; border: 3px solid #333;
+            margin-bottom: 15px; box-shadow: 0 0 25px rgba(0,0,0,0.6);
         }
         .step-count { font-size: 2.0rem; font-weight: 700; line-height: 1; }
         .step-label { font-size: 0.7rem; color: var(--text-secondary); margin-top: 5px; text-transform: uppercase; }
 
-        /* Ajuste de Zancada */
         .calibration-panel {
-            width: 100%;
-            max-width: 300px;
-            background: rgba(255,255,255,0.05);
-            padding: 8px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 1px solid #333;
+            width: 100%; max-width: 300px; background: rgba(255,255,255,0.05);
+            padding: 8px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #333;
         }
         .calib-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
         .calib-label { font-size: 0.7rem; color: var(--text-secondary); }
@@ -120,41 +99,25 @@
             width: 100%; height: 4px; cursor: pointer; background: #444; border-radius: 2px;
         }
 
-        /* Stats Grid */
         .stats-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            width: 100%;
-            margin-bottom: 10px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-bottom: 10px;
         }
         .stat-card {
-            background: var(--surface);
-            padding: 10px;
-            border-radius: 8px;
-            text-align: center;
-            border: 1px solid #333;
+            background: var(--surface); padding: 10px; border-radius: 8px;
+            text-align: center; border: 1px solid #333;
         }
         .stat-value { font-size: 1.1rem; font-weight: 600; color: var(--primary); }
         .stat-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; }
 
-        /* Sensores */
         .sensor-viz { width: 100%; height: 30px; background: #000; border-radius: 4px; margin-bottom: 10px; position: relative; overflow: hidden; display: flex; align-items: center; }
         .sensor-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.05s linear; }
         .status-msg { font-size: 0.75rem; color: var(--text-secondary); text-align: center; font-weight: bold; min-height: 1rem; }
 
-        /* Controles Inferiores */
+        /* --- CONTROLS --- */
         .controls {
-            background: var(--surface);
-            padding: 15px;
-            border-radius: 20px 20px 0 0;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-            z-index: 30;
+            background: var(--surface); padding: 15px; border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 15px; z-index: 30;
         }
-
         .mode-selector { display: flex; background: #121212; border-radius: 8px; padding: 4px; }
         .mode-btn {
             flex: 1; border: none; background: transparent; color: var(--text-secondary);
@@ -167,14 +130,8 @@
 
         .timer-row { display: flex; gap: 10px; }
         .btn-timer {
-            flex: 1;
-            padding: 15px;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            cursor: pointer;
+            flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 1rem;
+            font-weight: 700; text-transform: uppercase; cursor: pointer;
         }
         .btn-lap { background: #333; color: white; border: 1px solid #555; }
         .btn-main { background: var(--primary); color: #000; }
@@ -183,16 +140,35 @@
         
         .btn-reset-row { display: flex; }
         .btn-reset {
-            width: 100%;
-            padding: 12px;
-            background: #2b1d1d;
-            color: var(--danger);
-            border: 1px solid #553333;
-            border-radius: 8px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            cursor: pointer;
+            width: 100%; padding: 12px; background: #2b1d1d; color: var(--danger);
+            border: 1px solid #553333; border-radius: 8px; font-weight: 700; font-size: 0.9rem;
+            text-transform: uppercase; cursor: pointer;
+        }
+
+        /* --- MODAL CONFIG --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 1000;
+            display: flex; flex-direction: column; padding: 20px;
+            overflow-y: auto; /* Permite scroll si es largo */
+            transform: translateY(100%); transition: transform 0.3s ease-in-out;
+        }
+        .modal.open { transform: translateY(0); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .modal-title { font-size: 1.5rem; color: var(--primary); font-weight: 700; }
+        .modal-close { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; }
+        
+        .config-section { margin-bottom: 25px; background: var(--surface); padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        .config-section h3 { color: var(--accent); margin-bottom: 15px; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        
+        .config-item { margin-bottom: 15px; }
+        .config-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; color: var(--text-secondary); }
+        .config-val { color: var(--primary); font-weight: bold; }
+        .config-desc { font-size: 0.7rem; color: #666; margin-top: 2px; }
+
+        .btn-save {
+            width: 100%; padding: 15px; background: var(--primary); color: #000;
+            border: none; border-radius: 10px; font-weight: 700; font-size: 1.1rem; cursor: pointer; margin-top: 20px;
         }
 
         .hidden { display: none !important; }
@@ -200,19 +176,100 @@
 </head>
 <body>
 
+    <!-- MODAL DE CONFIGURACIÓN -->
+    <div id="settings-modal" class="modal">
+        <div class="modal-header">
+            <span class="modal-title">⚙️ Configuración</span>
+            <button class="modal-close" onclick="closeSettings()">×</button>
+        </div>
+
+        <!-- General -->
+        <div class="config-section">
+            <h3>General</h3>
+            <div class="config-item">
+                <div class="config-label">
+                    <span>⏱️ Pausa Automática</span>
+                    <span class="config-val" id="set-pause-val">5 s</span>
+                </div>
+                <input type="range" id="set-pause" min="1" max="30" step="1" value="5">
+                <div class="config-desc">Tiempo sin movimiento para pausar el reloj.</div>
+            </div>
+        </div>
+
+        <!-- Caminar / Correr -->
+        <div class="config-section">
+            <h3>🚶 Caminar / 🏃 Correr</h3>
+            
+            <div class="config-item">
+                <div class="config-label">
+                    <span>⚡ Sensibilidad Caminar</span>
+                    <span class="config-val" id="set-walk-sen-val">11.5</span>
+                </div>
+                <input type="range" id="set-walk-sen" min="8.0" max="18.0" step="0.1" value="11.5">
+                <div class="config-desc">Baja=Detecta todo | Alta=Ignora movimientos leves.</div>
+            </div>
+
+            <div class="config-item">
+                <div class="config-label">
+                    <span>⚡ Sensibilidad Correr</span>
+                    <span class="config-val" id="set-run-sen-val">15.5</span>
+                </div>
+                <input type="range" id="set-run-sen" min="10.0" max="25.0" step="0.1" value="15.5">
+                <div class="config-desc">Ajusta si cuenta pasos dobles al correr rápido.</div>
+            </div>
+
+            <div class="config-item">
+                <div class="config-label">
+                    <span>⏳ Tiempo entre Pasos (Cooldown)</span>
+                    <span class="config-val" id="set-cool-val">320 ms</span>
+                </div>
+                <input type="range" id="set-cool" min="150" max="800" step="10" value="320">
+                <div class="config-desc">Evita conteo doble. Aumenta si cuentas 2-3 pasos por zancada.</div>
+            </div>
+        </div>
+
+        <!-- Saltos -->
+        <div class="config-section">
+            <h3>⬆️ Saltos</h3>
+            <div class="config-item">
+                <div class="config-label">
+                    <span>📉 Detectar "Aire"</span>
+                    <span class="config-val" id="set-jump-air-val">3.5 G</span>
+                </div>
+                <input type="range" id="set-jump-air" min="1.0" max="8.0" step="0.1" value="3.5">
+                <div class="config-desc">Menor=detecta saltos cortos | Mayor=requiere caída libre pura.</div>
+            </div>
+            <div class="config-item">
+                <div class="config-label">
+                    <span>📈 Detectar "Impacto"</span>
+                    <span class="config-val" id="set-jump-land-val">16.0 G</span>
+                </div>
+                <input type="range" id="set-jump-land" min="10.0" max="30.0" step="0.5" value="16.0">
+                <div class="config-desc">Menor=detecta aterrizajes suaves | Mayor=solo saltos explosivos.</div>
+            </div>
+        </div>
+
+        <button class="btn-save" onclick="saveSettings()">💾 Guardar y Salir</button>
+        <div style="text-align:center; margin-top:15px; font-size:0.8rem; color:#666;">
+            Los cambios se guardan automáticamente en el dispositivo.
+        </div>
+    </div>
+
+    <!-- INTERFAZ PRINCIPAL -->
     <header>
-        <h1>Entrenador Pro v4</h1>
-        <button class="btn-icon" onclick="toggleFullScreen()">⛶</button>
+        <h1>Entrenador Pro v5</h1>
+        <div>
+            <button class="btn-icon" onclick="openSettings()">⚙️</button>
+            <button class="btn-icon" onclick="toggleFullScreen()">⛶</button>
+        </div>
     </header>
 
     <main>
-        <!-- CRONÓMETRO -->
         <div class="timer-container">
             <div class="main-time" id="main-timer">00:00.00</div>
             <div class="lap-time" id="lap-timer">Vuelta: --:--</div>
         </div>
 
-        <!-- INDICADOR RITMO -->
         <div class="spm-display hidden" id="spm-box">🏃 120 Pasos/Min</div>
 
         <div class="counter-container" id="counter-box">
@@ -263,44 +320,55 @@
     </div>
 
     <script>
-        // --- CONFIGURACIÓN ---
-        const config = {
-            walk: { label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676', threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12 },
-            run:  { label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff', threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14 },
-            jump: { label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100', freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15 }
+        // --- CONFIGURACIÓN POR DEFECTO ---
+        const defaultConfig = {
+            walk: { 
+                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676', 
+                threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12 
+            },
+            run: { 
+                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff', 
+                threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14 
+            },
+            jump: { 
+                label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100', 
+                freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15 
+            },
+            general: {
+                inactivityDelay: 5000 // ms
+            }
         };
 
+        // --- OBJETO CONFIG ACTIVO (Se carga desde memoria o usa defecto) ---
+        const config = JSON.parse(JSON.stringify(defaultConfig));
+
+        // --- CARGAR CONFIGURACIÓN GUARDADA ---
+        function loadSettings() {
+            const saved = localStorage.getItem('entrenadorProSettings');
+            if (saved) {
+                try {
+                    const parsed = JSON.parse(saved);
+                    // Merge simple (asumimos estructura igual)
+                    if(parsed.general) config.general = {...config.general, ...parsed.general};
+                    if(parsed.walk) config.walk = {...config.walk, ...parsed.walk};
+                    if(parsed.run) config.run = {...config.run, ...parsed.run};
+                    if(parsed.jump) config.jump = {...config.jump, ...parsed.jump};
+                    console.log("Configuración cargada");
+                } catch(e) { console.error("Error cargando config", e); }
+            }
+        }
+        loadSettings();
+
         // --- ESTADO ---
-        // Estados posibles: 'IDLE', 'WAITING', 'RUNNING', 'AUTO_PAUSED', 'STOPPED'
         const state = {
             status: 'IDLE', 
             mode: 'walk',
-            
-            // Cronómetro
-            timerRunning: false,
-            timerStartedAt: 0,
-            elapsed: 0,
-            lapStart: 0,
-            
-            // Auto-Pause Logic
+            timerRunning: false, timerStartedAt: 0, elapsed: 0, lapStart: 0,
             autoPauseId: null,
-            inactivityDelay: 5000, // 5 segundos sin pasos para pausar
-            
-            // Sensores y Datos
-            count: 0,
-            distance: 0,        
-            calories: 0,
-            strideLength: 1.50,
-            
-            // Cadencia (Pasos/Min)
-            lastStepsTimestamps: [], // Array para suavizar cálculo
-            
-            // Sensor
+            count: 0, distance: 0, calories: 0, strideLength: 1.50,
             lastStepTime: 0,
-            jumpState: 'GROUND',
-            jumpAirStartTime: 0,
-            jumpMaxPower: 0,
-            jumpTotalPower: 0
+            jumpState: 'GROUND', jumpAirStartTime: 0, jumpMaxPower: 0, jumpTotalPower: 0,
+            lastStepsTimestamps: []
         };
 
         // --- DOM ---
@@ -310,216 +378,197 @@
             spmBox: document.getElementById('spm-box'),
             count: document.getElementById('count-display'),
             mainLabel: document.getElementById('main-label'),
-            stat1: document.getElementById('stat-1'),
-            label1: document.getElementById('label-1'),
-            stat2: document.getElementById('stat-2'),
-            label2: document.getElementById('label-2'),
+            stat1: document.getElementById('stat-1'), label1: document.getElementById('label-1'),
+            stat2: document.getElementById('stat-2'), label2: document.getElementById('label-2'),
             counterBox: document.getElementById('counter-box'),
             calibPanel: document.getElementById('calib-panel'),
-            strideSlider: document.getElementById('stride-slider'),
-            strideVal: document.getElementById('stride-val'),
-            vizBar: document.getElementById('viz-bar'),
-            debug: document.getElementById('debug-info'),
-            btnMain: document.getElementById('btn-main'),
-            btnLap: document.getElementById('btn-lap'),
-            modeBtns: document.querySelectorAll('.mode-btn')
+            strideSlider: document.getElementById('stride-slider'), strideVal: document.getElementById('stride-val'),
+            vizBar: document.getElementById('viz-bar'), debug: document.getElementById('debug-info'),
+            btnMain: document.getElementById('btn-main'), btnLap: document.getElementById('btn-lap'),
+            modeBtns: document.querySelectorAll('.mode-btn'),
+            modal: document.getElementById('settings-modal')
         };
-
         let timerInterval;
 
-        // --- LÓGICA DE AUTO-PAUSA Y TIEMPO ---
+        // --- GESTIÓN DE CONFIGURACIÓN UI ---
+        function openSettings() {
+            ui.modal.classList.add('open');
+            // Poblar inputs con valores actuales de 'config'
+            document.getElementById('set-pause').value = config.general.inactivityDelay / 1000;
+            document.getElementById('set-pause-val').textContent = (config.general.inactivityDelay / 1000) + ' s';
 
+            document.getElementById('set-walk-sen').value = config.walk.threshold;
+            document.getElementById('set-walk-sen-val').textContent = config.walk.threshold;
+
+            document.getElementById('set-run-sen').value = config.run.threshold;
+            document.getElementById('set-run-sen-val').textContent = config.run.threshold;
+
+            document.getElementById('set-cool').value = config.run.cooldown; // Usamos cooldown de run como base
+            document.getElementById('set-cool-val').textContent = config.run.cooldown + ' ms';
+
+            document.getElementById('set-jump-air').value = config.jump.freeFallThreshold;
+            document.getElementById('set-jump-air-val').textContent = config.jump.freeFallThreshold + ' G';
+            
+            document.getElementById('set-jump-land').value = config.jump.impactThreshold;
+            document.getElementById('set-jump-land-val').textContent = config.jump.impactThreshold + ' G';
+
+            // Listeners para actualizar visualmente en tiempo real dentro del modal
+            setupSliderListeners();
+        }
+
+        function setupSliderListeners() {
+            const link = (id, suffix) => {
+                const el = document.getElementById(id);
+                el.oninput = (e) => document.getElementById(id+'-val').textContent = e.target.value + ' ' + suffix;
+            };
+            link('set-pause', 's');
+            link('set-walk-sen', '');
+            link('set-run-sen', '');
+            link('set-cool', ' ms');
+            link('set-jump-air', ' G');
+            link('set-jump-land', ' G');
+        }
+
+        function closeSettings() {
+            ui.modal.classList.remove('open');
+        }
+
+        function saveSettings() {
+            // Leer inputs y actualizar 'config'
+            config.general.inactivityDelay = parseInt(document.getElementById('set-pause').value) * 1000;
+            
+            config.walk.threshold = parseFloat(document.getElementById('set-walk-sen').value);
+            config.walk.autoStartThreshold = config.walk.threshold + 0.5; // Auto start ligeramente más alto
+            
+            config.run.threshold = parseFloat(document.getElementById('set-run-sen').value);
+            config.run.autoStartThreshold = config.run.threshold - 0.5;
+            
+            const newCooldown = parseInt(document.getElementById('set-cool').value);
+            config.run.cooldown = newCooldown;
+            config.walk.cooldown = newCooldown + 50; // Caminar un poco más lento
+
+            config.jump.freeFallThreshold = parseFloat(document.getElementById('set-jump-air').value);
+            config.jump.impactThreshold = parseFloat(document.getElementById('set-jump-land').value);
+
+            // Guardar en localStorage
+            localStorage.setItem('entrenadorProSettings', JSON.stringify(config));
+            
+            closeSettings();
+            showToast("Configuración guardada");
+        }
+
+        function showToast(msg) {
+            ui.debug.textContent = msg;
+            setTimeout(() => { if(state.status === 'IDLE') ui.debug.textContent = "Listo para iniciar"; }, 2000);
+        }
+
+        // --- LÓGICA PRINCIPAL (Cronómetro & Sensores) ---
         function toggleMainAction() {
-            if (state.status === 'IDLE' || state.status === 'STOPPED') {
-                armSystem();
-            } else if (state.status === 'WAITING') {
-                resetSystemUI();
-            } else if (state.status === 'RUNNING') {
-                stopSystem(); // Pausa Manual
-            } else if (state.status === 'AUTO_PAUSED') {
-                resumeSystem(); // Manual Resume si se pausó auto
-            }
+            if (state.status === 'IDLE' || state.status === 'STOPPED') { armSystem(); }
+            else if (state.status === 'WAITING') { resetSystemUI(); }
+            else if (state.status === 'RUNNING') { stopSystem(); }
+            else if (state.status === 'AUTO_PAUSED') { resumeSystem(); }
         }
 
         function armSystem() {
             state.status = 'WAITING';
-            ui.btnMain.textContent = "Cancelar";
-            ui.btnMain.className = "btn-timer btn-cancel";
-            ui.btnLap.disabled = true;
-            ui.debug.textContent = "Esperando movimiento...";
+            ui.btnMain.textContent = "Cancelar"; ui.btnMain.className = "btn-timer btn-cancel";
+            ui.btnLap.disabled = true; ui.debug.textContent = "Esperando movimiento...";
             ui.debug.style.color = "var(--warn)";
-            
             startSensorsOnly();
         }
 
         function startRunning() {
-            state.status = 'RUNNING';
-            state.timerRunning = true;
-            state.timerStartedAt = Date.now();
-            
+            state.status = 'RUNNING'; state.timerRunning = true; state.timerStartedAt = Date.now();
             ui.timerMain.classList.remove('paused');
-            ui.btnMain.textContent = "❚❚ Detener";
-            ui.btnMain.className = "btn-timer btn-stop";
-            ui.btnLap.disabled = false;
-            ui.debug.textContent = "EN MARCHA";
-            ui.debug.style.color = "var(--primary)";
-            
+            ui.btnMain.textContent = "❚❚ Detener"; ui.btnMain.className = "btn-timer btn-stop";
+            ui.btnLap.disabled = false; ui.debug.textContent = "EN MARCHA"; ui.debug.style.color = "var(--primary)";
             timerInterval = setInterval(updateTimerDisplay, 30);
-            
-            // Activar auto-pausa si no se pausó manualmente
             resetAutoPauseTimer();
         }
 
         function stopSystem() {
-            // Pausa Manual
-            state.status = 'STOPPED'; // Indica pausa manual explícita
-            pauseTimerLogic();
-            
-            ui.btnMain.textContent = "▶ Continuar";
-            ui.btnMain.className = "btn-timer btn-main";
-            ui.btnLap.disabled = true;
-            ui.debug.textContent = "PAUSADO MANUAL";
-            ui.debug.style.color = "#888";
-            
-            stopSensors(); // Opcional: detener sensores al pausar manual para bateria
+            state.status = 'STOPPED'; pauseTimerLogic();
+            ui.btnMain.textContent = "▶ Continuar"; ui.btnMain.className = "btn-timer btn-main";
+            ui.btnLap.disabled = true; ui.debug.textContent = "PAUSADO MANUAL"; ui.debug.style.color = "#888";
+            stopSensors();
         }
 
         function pauseSystemAuto() {
-            // Pausa Automática (Smart Pause)
-            state.status = 'AUTO_PAUSED';
-            pauseTimerLogic();
-            
-            ui.timerMain.classList.add('paused'); // Visual cue
-            ui.btnMain.textContent = "▶ Reanudar";
-            ui.btnMain.className = "btn-timer btn-main";
-            ui.btnLap.disabled = true;
-            ui.debug.textContent = "⏸ PAUSADO (Párate a descansar)";
+            state.status = 'AUTO_PAUSED'; pauseTimerLogic();
+            ui.timerMain.classList.add('paused');
+            ui.btnMain.textContent = "▶ Reanudar"; ui.btnMain.className = "btn-timer btn-main";
+            ui.btnLap.disabled = true; ui.debug.textContent = "⏸ PAUSADO (Párate a descansar)";
             ui.debug.style.color = "var(--text-secondary)";
-            
-            // NO detener sensores, porque necesitamos detectar el reinicio
         }
 
-        function resumeSystem() {
-            // Se reanuda desde pausa manual o auto
-            startRunning();
-        }
+        function resumeSystem() { startRunning(); }
 
         function pauseTimerLogic() {
-            state.timerRunning = false;
-            clearInterval(timerInterval);
-            clearTimeout(state.autoPauseId); // Limpiar timeout de auto-pausa
-            state.elapsed += Date.now() - state.timerStartedAt;
-            updateTimerDisplay();
+            state.timerRunning = false; clearInterval(timerInterval); clearTimeout(state.autoPauseId);
+            state.elapsed += Date.now() - state.timerStartedAt; updateTimerDisplay();
         }
 
         function resetAutoPauseTimer() {
-            // Solo funciona si estamos corriendo y no en pausa manual
             if (state.status !== 'RUNNING') return;
-
             clearTimeout(state.autoPauseId);
-            // Si no hay pasos en 5 segundos, pausar
             state.autoPauseId = setTimeout(() => {
-                if (state.status === 'RUNNING') {
-                    pauseSystemAuto();
-                }
-            }, state.inactivityDelay);
+                if (state.status === 'RUNNING') pauseSystemAuto();
+            }, config.general.inactivityDelay);
         }
 
         function hardReset() {
-            stopSystem();
-            state.status = 'IDLE';
-            state.elapsed = 0;
-            state.lapStart = 0;
-            state.count = 0;
-            state.distance = 0;
-            state.calories = 0;
-            state.jumpMaxPower = 0;
-            state.jumpTotalPower = 0;
-            state.lastStepsTimestamps = [];
-            
-            ui.timerMain.classList.remove('paused');
-            ui.spmBox.classList.add('hidden');
-            ui.btnMain.textContent = "▶ Iniciar";
-            ui.timerLap.textContent = "Vuelta: --:--";
-            ui.debug.textContent = "Listo para iniciar";
-            ui.debug.style.color = "var(--text-secondary)";
-            
-            updateTimerDisplay();
-            updateStats();
+            stopSystem(); state.status = 'IDLE'; state.elapsed = 0; state.lapStart = 0;
+            state.count = 0; state.distance = 0; state.calories = 0;
+            state.jumpMaxPower = 0; state.jumpTotalPower = 0; state.lastStepsTimestamps = [];
+            ui.timerMain.classList.remove('paused'); ui.spmBox.classList.add('hidden');
+            ui.btnMain.textContent = "▶ Iniciar"; ui.timerLap.textContent = "Vuelta: --:--";
+            ui.debug.textContent = "Listo para iniciar"; ui.debug.style.color = "var(--text-secondary)";
+            updateTimerDisplay(); updateStats();
         }
-
-        // --- MANEJO DE SENSORES ---
 
         function startSensorsOnly() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission().then(response => {
                     if (response === 'granted') window.addEventListener('devicemotion', handleMotion);
                 }).catch(e => console.log(e));
-            } else {
-                window.addEventListener('devicemotion', handleMotion);
-            }
+            } else { window.addEventListener('devicemotion', handleMotion); }
         }
-
-        function stopSensors() {
-            window.removeEventListener('devicemotion', handleMotion);
-        }
+        function stopSensors() { window.removeEventListener('devicemotion', handleMotion); }
 
         function handleMotion(event) {
-            const acc = event.accelerationIncludingGravity;
-            if (!acc) return;
-
+            const acc = event.accelerationIncludingGravity; if (!acc) return;
             const now = Date.now();
             const magnitude = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
             ui.vizBar.style.width = Math.min((magnitude / 25) * 100, 100) + '%';
 
-            // 1. Chequeo de Auto-Start
             if (state.status === 'WAITING') {
-                if (magnitude > config[state.mode].autoStartThreshold) {
-                    startRunning();
-                } else {
-                    return; 
-                }
+                if (magnitude > config[state.mode].autoStartThreshold) { startRunning(); } else return;
             }
-
-            // 2. Chequeo de Auto-Resume (si está en AUTO_PAUSED)
             if (state.status === 'AUTO_PAUSED') {
-                if (magnitude > config[state.mode].autoStartThreshold) {
-                    resumeSystem();
-                }
+                if (magnitude > config[state.mode].autoStartThreshold) { resumeSystem(); }
             }
-
-            // 3. Lógica Normal de Conteo
             if (state.status !== 'RUNNING') return;
 
-            if (state.mode === 'jump') {
-                processJump(magnitude, now);
-            } else {
-                processRunWalk(magnitude, now);
-            }
+            if (state.mode === 'jump') processJump(magnitude, now);
+            else processRunWalk(magnitude, now);
         }
 
-        // --- LÓGICA DE PASOS Y SALTOS ---
-        
         function processRunWalk(magnitude, now) {
             const conf = config[state.mode];
             if (magnitude > conf.threshold) {
                 if ((now - state.lastStepTime) > conf.cooldown) {
-                    registerStep(now);
-                    state.lastStepTime = now;
+                    registerStep(now); state.lastStepTime = now;
                 }
             }
         }
-
         function processJump(magnitude, now) {
             if (state.jumpState === 'GROUND') {
-                if (magnitude < config.jump.freeFallThreshold) {
-                    state.jumpState = 'AIR'; state.jumpAirStartTime = now;
-                }
+                if (magnitude < config.jump.freeFallThreshold) { state.jumpState = 'AIR'; state.jumpAirStartTime = now; }
             } else if (state.jumpState === 'AIR') {
                 if (magnitude > config.jump.impactThreshold) {
                     if ((now - state.jumpAirStartTime) < config.jump.maxAirTime) {
-                        registerJump(now, magnitude);
-                        state.jumpState = 'LANDED';
+                        registerJump(now, magnitude); state.jumpState = 'LANDED';
                         setTimeout(() => { state.jumpState = 'GROUND'; }, 500);
                     } else { state.jumpState = 'GROUND'; }
                 }
@@ -528,65 +577,31 @@
         }
 
         function registerStep(now) {
-            state.count++;
-            state.distance += state.strideLength;
-            state.calories += config[state.mode].kcalPerUnit;
-            
-            // Reiniciar timer de Auto-Pause
-            resetAutoPauseTimer();
-            
-            // Calcular Cadencia
-            calculateCadence(now);
-            
-            updateStats();
+            state.count++; state.distance += state.strideLength; state.calories += config[state.mode].kcalPerUnit;
+            resetAutoPauseTimer(); calculateCadence(now); updateStats();
         }
-
         function registerJump(now, force) {
-            state.count++;
-            state.jumpTotalPower += force;
+            state.count++; state.jumpTotalPower += force;
             if (force > state.jumpMaxPower) state.jumpMaxPower = force;
-            
-            resetAutoPauseTimer();
-            calculateCadence(now); // Para mostrar Jumps/min también
-            
-            updateStats();
+            resetAutoPauseTimer(); calculateCadence(now); updateStats();
             if(navigator.vibrate) navigator.vibrate(50);
         }
 
         function calculateCadence(now) {
-            // Guardar timestamp
             state.lastStepsTimestamps.push(now);
-            // Mantener solo los últimos 3 pasos para suavizar
-            if (state.lastStepsTimestamps.length > 3) {
-                state.lastStepsTimestamps.shift();
-            }
-
+            if (state.lastStepsTimestamps.length > 3) state.lastStepsTimestamps.shift();
             if (state.lastStepsTimestamps.length >= 2) {
-                const oldest = state.lastStepsTimestamps[0];
-                const newest = state.lastStepsTimestamps[state.lastStepsTimestamps.length - 1];
-                const diffMs = newest - oldest;
-                
-                // Pasos por minuto
-                const steps = state.lastStepsTimestamps.length;
-                const minutes = diffMs / 60000;
-                const spm = Math.round(steps / minutes);
-
-                // Actualizar UI
-                if (state.mode === 'jump') {
-                    ui.spmBox.textContent = `⬆️ ${spm} Saltos/Min`;
-                } else {
-                    ui.spmBox.textContent = `🏃 ${spm} Pasos/Min`;
-                }
+                const diffMs = state.lastStepsTimestamps[state.lastStepsTimestamps.length-1] - state.lastStepsTimestamps[0];
+                const spm = Math.round((state.lastStepsTimestamps.length * 60000) / diffMs);
+                if (state.mode === 'jump') ui.spmBox.textContent = `⬆️ ${spm} Saltos/Min`;
+                else ui.spmBox.textContent = `🏃 ${spm} Pasos/Min`;
                 ui.spmBox.classList.remove('hidden');
             }
         }
 
-        // --- VISUALIZACIÓN Y UI ---
-
         function formatTime(ms) {
             const totalSec = Math.floor(ms / 1000);
-            const mins = Math.floor(totalSec / 60);
-            const secs = totalSec % 60;
+            const mins = Math.floor(totalSec / 60), secs = totalSec % 60;
             const centis = Math.floor((ms % 1000) / 10);
             return `${pad(mins)}:${pad(secs)}.${pad(centis)}`;
         }
@@ -601,10 +616,8 @@
                 ui.timerLap.textContent = "Vuelta: " + formatTime(currentLap);
             } else {
                 ui.timerMain.textContent = formatTime(state.elapsed);
-                // ui.timerLap.textContent = "Vuelta: --:--"; // Mantener última vuelta visible
             }
         }
-
         function doLap() {
             if (state.status !== 'RUNNING') return;
             const now = Date.now();
@@ -615,68 +628,49 @@
             setTimeout(() => ui.timerLap.style.color = "var(--warn)", 300);
             ui.debug.textContent = `Vuelta: ${formatTime(lapTime)}`;
         }
-
         function updateStats() {
             ui.count.textContent = state.count;
             if (state.mode === 'jump') {
                 const avg = state.count > 0 ? (state.jumpTotalPower / state.count) : 0;
-                ui.stat1.textContent = state.jumpMaxPower.toFixed(1);
-                ui.stat2.textContent = avg.toFixed(1);
+                ui.stat1.textContent = state.jumpMaxPower.toFixed(1); ui.stat2.textContent = avg.toFixed(1);
             } else {
                 ui.stat1.textContent = (state.distance / 1000).toFixed(2);
                 ui.stat2.textContent = Math.round(state.calories);
             }
         }
-
         function resetSystemUI() {
-            state.status = 'IDLE';
-            ui.btnMain.textContent = "▶ Iniciar";
-            ui.btnMain.className = "btn-timer btn-main";
-            ui.debug.textContent = "Cancelado";
-            ui.debug.style.color = "var(--text-secondary)";
+            state.status = 'IDLE'; ui.btnMain.textContent = "▶ Iniciar"; ui.btnMain.className = "btn-timer btn-main";
+            ui.debug.textContent = "Cancelado"; ui.debug.style.color = "var(--text-secondary)";
             stopSensors();
         }
-
         function setMode(mode) {
             state.mode = mode;
             ui.modeBtns.forEach(b => b.classList.remove('active'));
             document.querySelector(`.mode-btn.${mode === 'jump' ? 'jump' : mode === 'run' ? 'run' : 'walk'}`).classList.add('active');
-
             const conf = config[mode];
-            ui.mainLabel.textContent = conf.label;
-            ui.label1.textContent = conf.s1Label;
-            ui.label2.textContent = conf.s2Label;
-            ui.counterBox.style.borderColor = conf.color;
+            ui.mainLabel.textContent = conf.label; ui.label1.textContent = conf.s1Label;
+            ui.label2.textContent = conf.s2Label; ui.counterBox.style.borderColor = conf.color;
             ui.vizBar.style.backgroundColor = conf.color;
-            
             if (mode === 'jump') { ui.calibPanel.classList.add('hidden'); } 
             else {
                 ui.calibPanel.classList.remove('hidden');
-                if (mode === 'walk') {
-                    state.strideLength = 0.75; ui.strideSlider.value = 0.75;
-                } else {
-                    state.strideLength = 1.50; ui.strideSlider.value = 1.50;
-                }
+                if (mode === 'walk') { state.strideLength = 0.75; ui.strideSlider.value = 0.75; }
+                else { state.strideLength = 1.50; ui.strideSlider.value = 1.50; }
                 ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
                 if(state.count > 0) { state.distance = state.count * state.strideLength; updateStats(); }
             }
         }
-
         function toggleFullScreen() {
             if (!document.fullscreenElement) document.documentElement.requestFullscreen();
             else if (document.exitFullscreen) document.exitFullscreen();
         }
-
         ui.strideSlider.addEventListener('input', (e) => {
             state.strideLength = parseFloat(e.target.value);
             ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
             if(state.count > 0 && state.mode !== 'jump') {
-                state.distance = state.count * state.strideLength;
-                updateStats();
+                state.distance = state.count * state.strideLength; updateStats();
             }
         });
-
-        // Init
         setMode('run');
     </script>
 </body>
