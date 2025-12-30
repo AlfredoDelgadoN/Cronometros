@@ -79,6 +79,9 @@
             font-size: 0.8rem;
             margin-left: 5px;
             cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
         /* --- Main Dashboard --- */
@@ -153,18 +156,7 @@
         }
 
         .stat-label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        
-        /* Aquí aplicamos la fuente seleccionada a los números grandes */
-        .stat-value { 
-            font-size: 2.2rem; 
-            font-weight: 700; 
-            font-family: var(--font-numbers); 
-            color: var(--primary-color); 
-            line-height: 0.9;
-            /* Ajuste específico para cada fuente para que se alinee bien */
-            transform-origin: center;
-        }
-        
+        .stat-value { font-size: 2.2rem; font-weight: 700; font-family: var(--font-numbers); color: var(--primary-color); line-height: 0.9; }
         .stat-unit { font-size: 0.9rem; color: var(--text-dim); font-family: var(--font-main); }
         .stat-sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
 
@@ -173,14 +165,7 @@
             text-align: center;
             padding: 5px 0;
         }
-        .timer-value { 
-            font-size: 4.5rem; 
-            font-family: var(--font-numbers); 
-            font-weight: 500; 
-            letter-spacing: -1px; 
-            line-height: 0.85; 
-            color: var(--primary-color); 
-        }
+        .timer-value { font-size: 4.5rem; font-family: var(--font-numbers); font-weight: 500; letter-spacing: -1px; line-height: 0.85; color: var(--primary-color); }
         
         /* Mapa */
         #map-container {
@@ -347,6 +332,7 @@
         </div>
         <div class="top-controls">
             <button onclick="app.toggleUnits()">Km/Mi</button>
+            <button onclick="app.toggleFullScreen()" title="Pantalla Completa">⛶</button>
             <button onclick="app.openSettings()">⚙️</button>
         </div>
     </header>
@@ -410,13 +396,11 @@
 
     <!-- Controles -->
     <section class="controls-area">
-        <!-- Botón Multifunción Izquierdo: LAP / Lista -->
         <button id="btn-lap" class="btn-big btn-lap" onclick="app.handleLeftButton()">
             Lap
             <small>Historial</small>
         </button>
 
-        <!-- Botón Multifunción Derecho: START / PAUSE / STOP -->
         <button id="btn-action" class="btn-big btn-action" onclick="app.handleRightButton()">
             Iniciar
         </button>
@@ -466,7 +450,6 @@
             </div>
             <div class="modal-body">
                 
-                <!-- NUEVO: Selector de Fuente -->
                 <div class="form-group">
                     <label>Tipo de Letra</label>
                     <select id="set-font" class="form-control" onchange="app.changeFont(this.value)">
@@ -521,20 +504,20 @@
          * Lógica de la Aplicación
          */
         const app = {
-            // Estado
             state: {
                 isRunning: false,
                 isPaused: false,
                 startTime: 0,
                 pausedTime: 0,
                 totalElapsed: 0,
-                distance: 0, // metros
-                currentSpeed: 0, // m/s
-                avgSpeed: 0, // m/s
+                movingTime: 0, // NUEVO: Para calcular promedio correcto (excluyendo pausas)
+                distance: 0,
+                currentSpeed: 0,
+                avgSpeed: 0,
                 lastPos: null,
                 altitude: 0,
                 accuracy: 0,
-                path: [], // Array de [lat, lng]
+                path: [],
                 laps: [],
                 currentLap: {
                     startTime: 0,
@@ -544,18 +527,18 @@
                 activity: 'stopped',
                 watchId: null,
                 timerInterval: null,
-                units: 'metric', // 'metric' (km) o 'imperial' (mi)
-                font: "'Teko', sans-serif", // NUEVO: Fuente seleccionada
+                wakeLock: null, // NUEVO: Wake Lock
+                units: 'metric',
+                font: "'Teko', sans-serif",
                 settings: {
                     autoLap: false,
                     lapType: 'distance',
-                    lapDistValue: 1000, // metros
-                    lapTimeValue: 600, // segundos
+                    lapDistValue: 1000,
+                    lapTimeValue: 600,
                     audio: true
                 }
             },
             
-            // Elementos DOM cacheados
             ui: {
                 timer: document.getElementById('main-timer'),
                 dist: document.getElementById('val-dist'),
@@ -576,18 +559,21 @@
                 toastPace: document.getElementById('toast-pace')
             },
 
-            // Mapa Leaflet
             map: null,
             polylineTotal: null,
             polylineLap: null,
             markers: [],
 
-            // Inicialización
             init: function() {
                 this.initMap();
                 this.loadSettings();
-                this.changeFont(this.state.font); // Aplicar fuente al inicio
+                this.changeFont(this.state.font);
                 this.updateUI();
+
+                // Listener para salir de pantalla completa si el usuario lo hace nativamente
+                document.addEventListener('fullscreenchange', () => {
+                   // Opcional: Cambiar icono del botón si se sale manualmente
+                });
             },
 
             initMap: function() {
@@ -602,7 +588,42 @@
                 this.polylineLap = L.polyline([], { color: '#ff1744', weight: 5, dashArray: '10, 10' }).addTo(this.map);
             },
 
-            // --- Gestión de Estado ---
+            // --- Wake Lock Logic (NUEVO) ---
+            async requestWakeLock() {
+                try {
+                    if ('wakeLock' in navigator) {
+                        this.state.wakeLock = await navigator.wakeLock.request('screen');
+                        console.log('⚡ Wake Lock activo. La pantalla no se apagará.');
+                    } else {
+                        console.warn('Wake Lock no soportado en este navegador.');
+                    }
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                }
+            },
+
+            releaseWakeLock() {
+                if (this.state.wakeLock !== null) {
+                    this.state.wakeLock.release()
+                        .then(() => {
+                            this.state.wakeLock = null;
+                            console.log('💤 Wake Lock liberado.');
+                        });
+                }
+            },
+
+            // --- Full Screen Logic (NUEVO) ---
+            toggleFullScreen: function() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.error(`Error habilitando pantalla completa: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
+            },
 
             handleRightButton: function() {
                 if (!this.state.isRunning && !this.state.isPaused) {
@@ -641,6 +662,8 @@
                 this.ui.status.classList.add('active');
                 this.ui.status.classList.remove('paused');
                 
+                this.requestWakeLock(); // NUEVO
+                
                 if ("geolocation" in navigator) {
                     this.state.watchId = navigator.geolocation.watchPosition(
                         (pos) => this.onPositionUpdate(pos),
@@ -660,6 +683,7 @@
                 this.state.isPaused = true;
                 clearInterval(this.state.timerInterval);
                 navigator.geolocation.clearWatch(this.state.watchId);
+                this.releaseWakeLock(); // NUEVO: Soltar wake lock al pausar
 
                 this.ui.btnAction.textContent = "Detener";
                 this.ui.btnAction.classList.add('paused');
@@ -673,14 +697,13 @@
                 this.state.isPaused = false;
                 clearInterval(this.state.timerInterval);
                 navigator.geolocation.clearWatch(this.state.watchId);
+                this.releaseWakeLock(); // NUEVO: Soltar wake lock al detener
                 
                 this.ui.btnAction.textContent = "Iniciar";
                 this.ui.btnAction.classList.remove('paused');
                 this.ui.status.classList.remove('paused');
                 this.updateStatusText("Terminado");
             },
-
-            // --- Lógica GPS y Cálculos ---
 
             onPositionUpdate: function(position) {
                 const lat = position.coords.latitude;
@@ -726,12 +749,22 @@
                 const now = Date.now();
                 this.state.totalElapsed = now - this.state.startTime;
 
+                // NUEVO LÓGICA PROMEDIO:
+                // Sumamos 1 segundo al movingTime SOLO si está corriendo.
+                if (this.state.isRunning) {
+                    this.state.movingTime += 1000;
+                }
+
                 const dateObj = new Date();
                 const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 document.getElementById('val-clock').textContent = timeString;
                 
-                if (this.state.totalElapsed > 0) {
-                    this.state.avgSpeed = (this.state.distance / this.state.totalElapsed) * 1000 * 3.6; 
+                // Calculo Promedio CORREGIDO: Distancia / Tiempo en Movimiento
+                if (this.state.movingTime > 0) {
+                    // m/s -> km/h
+                    this.state.avgSpeed = (this.state.distance / this.state.movingTime) * 1000 * 3.6; 
+                } else {
+                    this.state.avgSpeed = 0;
                 }
 
                 if (this.state.settings.autoLap && this.state.settings.lapType === 'time') {
@@ -852,14 +885,9 @@
                 return `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
             },
 
-            // --- Fuente (NUEVO) ---
-
             changeFont: function(fontFamily) {
                 this.state.font = fontFamily;
-                // Actualizar variable CSS
                 document.documentElement.style.setProperty('--font-numbers', fontFamily);
-                
-                // Guardar en preferencias (podríamos guardarlo en localStorage, por ahora solo en memoria state)
             },
 
             // --- Interfaz de Usuario ---
@@ -880,7 +908,7 @@
 
                 const displayDist = (this.state.distance / 1000) * factorDist;
                 const displaySpeed = this.state.currentSpeed * factorSpeed;
-                const displayAvgSpeed = this.state.avgSpeed * factorSpeed;
+                const displayAvgSpeed = this.state.avgSpeed * factorSpeed; // Usa avgSpeed corregido
 
                 this.ui.dist.textContent = displayDist.toFixed(2);
                 this.ui.distUnit.textContent = unitDist;
@@ -896,9 +924,11 @@
                 }
 
                 let globalPace = 0;
-                if (this.state.distance > 0) {
-                    globalPace = (this.state.totalElapsed / 1000) / ((this.state.distance / 1000) * factorDist);
+                // Calculo de Pace Global usando movingTime (excluyendo pausas)
+                if (this.state.movingTime > 0) {
+                    globalPace = (this.state.movingTime / 1000) / ((this.state.distance / 1000) * factorDist);
                 }
+                
                 if (displaySpeed < 0.5) {
                     this.ui.pace.textContent = "--:--";
                 } else {
@@ -1005,7 +1035,6 @@
                 this.state.settings.lapDistValue = parseFloat(document.getElementById('set-lap-dist').value) * 1000;
                 this.state.settings.lapTimeValue = parseFloat(document.getElementById('set-lap-time').value) * 60;
                 this.state.settings.audio = document.getElementById('set-audio').checked;
-                // Fuente se guarda inmediatamente al cambiar en el evento onchange, pero aquí podríamos persistirla
             },
 
             loadSettings: function() {
