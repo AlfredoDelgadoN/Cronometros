@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Podómetro Pro Ajustable</title>
+    <title>Podómetro Final</title>
     <style>
         :root {
-            --primary: #00e676; /* Caminar */
-            --accent: #2979ff;  /* Correr */
-            --jump: #ff9100;    /* Saltar */
+            --primary: #00e676;
+            --accent: #2979ff;
+            --jump: #ff9100;
             --bg: #121212;
             --surface: #1e1e1e;
             --text: #ffffff;
@@ -26,32 +26,47 @@
             height: 100vh;
             display: flex;
             flex-direction: column;
-            /* overflow: hidden; */
+            overflow: hidden;
         }
 
+        /* Cabecera */
         header {
-            padding: 15px;
-            text-align: center;
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
             background: var(--surface);
             border-bottom: 1px solid #333;
-            z-index: 10;
+            height: 60px;
+            z-index: 20;
         }
 
-        h1 { font-size: 1.1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+        h1 { font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .btn-icon {
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+        }
 
+        /* Área Principal */
         main {
             flex: 1;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 15px;
+            padding: 10px 20px;
+            position: relative;
         }
 
-        /* Contador */
+        /* Contador Circular */
         .counter-container {
-            width: 220px;
-            height: 220px;
+            width: 200px;
+            height: 200px;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -60,23 +75,49 @@
             border-radius: 50%;
             background: #181818;
             border: 4px solid #333;
-            margin-bottom: 20px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            margin-bottom: 15px;
+            box-shadow: 0 0 25px rgba(0,0,0,0.6);
             transition: border-color 0.3s;
         }
 
-        .step-count { font-size: 3.5rem; font-weight: 700; line-height: 1; }
-        .step-label { font-size: 0.9rem; color: var(--text-secondary); margin-top: 5px; text-transform: uppercase; }
+        .step-count { font-size: 3.2rem; font-weight: 700; line-height: 1; }
+        .step-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px; text-transform: uppercase; }
 
-        /* Stats */
+        /* Ajuste de Zancada */
+        .calibration-panel {
+            width: 100%;
+            max-width: 300px;
+            background: rgba(255,255,255,0.05);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #333;
+        }
+        .calib-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .calib-label { font-size: 0.75rem; color: var(--text-secondary); }
+        .calib-val { font-size: 0.8rem; font-weight: bold; color: var(--primary); }
+        
+        input[type=range] {
+            width: 100%;
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 16px; width: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 4px; cursor: pointer; background: #444; border-radius: 2px;
+        }
+
+        /* Stats Grid */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 10px;
             width: 100%;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
-
         .stat-card {
             background: var(--surface);
             padding: 12px;
@@ -84,107 +125,39 @@
             text-align: center;
             border: 1px solid #333;
         }
+        .stat-value { font-size: 1.4rem; font-weight: 600; color: var(--primary); }
+        .stat-label { font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; }
 
-        .stat-value { font-size: 1.2rem; font-weight: 600; color: var(--primary); }
-        .stat-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 4px; }
+        /* Sensor Viz */
+        .sensor-viz { width: 100%; height: 40px; background: #000; border-radius: 8px; margin-bottom: 10px; position: relative; overflow: hidden; display: flex; align-items: center; }
+        .sensor-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.05s linear; }
+        .debug-text { font-size: 0.7rem; color: #666; width: 100%; text-align: right; min-height: 1rem;}
 
-        /* Slider de Ajuste */
-        .calibration-panel {
-            width: 100%;
-            background: rgba(255,255,255,0.05);
-            padding: 15px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-        }
-
-        .calibration-label {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.8rem;
-            color: var(--text-secondary);
-            margin-bottom: 8px;
-        }
-
-        input[type=range] {
-            width: 100%;
-            -webkit-appearance: none;
-            background: transparent;
-        }
-        
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: var(--primary);
-            cursor: pointer;
-            margin-top: -8px;
-        }
-
-        input[type=range]::-webkit-slider-runnable-track {
-            width: 100%;
-            height: 4px;
-            cursor: pointer;
-            background: #444;
-            border-radius: 2px;
-        }
-
-        /* Sensores Viz */
-        .sensor-viz {
-            width: 100%;
-            height: 40px;
-            background: #000;
-            border-radius: 8px;
-            margin-bottom: 10px;
-            position: relative;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-        }
-        .sensor-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.1s; }
-
-        /* Controles Inferiores */
+        /* Controles */
         .controls {
             background: var(--surface);
-            padding: 20px;
+            padding: 15px;
             border-radius: 25px 25px 0 0;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
             gap: 15px;
+            z-index: 30;
         }
 
-        .mode-selector {
-            display: flex;
-            background: #121212;
-            border-radius: 10px;
-            padding: 4px;
-        }
-
+        .mode-selector { display: flex; background: #121212; border-radius: 10px; padding: 4px; }
         .mode-btn {
-            flex: 1;
-            border: none;
-            background: transparent;
-            color: var(--text-secondary);
-            padding: 10px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border-radius: 8px;
-            cursor: pointer;
+            flex: 1; border: none; background: transparent; color: var(--text-secondary);
+            padding: 10px; font-size: 0.75rem; font-weight: 600; border-radius: 8px; cursor: pointer;
         }
-
-        .mode-btn.active {
-            background: var(--surface);
-            color: var(--text);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-
+        .mode-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .mode-btn.active.walk { color: var(--primary); }
         .mode-btn.active.run { color: var(--accent); }
         .mode-btn.active.jump { color: var(--jump); }
 
-        .action-btn {
-            width: 100%;
+        .action-row { display: flex; gap: 10px; }
+        .btn-main {
+            flex: 2;
             padding: 18px;
             border: none;
             border-radius: 12px;
@@ -195,24 +168,28 @@
             cursor: pointer;
             text-transform: uppercase;
         }
-        .action-btn.stop { background: var(--danger); color: white; }
-
-        #toast {
-            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
-            background: rgba(41, 121, 255, 0.9); color: white; padding: 10px 20px;
-            border-radius: 20px; font-size: 0.9rem; opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 100;
+        .btn-main.stop { background: var(--danger); color: white; }
+        
+        .btn-reset {
+            flex: 1;
+            background: #333;
+            color: white;
+            border: 1px solid #555;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            cursor: pointer;
         }
 
         .hidden { display: none !important; }
-
     </style>
 </head>
 <body>
 
-    <div id="toast">Mensaje</div>
-
+    <!-- Cabecera con Pantalla Completa -->
     <header>
-        <h1>Podómetro & Potencia</h1>
+        <h1>Entrenador Web</h1>
+        <button class="btn-icon" id="fs-btn" onclick="toggleFullScreen()" title="Pantalla Completa">⛶</button>
     </header>
 
     <main>
@@ -221,16 +198,13 @@
             <div class="step-label" id="main-label">Pasos</div>
         </div>
 
+        <!-- Panel de calibración (visible solo en caminar/correr) -->
         <div class="calibration-panel" id="calib-panel">
-            <div class="calibration-label">
-                <span>Ajuste de Zancada</span>
-                <span id="stride-val">0.75 m</span>
+            <div class="calib-row">
+                <span class="calib-label">Zancada</span>
+                <span class="calib-val" id="stride-val">0.75 m</span>
             </div>
-            <!-- Slider para ajustar la distancia por paso -->
             <input type="range" id="stride-slider" min="0.40" max="1.50" step="0.01" value="0.75">
-            <div style="font-size: 0.7rem; color: #666; margin-top: 5px; text-align: center;">
-                Ajusta si la distancia no es exacta
-            </div>
         </div>
 
         <div class="stats-grid">
@@ -247,7 +221,7 @@
         <div class="sensor-viz">
             <div class="sensor-bar" id="viz-bar"></div>
         </div>
-        <div style="font-size: 0.75rem; color: #666; width: 100%; text-align: right;" id="debug-info">Estado: Listo</div>
+        <div class="debug-text" id="debug-info">Estado: Listo</div>
     </main>
 
     <div class="controls">
@@ -256,7 +230,11 @@
             <button class="mode-btn run" onclick="setMode('run')">🏃 Correr</button>
             <button class="mode-btn jump" onclick="setMode('jump')">⬆️ Saltar</button>
         </div>
-        <button class="action-btn" id="toggle-btn" onclick="toggleTracking()">Iniciar Rastreo</button>
+        
+        <div class="action-row">
+            <button class="btn-reset" onclick="resetCounter()">↺ Reiniciar</button>
+            <button class="btn-main" id="toggle-btn" onclick="toggleTracking()">Iniciar</button>
+        </div>
     </div>
 
     <script>
@@ -267,8 +245,8 @@
                 s1Label: 'Kilómetros',
                 s2Label: 'Kcal',
                 color: '#00e676',
-                threshold: 11.5, // Sensibilidad
-                cooldown: 350,
+                threshold: 11.5, 
+                cooldown: 350, // 350ms = aprox 170 pasos por minuto max
                 kcalPerUnit: 0.04
             },
             run: {
@@ -276,8 +254,10 @@
                 s1Label: 'Kilómetros',
                 s2Label: 'Kcal',
                 color: '#2979ff',
-                threshold: 14, // Sensibilidad
-                cooldown: 250,
+                threshold: 15.5, 
+                // AUMENTADO a 320ms para evitar conteo doble por balanceo de brazos
+                // Permite hasta ~187 pasos por minuto (sprint rápido)
+                cooldown: 320, 
                 kcalPerUnit: 0.08
             },
             jump: {
@@ -285,10 +265,9 @@
                 s1Label: 'Pico (G)',
                 s2Label: 'Media (G)',
                 color: '#ff9100',
-                // Umbrales nuevos para el método de "Caída Libre"
-                freeFallThreshold: 3.0, // Menos de esto es aire (0G aprox + ruido)
-                impactThreshold: 15.0,  // Más de esto es aterrizaje fuerte
-                maxAirTime: 1000,      // ms
+                freeFallThreshold: 3.5, // < 3.5 se considera aire
+                impactThreshold: 16.0,  // > 16 se considera impacto
+                maxAirTime: 1000,      
             }
         };
 
@@ -297,18 +276,15 @@
             isRunning: false,
             mode: 'walk',
             count: 0,
-            distance: 0,        // Metros
+            distance: 0,        
             calories: 0,
+            strideLength: 0.75, 
             
-            // Variables de ajuste
-            strideLength: 0.75, // Por defecto (ajustable con slider)
-            
-            // Variables temporales de sensor
             lastX: 0, lastY: 0, lastZ: 0,
             lastTime: 0,
             
-            // Variables de Salto (Nuevo Algoritmo)
-            jumpState: 'GROUND', // GROUND, AIR, LANDED
+            // Salto
+            jumpState: 'GROUND',
             jumpAirStartTime: 0,
             jumpPeakImpact: 0,
             jumpMaxPower: 0,
@@ -330,11 +306,32 @@
             toggleBtn: document.getElementById('toggle-btn'),
             vizBar: document.getElementById('viz-bar'),
             debug: document.getElementById('debug-info'),
-            toast: document.getElementById('toast'),
             modeBtns: document.querySelectorAll('.mode-btn')
         };
 
-        // --- LÓGICA PRINCIPAL ---
+        // --- FUNCIONES PRINCIPALES ---
+
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(`Error intentando pantalla completa: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+
+        function resetCounter() {
+            state.count = 0;
+            state.distance = 0;
+            state.calories = 0;
+            state.jumpMaxPower = 0;
+            state.jumpTotalPower = 0;
+            updateUI();
+            ui.debug.textContent = "Estado: Reiniciado";
+        }
 
         function toggleTracking() {
             if (!state.isRunning) {
@@ -342,7 +339,7 @@
                     DeviceMotionEvent.requestPermission()
                         .then(response => {
                             if (response === 'granted') start();
-                            else alert("Permiso necesario");
+                            else alert("Se requiere permiso para acceder al movimiento.");
                         })
                         .catch(e => console.error(e));
                 } else {
@@ -363,7 +360,7 @@
 
         function stop() {
             state.isRunning = false;
-            ui.toggleBtn.textContent = "Iniciar Rastreo";
+            ui.toggleBtn.textContent = "Iniciar";
             ui.toggleBtn.classList.remove('stop');
             ui.debug.textContent = "Estado: Pausado";
             window.removeEventListener('devicemotion', handleMotion);
@@ -372,11 +369,9 @@
         function setMode(mode) {
             state.mode = mode;
             
-            // Actualizar UI botones
             ui.modeBtns.forEach(b => b.classList.remove('active'));
             document.querySelector(`.mode-btn.${mode === 'jump' ? 'jump' : mode === 'run' ? 'run' : 'walk'}`).classList.add('active');
 
-            // Actualizar colores y textos
             const conf = config[mode];
             ui.mainLabel.textContent = conf.label;
             ui.label1.textContent = conf.s1Label;
@@ -385,153 +380,115 @@
             ui.vizBar.style.backgroundColor = conf.color;
             ui.toggleBtn.style.backgroundColor = conf.color;
 
-            // Mostrar/Ocultar slider de zancada (Solo en caminar/correr)
+            // Mostrar slider solo si NO es salto
             if (mode === 'jump') {
                 ui.calibPanel.classList.add('hidden');
             } else {
                 ui.calibPanel.classList.remove('hidden');
-                // Resetear slider a valores por defecto si cambia de modo
                 if (mode === 'walk') {
                     state.strideLength = 0.75;
                     ui.strideSlider.value = 0.75;
-                } else if (mode === 'run') {
+                } else {
                     state.strideLength = 1.20;
                     ui.strideSlider.value = 1.20;
                 }
                 ui.strideVal.textContent = state.strideLength + " m";
+                // Recalcular distancia con la nueva zancada por defecto si hay pasos
+                if(state.count > 0) {
+                    state.distance = state.count * state.strideLength;
+                    updateUI();
+                }
             }
         }
 
-        // --- EVENTO DEL SLIDER ---
+        // --- EVENTOS ---
         ui.strideSlider.addEventListener('input', (e) => {
             state.strideLength = parseFloat(e.target.value);
             ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
-            // Recalcular distancia basada en pasos actuales
-            if(state.mode !== 'jump') {
-                const newDist = state.count * state.strideLength;
-                state.distance = newDist;
+            if(state.count > 0 && state.mode !== 'jump') {
+                state.distance = state.count * state.strideLength;
                 updateUI();
             }
         });
 
-        // --- MANEJO DE SENSORES ---
+        // --- SENSORES ---
         function handleMotion(event) {
             const acc = event.accelerationIncludingGravity;
             if (!acc) return;
 
             const now = Date.now();
-            const x = acc.x; const y = acc.y; const z = acc.z;
+            const magnitude = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
 
-            // Calcular Magnitud Vectorial (Total de fuerza)
-            // Gravity es ~9.8. En reposo esto da ~10. En caída libre da ~0.
-            const magnitude = Math.sqrt(x*x + y*y + z*z);
-
-            // Visualizador (Normalizado entre 0 y 25G)
+            // Viz
             ui.vizBar.style.width = Math.min((magnitude / 25) * 100, 100) + '%';
 
             if (state.mode === 'jump') {
-                processJumpLogic(magnitude, now);
+                processJump(magnitude, now);
             } else {
-                processWalkRunLogic(magnitude, now);
+                processRunWalk(magnitude, now);
             }
         }
 
-        // 1. Lógica Caminar/Correr
-        function processWalkRunLogic(magnitude, now) {
+        function processRunWalk(magnitude, now) {
             const conf = config[state.mode];
-
-            // Detección simple de pico
             if (magnitude > conf.threshold) {
-                // Evitar rebote (debounce)
                 if ((now - state.lastTime) > conf.cooldown) {
-                    registerStepRun();
+                    registerStep();
                     state.lastTime = now;
                 }
             }
         }
 
-        // 2. Lógica Saltar (Método Caída Libre + Impacto)
-        function processJumpLogic(magnitude, now) {
-            // Magnitud cerca de 0 = Caída Libre (Aire). Magnitud > 15 = Impacto fuerte.
-            
+        function processJump(magnitude, now) {
             if (state.jumpState === 'GROUND') {
-                // Esperando caída libre
                 if (magnitude < config.jump.freeFallThreshold) {
                     state.jumpState = 'AIR';
                     state.jumpAirStartTime = now;
-                    ui.debug.textContent = "Estado: En el aire...";
+                    ui.debug.textContent = "Estado: Aire";
                 }
-            } 
-            else if (state.jumpState === 'AIR') {
-                // Estamos en el aire, esperando aterrizaje o timeout
+            } else if (state.jumpState === 'AIR') {
                 if (magnitude > config.jump.impactThreshold) {
-                    // ¡IMPACTO! Aterrizaje detectado
                     if ((now - state.jumpAirStartTime) < config.jump.maxAirTime) {
-                        // Validado como salto
-                        registerJump(magnitude); // 'magnitude' aquí es la fuerza del impacto
+                        registerJump(magnitude);
                         state.jumpState = 'LANDED';
-                        ui.debug.textContent = "Estado: Aterrizaje!";
-                        
-                        // Pequeño cooldown para evitar rebotes
+                        ui.debug.textContent = "Estado: Impacto!";
                         setTimeout(() => { state.jumpState = 'GROUND'; }, 500);
                     } else {
-                        // Demasiado tiempo en el aire, quizás se tiró el celular? Reset
                         state.jumpState = 'GROUND';
                     }
                 }
-                
-                // Timeout: Si pasamos mucho tiempo y no hubo impacto fuerte (salto suave)
-                if ((now - state.jumpAirStartTime) > 800) {
-                    // Asumimos que cayó suavemente, count como salto si fue tiempo suficiente
-                    if (magnitude < 10) { // Si sigue bajito, asumimos que seguimos cayendo o aterrizamos suave
-                         // Para saltos suaves sin impacto fuerte, podríamos contar aquí si quisiéramos,
-                         // pero por ahora priorizamos saltos fuertes.
-                    }
-                    state.jumpState = 'GROUND';
-                }
+                if ((now - state.jumpAirStartTime) > 800) state.jumpState = 'GROUND';
             }
         }
 
-        // --- REGISTROS Y CÁLCULOS ---
-
-        function registerStepRun() {
+        function registerStep() {
             state.count++;
-            state.distance += state.strideLength; // Usamos la variable del slider
+            state.distance += state.strideLength;
             state.calories += config[state.mode].kcalPerUnit;
             updateUI();
         }
 
         function registerJump(impactForce) {
             state.count++;
-            
-            // Potencia estimada basada en el impacto (fuerza G)
             state.jumpTotalPower += impactForce;
             if (impactForce > state.jumpMaxPower) state.jumpMaxPower = impactForce;
-
             updateUI();
-            
-            // Vibración fuerte para feedback
             if(navigator.vibrate) navigator.vibrate(50);
         }
 
         function updateUI() {
             ui.count.textContent = state.count;
-            
             if (state.mode === 'jump') {
-                // Modo Salto: Estadísticas de Potencia
                 const avg = state.count > 0 ? (state.jumpTotalPower / state.count) : 0;
                 ui.stat1.textContent = state.jumpMaxPower.toFixed(1);
                 ui.stat2.textContent = avg.toFixed(1);
             } else {
-                // Modo Caminar/Correr: Distancia y Kcal
-                ui.stat1.textContent = (state.distance / 1000).toFixed(2); // Km
+                ui.stat1.textContent = (state.distance / 1000).toFixed(2);
                 ui.stat2.textContent = Math.round(state.calories);
             }
         }
-        
-        // Inicializar UI
-        setMode('walk');
 
+        setMode('walk');
     </script>
 </body>
 </html>
