@@ -3,24 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Podómetro Final</title>
+    <title>Entrenador Pro Cronómetro</title>
     <style>
         :root {
-            --primary: #00e676;
-            --accent: #2979ff;
-            --jump: #ff9100;
+            --primary: #00e676; /* Caminar */
+            --accent: #2979ff;  /* Correr */
+            --jump: #ff9100;    /* Saltar */
             --bg: #121212;
             --surface: #1e1e1e;
             --text: #ffffff;
             --text-secondary: #b0b0b0;
             --danger: #ff5252;
-            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            --warn: #ffab00;
+            --font-digital: 'Courier New', Courier, monospace;
+            --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
         body {
-            font-family: var(--font-family);
+            font-family: var(--font-ui);
             background-color: var(--bg);
             color: var(--text);
             height: 100vh;
@@ -38,19 +40,9 @@
             background: var(--surface);
             border-bottom: 1px solid #333;
             height: 60px;
-            z-index: 20;
         }
-
         h1 { font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
-        
-        .btn-icon {
-            background: none;
-            border: none;
-            color: var(--text);
-            font-size: 1.5rem;
-            cursor: pointer;
-            padding: 5px;
-        }
+        .btn-icon { background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
 
         /* Área Principal */
         main {
@@ -58,15 +50,32 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
             padding: 10px 20px;
-            position: relative;
+        }
+
+        /* CRONÓMETRO */
+        .timer-container {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        .main-time {
+            font-family: var(--font-digital);
+            font-size: 3.5rem;
+            font-weight: 700;
+            color: var(--text);
+            text-shadow: 0 0 10px rgba(255,255,255,0.1);
+        }
+        .lap-time {
+            font-family: var(--font-digital);
+            font-size: 1.2rem;
+            color: var(--warn);
+            min-height: 1.5rem; /* Espacio reservado */
         }
 
         /* Contador Circular */
         .counter-container {
-            width: 200px;
-            height: 200px;
+            width: 160px;
+            height: 160px;
             position: relative;
             display: flex;
             flex-direction: column;
@@ -74,14 +83,12 @@
             justify-content: center;
             border-radius: 50%;
             background: #181818;
-            border: 4px solid #333;
+            border: 3px solid #333;
             margin-bottom: 15px;
             box-shadow: 0 0 25px rgba(0,0,0,0.6);
-            transition: border-color 0.3s;
         }
-
-        .step-count { font-size: 3.2rem; font-weight: 700; line-height: 1; }
-        .step-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px; text-transform: uppercase; }
+        .step-count { font-size: 2.5rem; font-weight: 700; line-height: 1; }
+        .step-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 5px; text-transform: uppercase; }
 
         /* Ajuste de Zancada */
         .calibration-panel {
@@ -89,22 +96,20 @@
             max-width: 300px;
             background: rgba(255,255,255,0.05);
             padding: 10px;
-            border-radius: 10px;
+            border-radius: 8px;
             margin-bottom: 15px;
             border: 1px solid #333;
         }
         .calib-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .calib-label { font-size: 0.75rem; color: var(--text-secondary); }
+        .calib-label { font-size: 0.7rem; color: var(--text-secondary); }
         .calib-val { font-size: 0.8rem; font-weight: bold; color: var(--primary); }
         
         input[type=range] {
-            width: 100%;
-            -webkit-appearance: none;
-            background: transparent;
+            width: 100%; -webkit-appearance: none; background: transparent;
         }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 16px; width: 16px; border-radius: 50%; background: var(--primary); cursor: pointer; margin-top: -6px;
+            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; 
+            background: var(--primary); cursor: pointer; margin-top: -6px;
         }
         input[type=range]::-webkit-slider-runnable-track {
             width: 100%; height: 4px; cursor: pointer; background: #444; border-radius: 2px;
@@ -120,24 +125,24 @@
         }
         .stat-card {
             background: var(--surface);
-            padding: 12px;
-            border-radius: 12px;
+            padding: 10px;
+            border-radius: 8px;
             text-align: center;
             border: 1px solid #333;
         }
-        .stat-value { font-size: 1.4rem; font-weight: 600; color: var(--primary); }
-        .stat-label { font-size: 0.7rem; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; }
+        .stat-value { font-size: 1.2rem; font-weight: 600; color: var(--primary); }
+        .stat-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; }
 
-        /* Sensor Viz */
-        .sensor-viz { width: 100%; height: 40px; background: #000; border-radius: 8px; margin-bottom: 10px; position: relative; overflow: hidden; display: flex; align-items: center; }
+        /* Sensores */
+        .sensor-viz { width: 100%; height: 30px; background: #000; border-radius: 4px; margin-bottom: 10px; position: relative; overflow: hidden; display: flex; align-items: center; }
         .sensor-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.05s linear; }
-        .debug-text { font-size: 0.7rem; color: #666; width: 100%; text-align: right; min-height: 1rem;}
+        .status-msg { font-size: 0.75rem; color: var(--text-secondary); text-align: center; min-height: 1rem;}
 
-        /* Controles */
+        /* Controles Inferiores */
         .controls {
             background: var(--surface);
             padding: 15px;
-            border-radius: 25px 25px 0 0;
+            border-radius: 20px 20px 0 0;
             box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
             display: flex;
             flex-direction: column;
@@ -145,66 +150,63 @@
             z-index: 30;
         }
 
-        .mode-selector { display: flex; background: #121212; border-radius: 10px; padding: 4px; }
+        .mode-selector { display: flex; background: #121212; border-radius: 8px; padding: 4px; }
         .mode-btn {
             flex: 1; border: none; background: transparent; color: var(--text-secondary);
-            padding: 10px; font-size: 0.75rem; font-weight: 600; border-radius: 8px; cursor: pointer;
+            padding: 10px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; cursor: pointer;
         }
-        .mode-btn.active { background: var(--surface); color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .mode-btn.active { background: var(--surface); color: var(--text); }
         .mode-btn.active.walk { color: var(--primary); }
         .mode-btn.active.run { color: var(--accent); }
         .mode-btn.active.jump { color: var(--jump); }
 
-        .action-row { display: flex; gap: 10px; }
-        .btn-main {
-            flex: 2;
-            padding: 18px;
-            border: none;
-            border-radius: 12px;
-            font-size: 1.1rem;
-            font-weight: 700;
-            color: #000;
-            background: var(--primary);
-            cursor: pointer;
-            text-transform: uppercase;
-        }
-        .btn-main.stop { background: var(--danger); color: white; }
-        
-        .btn-reset {
+        .timer-controls { display: flex; gap: 10px; }
+        .btn-timer {
             flex: 1;
-            background: #333;
-            color: white;
-            border: 1px solid #555;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 0.8rem;
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
             cursor: pointer;
         }
+        .btn-lap { background: #333; color: white; border: 1px solid #555; }
+        .btn-start { background: var(--primary); color: #000; }
+        .btn-stop { background: var(--danger); color: white; }
+        
+        .btn-reset-row { display: flex; justify-content: flex-end; }
+        .btn-reset-small { background: none; border: none; color: #666; font-size: 0.8rem; cursor: pointer; text-decoration: underline; }
 
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
-    <!-- Cabecera con Pantalla Completa -->
     <header>
-        <h1>Entrenador Web</h1>
-        <button class="btn-icon" id="fs-btn" onclick="toggleFullScreen()" title="Pantalla Completa">⛶</button>
+        <h1>Entrenador Pro</h1>
+        <button class="btn-icon" onclick="toggleFullScreen()">⛶</button>
     </header>
 
     <main>
+        <!-- CRONÓMETRO -->
+        <div class="timer-container">
+            <div class="main-time" id="main-timer">00:00.00</div>
+            <div class="lap-time" id="lap-timer">Vuelta: --:--</div>
+        </div>
+
         <div class="counter-container" id="counter-box">
             <div class="step-count" id="count-display">0</div>
             <div class="step-label" id="main-label">Pasos</div>
         </div>
 
-        <!-- Panel de calibración (visible solo en caminar/correr) -->
         <div class="calibration-panel" id="calib-panel">
             <div class="calib-row">
-                <span class="calib-label">Zancada</span>
-                <span class="calib-val" id="stride-val">0.75 m</span>
+                <span class="calib-label">Longitud Zancada</span>
+                <span class="calib-val" id="stride-val">1.50 m</span>
             </div>
-            <input type="range" id="stride-slider" min="0.40" max="1.50" step="0.01" value="0.75">
+            <input type="range" id="stride-slider" min="0.40" max="2.50" step="0.01" value="1.50">
+            <div style="font-size:0.65rem; color:#666; text-align:center; margin-top:4px;">Ajusta según tu paso (Correr)</div>
         </div>
 
         <div class="stats-grid">
@@ -221,7 +223,7 @@
         <div class="sensor-viz">
             <div class="sensor-bar" id="viz-bar"></div>
         </div>
-        <div class="debug-text" id="debug-info">Estado: Listo</div>
+        <div class="status-msg" id="debug-info">Listo para iniciar</div>
     </main>
 
     <div class="controls">
@@ -231,9 +233,13 @@
             <button class="mode-btn jump" onclick="setMode('jump')">⬆️ Saltar</button>
         </div>
         
-        <div class="action-row">
-            <button class="btn-reset" onclick="resetCounter()">↺ Reiniciar</button>
-            <button class="btn-main" id="toggle-btn" onclick="toggleTracking()">Iniciar</button>
+        <div class="timer-controls">
+            <button class="btn-timer btn-lap" id="btn-lap" onclick="doLap()" disabled>⏺ Vuelta</button>
+            <button class="btn-timer btn-start" id="btn-start" onclick="toggleTimer()">▶ Iniciar</button>
+        </div>
+
+        <div class="btn-reset-row">
+            <button class="btn-reset-small" onclick="hardReset()">Reiniciar todo</button>
         </div>
     </div>
 
@@ -241,58 +247,47 @@
         // --- CONFIGURACIÓN ---
         const config = {
             walk: {
-                label: 'Pasos',
-                s1Label: 'Kilómetros',
-                s2Label: 'Kcal',
-                color: '#00e676',
-                threshold: 11.5, 
-                cooldown: 350, // 350ms = aprox 170 pasos por minuto max
-                kcalPerUnit: 0.04
+                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676',
+                threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12
             },
             run: {
-                label: 'Pasos',
-                s1Label: 'Kilómetros',
-                s2Label: 'Kcal',
-                color: '#2979ff',
-                threshold: 15.5, 
-                // AUMENTADO a 320ms para evitar conteo doble por balanceo de brazos
-                // Permite hasta ~187 pasos por minuto (sprint rápido)
-                cooldown: 320, 
-                kcalPerUnit: 0.08
+                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff',
+                threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14
             },
             jump: {
-                label: 'Saltos',
-                s1Label: 'Pico (G)',
-                s2Label: 'Media (G)',
-                color: '#ff9100',
-                freeFallThreshold: 3.5, // < 3.5 se considera aire
-                impactThreshold: 16.0,  // > 16 se considera impacto
-                maxAirTime: 1000,      
+                label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100',
+                freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15
             }
         };
 
         // --- ESTADO ---
         const state = {
-            isRunning: false,
+            timerRunning: false,
+            timerStartedAt: 0,
+            timerPausedAt: 0,
+            elapsed: 0, // Tiempo total acumulado
+            lapStart: 0, // Tiempo en que empezó la vuelta actual (relativo al elapsed total)
+            
+            isTracking: false, // Sensor activo
             mode: 'walk',
             count: 0,
             distance: 0,        
             calories: 0,
-            strideLength: 0.75, 
+            strideLength: 1.50, // Default Correr
             
             lastX: 0, lastY: 0, lastZ: 0,
-            lastTime: 0,
+            lastStepTime: 0,
             
-            // Salto
             jumpState: 'GROUND',
             jumpAirStartTime: 0,
-            jumpPeakImpact: 0,
             jumpMaxPower: 0,
             jumpTotalPower: 0
         };
 
         // --- DOM ---
         const ui = {
+            timerMain: document.getElementById('main-timer'),
+            timerLap: document.getElementById('lap-timer'),
             count: document.getElementById('count-display'),
             mainLabel: document.getElementById('main-label'),
             stat1: document.getElementById('stat-1'),
@@ -303,115 +298,159 @@
             calibPanel: document.getElementById('calib-panel'),
             strideSlider: document.getElementById('stride-slider'),
             strideVal: document.getElementById('stride-val'),
-            toggleBtn: document.getElementById('toggle-btn'),
             vizBar: document.getElementById('viz-bar'),
             debug: document.getElementById('debug-info'),
+            btnStart: document.getElementById('btn-start'),
+            btnLap: document.getElementById('btn-lap'),
             modeBtns: document.querySelectorAll('.mode-btn')
         };
 
-        // --- FUNCIONES PRINCIPALES ---
+        // --- FUNCIONES DE TIEMPO ---
+        let timerInterval;
 
-        function toggleFullScreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(`Error intentando pantalla completa: ${err.message}`);
-                });
+        function formatTime(ms) {
+            const totalSec = Math.floor(ms / 1000);
+            const mins = Math.floor(totalSec / 60);
+            const secs = totalSec % 60;
+            const centis = Math.floor((ms % 1000) / 10);
+            return `${pad(mins)}:${pad(secs)}.${pad(centis)}`;
+        }
+
+        function pad(n) { return n < 10 ? '0' + n : n; }
+
+        function updateTimerDisplay() {
+            if (state.timerRunning) {
+                const now = Date.now();
+                const currentElapsed = state.elapsed + (now - state.timerStartedAt);
+                ui.timerMain.textContent = formatTime(currentElapsed);
+                
+                // Tiempo de vuelta actual
+                const currentLap = currentElapsed - state.lapStart;
+                ui.timerLap.textContent = "Vuelta: " + formatTime(currentLap);
             } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+                ui.timerMain.textContent = formatTime(state.elapsed);
+                ui.timerLap.textContent = "Vuelta: --:--";
             }
         }
 
-        function resetCounter() {
+        function toggleTimer() {
+            if (state.timerRunning) {
+                stopAll();
+            } else {
+                startAll();
+            }
+        }
+
+        function startAll() {
+            // Iniciar Cronómetro
+            state.timerStartedAt = Date.now();
+            state.timerRunning = true;
+            ui.btnStart.textContent = "❚❚ Detener";
+            ui.btnStart.classList.replace('btn-start', 'btn-stop');
+            ui.btnLap.disabled = false;
+            
+            // Iniciar intervalo de renderizado
+            timerInterval = setInterval(updateTimerDisplay, 30); // 30fps update
+            
+            // Iniciar Sensores
+            startSensors();
+            ui.debug.textContent = "Iniciado";
+        }
+
+        function stopAll() {
+            // Pausar Cronómetro
+            state.timerRunning = false;
+            clearInterval(timerInterval);
+            state.elapsed += Date.now() - state.timerStartedAt;
+            updateTimerDisplay();
+            
+            ui.btnStart.textContent = "▶ Continuar";
+            ui.btnStart.classList.replace('btn-stop', 'btn-start');
+            ui.btnLap.disabled = true;
+            
+            // Detener Sensores
+            stopSensors();
+            ui.debug.textContent = "Pausado";
+        }
+
+        function doLap() {
+            if (!state.timerRunning) return;
+            
+            // Calcular tiempo de vuelta actual
+            const now = Date.now();
+            const currentElapsed = state.elapsed + (now - state.timerStartedAt);
+            const lapTime = currentElapsed - state.lapStart;
+            
+            // Guardar (en una app real lo guardaríamos en array)
+            // Aquí mostramos un feedback temporal
+            ui.timerLap.style.color = "#fff";
+            setTimeout(() => ui.timerLap.style.color = "var(--warn)", 200);
+            
+            // Reiniciar inicio de vuelta
+            state.lapStart = currentElapsed;
+            ui.timerLap.textContent = "Vuelta: 00:00.00";
+            
+            // Feedback visual
+            ui.debug.textContent = `Vuelta registrada: ${formatTime(lapTime)}`;
+        }
+
+        function hardReset() {
+            stopAll(); // Detener todo primero
+            
+            state.elapsed = 0;
+            state.lapStart = 0;
             state.count = 0;
             state.distance = 0;
             state.calories = 0;
             state.jumpMaxPower = 0;
             state.jumpTotalPower = 0;
-            updateUI();
-            ui.debug.textContent = "Estado: Reiniciado";
+            
+            updateTimerDisplay();
+            updateStats();
+            
+            ui.btnStart.textContent = "▶ Iniciar";
+            ui.btnLap.textContent = "⏺ Vuelta";
+            ui.debug.textContent = "Todo reiniciado";
         }
 
-        function toggleTracking() {
-            if (!state.isRunning) {
-                if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                    DeviceMotionEvent.requestPermission()
-                        .then(response => {
-                            if (response === 'granted') start();
-                            else alert("Se requiere permiso para acceder al movimiento.");
-                        })
-                        .catch(e => console.error(e));
+        // --- AUTO START LOGIC ---
+        function checkAutoStart(magnitude) {
+            // Si el cronómetro está corriendo, no hacer nada
+            if (state.timerRunning) return;
+            
+            // Si el usuario no ha pulsado iniciar (estado 0), no hacer nada
+            // Nota: Para simplificar, el usuario debe dar a "Iniciar" para armar el sistema.
+            // Pero si el usuario pulso "Iniciar" y aún no corre, podemos arrancar solos.
+            
+            if (!state.isTracking && state.elapsed === 0) {
+                // Estado "Armado" pero esperando movimiento
+                if (magnitude > config[state.mode].autoStartThreshold) {
+                    ui.debug.textContent = "Movimiento detectado!";
+                    startAll(); // Comenzar automaticamente
                 } else {
-                    start();
+                    ui.debug.textContent = "Esperando movimiento...";
                 }
-            } else {
-                stop();
             }
         }
 
-        function start() {
-            state.isRunning = true;
-            ui.toggleBtn.textContent = "Detener";
-            ui.toggleBtn.classList.add('stop');
-            ui.debug.textContent = "Estado: Rastreando...";
-            window.addEventListener('devicemotion', handleMotion);
+        // --- SENSORES ---
+        function startSensors() {
+            state.isTracking = true;
+            ui.debug.textContent = "Rastreando...";
+            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+                DeviceMotionEvent.requestPermission().then(response => {
+                    if (response === 'granted') window.addEventListener('devicemotion', handleMotion);
+                }).catch(e => console.log("Sensor permiso error", e));
+            } else {
+                window.addEventListener('devicemotion', handleMotion);
+            }
         }
 
-        function stop() {
-            state.isRunning = false;
-            ui.toggleBtn.textContent = "Iniciar";
-            ui.toggleBtn.classList.remove('stop');
-            ui.debug.textContent = "Estado: Pausado";
+        function stopSensors() {
+            state.isTracking = false;
             window.removeEventListener('devicemotion', handleMotion);
         }
 
-        function setMode(mode) {
-            state.mode = mode;
-            
-            ui.modeBtns.forEach(b => b.classList.remove('active'));
-            document.querySelector(`.mode-btn.${mode === 'jump' ? 'jump' : mode === 'run' ? 'run' : 'walk'}`).classList.add('active');
-
-            const conf = config[mode];
-            ui.mainLabel.textContent = conf.label;
-            ui.label1.textContent = conf.s1Label;
-            ui.label2.textContent = conf.s2Label;
-            ui.counterBox.style.borderColor = conf.color;
-            ui.vizBar.style.backgroundColor = conf.color;
-            ui.toggleBtn.style.backgroundColor = conf.color;
-
-            // Mostrar slider solo si NO es salto
-            if (mode === 'jump') {
-                ui.calibPanel.classList.add('hidden');
-            } else {
-                ui.calibPanel.classList.remove('hidden');
-                if (mode === 'walk') {
-                    state.strideLength = 0.75;
-                    ui.strideSlider.value = 0.75;
-                } else {
-                    state.strideLength = 1.20;
-                    ui.strideSlider.value = 1.20;
-                }
-                ui.strideVal.textContent = state.strideLength + " m";
-                // Recalcular distancia con la nueva zancada por defecto si hay pasos
-                if(state.count > 0) {
-                    state.distance = state.count * state.strideLength;
-                    updateUI();
-                }
-            }
-        }
-
-        // --- EVENTOS ---
-        ui.strideSlider.addEventListener('input', (e) => {
-            state.strideLength = parseFloat(e.target.value);
-            ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
-            if(state.count > 0 && state.mode !== 'jump') {
-                state.distance = state.count * state.strideLength;
-                updateUI();
-            }
-        });
-
-        // --- SENSORES ---
         function handleMotion(event) {
             const acc = event.accelerationIncludingGravity;
             if (!acc) return;
@@ -419,7 +458,12 @@
             const now = Date.now();
             const magnitude = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
 
-            // Viz
+            // Auto Start Check
+            if (state.elapsed === 0 && !state.timerRunning && !state.isTracking) {
+                checkAutoStart(magnitude);
+                return; // No procesar pasos si estamos esperando auto-start
+            }
+
             ui.vizBar.style.width = Math.min((magnitude / 25) * 100, 100) + '%';
 
             if (state.mode === 'jump') {
@@ -432,9 +476,9 @@
         function processRunWalk(magnitude, now) {
             const conf = config[state.mode];
             if (magnitude > conf.threshold) {
-                if ((now - state.lastTime) > conf.cooldown) {
+                if ((now - state.lastStepTime) > conf.cooldown) {
                     registerStep();
-                    state.lastTime = now;
+                    state.lastStepTime = now;
                 }
             }
         }
@@ -444,39 +488,38 @@
                 if (magnitude < config.jump.freeFallThreshold) {
                     state.jumpState = 'AIR';
                     state.jumpAirStartTime = now;
-                    ui.debug.textContent = "Estado: Aire";
+                    ui.debug.textContent = "Aire...";
                 }
             } else if (state.jumpState === 'AIR') {
                 if (magnitude > config.jump.impactThreshold) {
                     if ((now - state.jumpAirStartTime) < config.jump.maxAirTime) {
                         registerJump(magnitude);
                         state.jumpState = 'LANDED';
-                        ui.debug.textContent = "Estado: Impacto!";
+                        ui.debug.textContent = "¡Salto!";
                         setTimeout(() => { state.jumpState = 'GROUND'; }, 500);
-                    } else {
-                        state.jumpState = 'GROUND';
-                    }
+                    } else { state.jumpState = 'GROUND'; }
                 }
                 if ((now - state.jumpAirStartTime) > 800) state.jumpState = 'GROUND';
             }
         }
 
+        // --- REGISTRO DE DATOS ---
         function registerStep() {
             state.count++;
             state.distance += state.strideLength;
             state.calories += config[state.mode].kcalPerUnit;
-            updateUI();
+            updateStats();
         }
 
         function registerJump(impactForce) {
             state.count++;
             state.jumpTotalPower += impactForce;
             if (impactForce > state.jumpMaxPower) state.jumpMaxPower = impactForce;
-            updateUI();
+            updateStats();
             if(navigator.vibrate) navigator.vibrate(50);
         }
 
-        function updateUI() {
+        function updateStats() {
             ui.count.textContent = state.count;
             if (state.mode === 'jump') {
                 const avg = state.count > 0 ? (state.jumpTotalPower / state.count) : 0;
@@ -488,7 +531,59 @@
             }
         }
 
-        setMode('walk');
+        // --- UI HELPERS ---
+        function toggleFullScreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+
+        function setMode(mode) {
+            state.mode = mode;
+            ui.modeBtns.forEach(b => b.classList.remove('active'));
+            document.querySelector(`.mode-btn.${mode === 'jump' ? 'jump' : mode === 'run' ? 'run' : 'walk'}`).classList.add('active');
+
+            const conf = config[mode];
+            ui.mainLabel.textContent = conf.label;
+            ui.label1.textContent = conf.s1Label;
+            ui.label2.textContent = conf.s2Label;
+            ui.counterBox.style.borderColor = conf.color;
+            ui.vizBar.style.backgroundColor = conf.color;
+            
+            // Ajustar Slider
+            if (mode === 'jump') {
+                ui.calibPanel.classList.add('hidden');
+            } else {
+                ui.calibPanel.classList.remove('hidden');
+                if (mode === 'walk') {
+                    state.strideLength = 0.75;
+                    ui.strideSlider.value = 0.75;
+                } else {
+                    // MODE RUN: Ajustado a 1.50m por defecto
+                    state.strideLength = 1.50;
+                    ui.strideSlider.value = 1.50;
+                }
+                ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
+                if(state.count > 0) {
+                    state.distance = state.count * state.strideLength;
+                    updateStats();
+                }
+            }
+        }
+
+        ui.strideSlider.addEventListener('input', (e) => {
+            state.strideLength = parseFloat(e.target.value);
+            ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
+            if(state.count > 0 && state.mode !== 'jump') {
+                state.distance = state.count * state.strideLength;
+                updateStats();
+            }
+        });
+
+        // Init
+        setMode('run'); // Iniciar en modo correr por defecto ya que entrenas más
     </script>
 </body>
 </html>
