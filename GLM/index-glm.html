@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cronómetro Pro GPS</title>
-    <!-- Leaflet CSS para el mapa -->
+    <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
     
-    <!-- Importar Fuentes de Google Fonts -->
+    <!-- Fuentes -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="pre-connect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;700&family=Roboto+Mono:wght@500&family=Teko:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
@@ -22,8 +22,6 @@
             --text-main: #ffffff;
             --text-dim: #fbff00;
             --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            
-            /* Variables de Fuente Dinámica */
             --font-numbers: 'Teko', sans-serif; 
         }
 
@@ -41,7 +39,7 @@
             flex-direction: column;
         }
 
-        /* --- Header & Status --- */
+        /* --- Header --- */
         header {
             padding: 10px 15px;
             padding-top: max(10px, env(safe-area-inset-top));
@@ -58,15 +56,18 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            font-size: 0.9rem;
+            font-size: 0.8rem;
             font-weight: bold;
             color: var(--text-dim);
             background: #2c2c2c;
-            padding: 5px 10px;
+            padding: 4px 8px;
             border-radius: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
         
-        .status-icon { width: 16px; height: 16px; fill: currentColor; }
+        .status-icon { width: 16px; height: 16px; fill: currentColor; flex-shrink: 0; }
         .status-badge.active { color: var(--primary-color); background: rgba(0, 230, 118, 0.1); }
         .status-badge.paused { color: var(--danger-color); background: rgba(255, 23, 68, 0.1); }
 
@@ -74,10 +75,10 @@
             background: none;
             border: 1px solid #444;
             color: var(--text-main);
-            padding: 5px 10px;
-            border-radius: 5px;
-            font-size: 0.8rem;
-            margin-left: 5px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 3px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
@@ -94,79 +95,62 @@
             min-height: 0;
         }
 
-        /* Grid de Estadísticas */
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            padding: 15px;
+            gap: 8px;
+            padding: 10px;
             flex-shrink: 0;
         }
 
-        /* --- Fila Secundaria de Métricas --- */
         .stats-row-secondary {
             display: flex;
             justify-content: space-around;
-            padding: 8px 15px;
+            padding: 6px 10px;
             background-color: #181818;
             border-top: 1px solid #333;
             border-bottom: 1px solid #333;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
             flex-shrink: 0;
         }
 
-        .mini-stat {
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .mini-label {
-            font-size: 0.7rem;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            margin-bottom: 2px;
-        }
-
-        .mini-val {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: white;
-            font-family: var(--font-numbers);
-            line-height: 0.9;
-        }
-
-        .mini-unit {
-            font-size: 0.8rem;
-            color: var(--text-dim);
-            margin-left: 2px;
-            font-family: var(--font-main);
-        }
+        .mini-stat { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .mini-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 2px; }
+        .mini-val { font-size: 1.1rem; font-weight: bold; color: white; font-family: var(--font-numbers); line-height: 0.9; }
+        .mini-unit { font-size: 0.7rem; color: var(--text-dim); margin-left: 2px; font-family: var(--font-main); }
 
         .stat-card {
             background-color: var(--surface-color);
-            padding: 15px;
-            border-radius: 12px;
+            padding: 10px;
+            border-radius: 10px;
             text-align: center;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
 
-        .stat-label { font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
-        .stat-value { font-size: 2.2rem; font-weight: 700; font-family: var(--font-numbers); color: var(--primary-color); line-height: 0.9; }
-        .stat-unit { font-size: 0.9rem; color: var(--text-dim); font-family: var(--font-main); }
-        .stat-sub { font-size: 0.75rem; color: var(--text-dim); margin-top: 4px; }
+        .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
+        .stat-value { font-size: 1.8rem; font-weight: 700; font-family: var(--font-numbers); color: var(--primary-color); line-height: 0.9; }
+        .stat-unit { font-size: 0.8rem; color: var(--text-dim); font-family: var(--font-main); }
+        .stat-sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
 
-        /* Cronómetro Central */
-        .timer-display {
-            text-align: center;
-            padding: 5px 0;
-        }
-        .timer-value { font-size: 4.5rem; font-family: var(--font-numbers); font-weight: 500; letter-spacing: -1px; line-height: 0.85; color: var(--primary-color); }
+        .timer-display { text-align: center; padding: 2px 0; }
+        .timer-value { font-size: 4rem; font-family: var(--font-numbers); font-weight: 500; letter-spacing: -1px; line-height: 0.85; color: var(--primary-color); }
         
+        /* Workout Guidance */
+        .workout-guidance {
+            background-color: #1a2b1a; /* Verde muy oscuro */
+            border-left: 4px solid var(--primary-color);
+            padding: 8px 10px;
+            margin: 0 10px 10px 10px;
+            border-radius: 4px;
+            display: none;
+        }
+        .workout-guidance.active { display: block; }
+        .workout-step-title { font-size: 0.8rem; color: #8bc34a; font-weight: bold; text-transform: uppercase; }
+        .workout-step-desc { font-size: 1rem; color: white; margin-top: 2px; }
+        .workout-step-target { font-size: 0.9rem; color: var(--text-dim); font-family: var(--font-mono); }
+
         /* Mapa */
         #map-container {
             height: 200px;
@@ -196,7 +180,7 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
 
-        /* --- Controles Inferiores --- */
+        /* --- Controles --- */
         .controls-area {
             background-color: var(--surface-color);
             padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
@@ -233,7 +217,7 @@
         .btn-action.paused { background-color: var(--text-main); color: black; }
         .btn-action.stopped { background-color: var(--danger-color); color: white; }
 
-        /* --- Lap Overlay (Toast) --- */
+        /* --- Lap Overlay --- */
         #lap-toast {
             position: absolute;
             top: 15%;
@@ -270,7 +254,7 @@
             background: var(--surface-color);
             width: 90%;
             max-width: 500px;
-            max-height: 80vh;
+            max-height: 85vh;
             border-radius: 12px;
             display: flex;
             flex-direction: column;
@@ -284,11 +268,23 @@
             justify-content: space-between;
             align-items: center;
         }
-        .modal-body {
-            padding: 15px;
-            overflow-y: auto;
-        }
+        .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
         .close-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+
+        /* Tabs Settings */
+        .tabs { display: flex; border-bottom: 1px solid #333; }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            background: none;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .tab-btn.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
 
         /* Tabla de Laps */
         table.laps-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
@@ -298,10 +294,10 @@
         table.laps-table td.highlight { color: var(--primary-color); font-weight: bold; font-family: var(--font-numbers); font-size: 1.2rem; }
 
         /* Form Settings */
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; color: var(--text-dim); }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; margin-bottom: 5px; color: var(--text-dim); font-size: 0.9rem; }
         .form-control {
-            width: 100%; padding: 10px; background: #121212; border: 1px solid #444;
+            width: 100%; padding: 8px; background: #121212; border: 1px solid #444;
             color: white; border-radius: 6px; font-size: 1rem;
         }
         .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
@@ -320,6 +316,26 @@
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(24px); }
 
+        /* Workout Builder Styles */
+        .workout-step-item {
+            background: #2c2c2c;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 4px solid var(--secondary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .step-info h4 { margin: 0 0 4px 0; font-size: 1rem; color: white; }
+        .step-info p { margin: 0; font-size: 0.85rem; color: var(--text-dim); }
+        .step-delete { background: none; border: none; color: var(--danger-color); font-size: 1.2rem; cursor: pointer; }
+        
+        .btn-small {
+            background: var(--secondary-color); color: white; border: none; padding: 8px 12px;
+            border-radius: 4px; font-size: 0.9rem; width: 100%; cursor: pointer; margin-top: 5px;
+        }
+
     </style>
 </head>
 <body>
@@ -332,6 +348,7 @@
         </div>
         <div class="top-controls">
             <button onclick="app.toggleUnits()">Km/Mi</button>
+            <button onclick="app.openWorkoutModal()" title="Plan de Entreno">📋 Plan</button>
             <button onclick="app.toggleFullScreen()" title="Pantalla Completa">⛶</button>
             <button onclick="app.openSettings()">⚙️</button>
         </div>
@@ -341,6 +358,13 @@
     <main>
         <div class="timer-display">
             <div class="timer-value" id="main-timer">00:00:00</div>
+        </div>
+
+        <!-- Guía de Entrenamiento -->
+        <div id="workout-guidance" class="workout-guidance">
+            <div class="workout-step-title" id="guide-title">Plan Activo</div>
+            <div class="workout-step-desc" id="guide-desc">Sigue el plan...</div>
+            <div class="workout-step-target" id="guide-target">Objetivo: --</div>
         </div>
 
         <div class="stats-grid">
@@ -365,7 +389,6 @@
             </div>
         </div>
 
-        <!-- NUEVA FILA DE INFORMACIÓN SECUNDARIA -->
         <div class="stats-row-secondary">
             <div class="mini-stat">
                 <div class="mini-label">Altitud</div>
@@ -406,7 +429,7 @@
         </button>
     </section>
 
-    <!-- Overlay de Lap (6 segundos) -->
+    <!-- Overlay de Lap -->
     <div id="lap-toast">
         <h3>✅ Lap Completado</h3>
         <div class="lap-toast-label">Tiempo</div>
@@ -441,58 +464,139 @@
         </div>
     </div>
 
-    <!-- Modal Configuración -->
+    <!-- Modal Configuración y Planes -->
     <div id="modal-settings" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Configuración</h3>
                 <button class="close-btn" onclick="app.closeModals()">&times;</button>
             </div>
+            
+            <!-- Pestañas -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="app.switchTab('general')">General</button>
+                <button class="tab-btn" onclick="app.switchTab('paces')">Ritmos</button>
+                <button class="tab-btn" onclick="app.switchTab('workout')">Plan Entreno</button>
+            </div>
+
             <div class="modal-body">
                 
-                <div class="form-group">
-                    <label>Tipo de Letra</label>
-                    <select id="set-font" class="form-control" onchange="app.changeFont(this.value)">
-                        <option value="'Teko', sans-serif">Teko (Deportiva/Alta)</option>
-                        <option value="'Oswald', sans-serif">Oswald (Moderna/Negra)</option>
-                        <option value="'Anton', sans-serif">Anton (Gruesa/Impacto)</option>
-                        <option value="'Roboto Mono', monospace">Roboto Mono (Técnica)</option>
-                    </select>
+                <!-- Tab: General -->
+                <div id="tab-general" class="tab-content active">
+                    <div class="form-group">
+                        <label>Tipo de Letra</label>
+                        <select id="set-font" class="form-control" onchange="app.changeFont(this.value)">
+                            <option value="'Teko', sans-serif">Teko (Deportiva)</option>
+                            <option value="'Oswald', sans-serif">Oswald (Moderna)</option>
+                            <option value="'Anton', sans-serif">Anton (Gruesa)</option>
+                            <option value="'Roboto Mono', monospace">Roboto Mono (Técnica)</option>
+                        </select>
+                    </div>
+
+                    <div class="toggle-row">
+                        <span>Auto Laps</span>
+                        <label class="switch">
+                            <input type="checkbox" id="set-autolap">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Tipo de Lap</label>
+                        <select id="set-lap-type" class="form-control" onchange="app.toggleLapInputs()">
+                            <option value="distance">Por Distancia</option>
+                            <option value="time">Por Tiempo</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="input-dist-group">
+                        <label>Distancia por Lap (km)</label>
+                        <input type="number" id="set-lap-dist" class="form-control" value="1.0" step="0.1">
+                    </div>
+
+                    <div class="form-group" id="input-time-group" style="display:none;">
+                        <label>Tiempo por Lap (minutos)</label>
+                        <input type="number" id="set-lap-time" class="form-control" value="10" step="1">
+                    </div>
+
+                    <div class="toggle-row">
+                        <span>Audio Alerta</span>
+                        <label class="switch">
+                            <input type="checkbox" id="set-audio" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
 
-                <div class="toggle-row">
-                    <span>Auto Laps</span>
-                    <label class="switch">
-                        <input type="checkbox" id="set-autolap">
-                        <span class="slider"></span>
-                    </label>
-                </div>
-                
-                <div class="form-group">
-                    <label>Tipo de Lap</label>
-                    <select id="set-lap-type" class="form-control" onchange="app.toggleLapInputs()">
-                        <option value="distance">Por Distancia</option>
-                        <option value="time">Por Tiempo</option>
-                    </select>
+                <!-- Tab: Ritmos de Referencia -->
+                <div id="tab-paces" class="tab-content">
+                    <p style="color:var(--text-dim); font-size:0.8rem;">Define tus ritmos para usarlos en el plan (min/km).</p>
+                    
+                    <div class="form-group">
+                        <label>Paso Fondo / Recuperación</label>
+                        <input type="number" id="pace-easy" class="form-control" step="0.01" placeholder="Ej: 6.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Paso Maratón (42k)</label>
+                        <input type="number" id="pace-marathon" class="form-control" step="0.01" placeholder="Ej: 5.30">
+                    </div>
+                    <div class="form-group">
+                        <label>Paso Media Maratón (21k)</label>
+                        <input type="number" id="pace-half" class="form-control" step="0.01" placeholder="Ej: 5.00">
+                    </div>
+                    <div class="form-group">
+                        <label>Paso 10k</label>
+                        <input type="number" id="pace-10k" class="form-control" step="0.01" placeholder="Ej: 4.40">
+                    </div>
+                    <div class="form-group">
+                        <label>Paso 5k</label>
+                        <input type="number" id="pace-5k" class="form-control" step="0.01" placeholder="Ej: 4.20">
+                    </div>
+                    <button class="btn-small" onclick="app.savePaces()">Guardar Ritmos</button>
                 </div>
 
-                <div class="form-group" id="input-dist-group">
-                    <label>Distancia por Lap (km)</label>
-                    <input type="number" id="set-lap-dist" class="form-control" value="1.0" step="0.1">
+                <!-- Tab: Plan de Entreno -->
+                <div id="tab-workout" class="tab-content">
+                    <div class="form-group" style="background:#222; padding:10px; border-radius:6px;">
+                        <label>Agregar Paso</label>
+                        <select id="wk-type" class="form-control" style="margin-bottom:5px;">
+                            <option value="time">Por Tiempo</option>
+                            <option value="dist">Por Distancia</option>
+                        </select>
+                        
+                        <div style="display:flex; gap:5px;">
+                            <input type="number" id="wk-value" class="form-control" placeholder="Ej: 10 o 1000">
+                            <select id="wk-unit" class="form-control" style="width:80px;">
+                                <option value="min">Min</option>
+                                <option value="m">Mts</option>
+                                <option value="km">Km</option>
+                            </select>
+                        </div>
+
+                        <select id="wk-target" class="form-control" style="margin-top:5px;">
+                            <option value="none">Sin objetivo</option>
+                            <option value="easy">Fondo / Suelta</option>
+                            <option value="marathon">Paso Maratón</option>
+                            <option value="half">Paso Media</option>
+                            <option value="tenk">Paso 10k</option>
+                            <option value="fivek">Paso 5k</option>
+                        </select>
+                        <button class="btn-small" onclick="app.addWorkoutStep()">+ Agregar a la lista</button>
+                    </div>
+
+                    <div style="border-top:1px solid #444; margin:10px 0;"></div>
+                    <h4 style="margin:0 0 10px 0; font-size:0.9rem; color:white;">Lista de Pasos:</h4>
+                    <div id="workout-list">
+                        <!-- Pasos renderizados aquí -->
+                        <div style="text-align:center; color:#666; font-size:0.8rem;">Vacío</div>
+                    </div>
+                    
+                    <div style="margin-top:10px;">
+                        <button class="btn-small" style="background:var(--danger-color);" onclick="app.clearWorkout()">Borrar Todo</button>
+                        <button class="btn-small" style="background:var(--primary-color); color:black;" onclick="app.activateWorkout()">Activar Plan</button>
+                    </div>
                 </div>
 
-                <div class="form-group" id="input-time-group" style="display:none;">
-                    <label>Tiempo por Lap (minutos)</label>
-                    <input type="number" id="set-lap-time" class="form-control" value="10" step="1">
-                </div>
-
-                <div class="toggle-row">
-                    <span>Audio Alerta</span>
-                    <label class="switch">
-                        <input type="checkbox" id="set-audio" checked>
-                        <span class="slider"></span>
-                    </label>
-                </div>
             </div>
         </div>
     </div>
@@ -511,7 +615,7 @@
                 pausedTime: 0,
                 totalElapsed: 0,
                 movingTime: 0,
-                distance: 0,
+                distance: 0, // metros
                 currentSpeed: 0,
                 avgSpeed: 0,
                 lastPos: null,
@@ -519,24 +623,35 @@
                 accuracy: 0,
                 path: [],
                 laps: [],
-                currentLap: {
-                    startTime: 0,
-                    distance: 0,
-                    path: []
-                },
+                currentLap: { startTime: 0, distance: 0, path: [] },
                 activity: 'stopped',
                 watchId: null,
                 timerInterval: null,
                 wakeLock: null,
                 units: 'metric',
                 font: "'Teko', sans-serif",
+                
                 settings: {
                     autoLap: false,
                     lapType: 'distance',
                     lapDistValue: 1000,
                     lapTimeValue: 600,
                     audio: true
-                }
+                },
+
+                paces: {
+                    easy: 0,
+                    marathon: 0,
+                    half: 0,
+                    tenk: 0,
+                    fivek: 0
+                },
+
+                workoutPlan: [], 
+                isWorkoutActive: false,
+                currentStepIndex: -1,
+                stepStartTime: 0,
+                stepStartDist: 0
             },
             
             ui: {
@@ -556,7 +671,12 @@
                 toast: document.getElementById('lap-toast'),
                 lapsTable: document.getElementById('laps-table-body'),
                 toastTime: document.getElementById('toast-time'),
-                toastPace: document.getElementById('toast-pace')
+                toastPace: document.getElementById('toast-pace'),
+                workoutList: document.getElementById('workout-list'),
+                guidance: document.getElementById('workout-guidance'),
+                guideTitle: document.getElementById('guide-title'),
+                guideDesc: document.getElementById('guide-desc'),
+                guideTarget: document.getElementById('guide-target')
             },
 
             map: null,
@@ -569,8 +689,6 @@
                 this.loadSettings();
                 this.changeFont(this.state.font);
                 this.updateUI();
-
-                document.addEventListener('fullscreenchange', () => {});
             },
 
             initMap: function() {
@@ -585,41 +703,36 @@
                 this.polylineLap = L.polyline([], { color: '#ff1744', weight: 5, dashArray: '10, 10' }).addTo(this.map);
             },
 
+            // --- Wake Lock & Full Screen ---
             async requestWakeLock() {
                 try {
                     if ('wakeLock' in navigator) {
                         this.state.wakeLock = await navigator.wakeLock.request('screen');
-                        console.log('⚡ Wake Lock activo.');
-                    } else {
-                        console.warn('Wake Lock no soportado.');
                     }
-                } catch (err) {
-                    console.error(`${err.name}, ${err.message}`);
-                }
+                } catch (err) { console.error(err); }
             },
-
             releaseWakeLock() {
                 if (this.state.wakeLock !== null) {
-                    this.state.wakeLock.release()
-                        .then(() => {
-                            this.state.wakeLock = null;
-                            console.log('💤 Wake Lock liberado.');
-                        });
+                    this.state.wakeLock.release().then(() => { this.state.wakeLock = null; });
                 }
             },
-
             toggleFullScreen: function() {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(err => {
-                        console.error(`Error habilitando pantalla completa: ${err.message}`);
-                    });
-                } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    }
-                }
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{});
+                else if (document.exitFullscreen) document.exitFullscreen();
             },
 
+            // --- Tabs UI ---
+            switchTab: function(tabName) {
+                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+                document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+                
+                document.getElementById('tab-' + tabName).classList.add('active');
+                // Highlight button logic (simple index matching for this demo)
+                const index = ['general','paces','workout'].indexOf(tabName);
+                if(index >= 0) document.querySelectorAll('.tab-btn')[index].classList.add('active');
+            },
+
+            // --- Gestión de Estado ---
             handleRightButton: function() {
                 if (!this.state.isRunning && !this.state.isPaused) {
                     this.startTracking();
@@ -647,10 +760,16 @@
                 this.state.isRunning = true;
                 this.state.isPaused = false;
                 this.state.startTime = Date.now() - this.state.totalElapsed;
-                
                 this.state.currentLap.startTime = Date.now();
                 this.state.currentLap.distance = 0;
                 this.state.currentLap.path = [];
+
+                if (this.state.isWorkoutActive) {
+                    this.state.currentStepIndex = 0;
+                    this.state.stepStartTime = Date.now();
+                    this.state.stepStartDist = 0;
+                    this.updateWorkoutUI();
+                }
 
                 this.ui.btnAction.textContent = "Pausar";
                 this.ui.btnAction.classList.remove('stopped');
@@ -666,7 +785,7 @@
                         { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
                     );
                 } else {
-                    alert("GPS no soportado en este navegador.");
+                    alert("GPS no soportado.");
                 }
 
                 this.state.timerInterval = setInterval(() => this.tick(), 1000);
@@ -700,15 +819,15 @@
                 this.updateStatusText("Terminado");
             },
 
+            // --- Lógica GPS y Entrenos ---
             onPositionUpdate: function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-                const altitude = position.coords.altitude;
                 const accuracy = position.coords.accuracy;
                 const speed = position.coords.speed;
                 
                 this.state.accuracy = Math.round(accuracy);
-                this.state.altitude = altitude ? Math.round(altitude) : 0; 
+                this.state.altitude = position.coords.altitude ? Math.round(position.coords.altitude) : 0; 
 
                 if (!speed && speed !== 0) return;
 
@@ -721,11 +840,6 @@
                 if (this.state.lastPos) {
                     const dist = this.getDistanceFromLatLonInM(this.state.lastPos[0], this.state.lastPos[1], lat, lng);
                     
-                    // CORRECCIÓN IMPORTANTE PARA OFFLINE (SIN DATOS)
-                    // Aumentado el filtro de accuracy de 50m a 150m.
-                    // Sin datos móviles, el GPS tiene menos precisión inicial (AGPS),
-                    // por lo que ignoramos muchos puntos buenos si somos estrictos.
-                    // 150m es aceptable para correr en la calle sin perder datos.
                     if (accuracy < 150 && dist > 2) {
                         this.state.distance += dist;
                         this.state.currentLap.distance += dist;
@@ -754,13 +868,16 @@
                 }
 
                 const dateObj = new Date();
-                const timeString = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                document.getElementById('val-clock').textContent = timeString;
+                document.getElementById('val-clock').textContent = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
                 if (this.state.movingTime > 0) {
                     this.state.avgSpeed = (this.state.distance / this.state.movingTime) * 1000 * 3.6; 
                 } else {
                     this.state.avgSpeed = 0;
+                }
+
+                if (this.state.isWorkoutActive && this.state.currentStepIndex < this.state.workoutPlan.length) {
+                    this.checkWorkoutProgress();
                 }
 
                 if (this.state.settings.autoLap && this.state.settings.lapType === 'time') {
@@ -771,6 +888,39 @@
                 }
 
                 this.updateUI();
+            },
+
+            checkWorkoutProgress: function() {
+                const step = this.state.workoutPlan[this.state.currentStepIndex];
+                let completed = false;
+
+                if (step.type === 'time') {
+                    const currentStepTime = (Date.now() - this.state.stepStartTime) / 1000;
+                    if (currentStepTime >= step.value) completed = true;
+                } else if (step.type === 'dist') {
+                    const currentStepDist = this.state.distance - this.state.stepStartDist;
+                    if (currentStepDist >= step.value) completed = true;
+                }
+
+                if (completed) {
+                    this.nextWorkoutStep();
+                }
+            },
+
+            nextWorkoutStep: function() {
+                this.state.currentStepIndex++;
+                this.state.stepStartTime = Date.now();
+                this.state.stepStartDist = this.state.distance;
+
+                if (this.state.currentStepIndex >= this.state.workoutPlan.length) {
+                    this.state.isWorkoutActive = false;
+                    this.ui.guidance.classList.remove('active');
+                    this.playBeep();
+                } else {
+                    this.updateWorkoutUI();
+                    this.playBeep();
+                    setTimeout(() => this.playBeep(), 200);
+                }
             },
 
             checkAutoLap: function() {
@@ -786,21 +936,12 @@
             recordLap: function(isManual) {
                 const now = Date.now();
                 const lapDuration = now - this.state.currentLap.startTime;
-                
                 let paceSecPerUnit = 0;
                 if (this.state.currentLap.distance > 0) {
                     paceSecPerUnit = (lapDuration / 1000) / (this.state.currentLap.distance / 1000);
-                } else {
-                    paceSecPerUnit = 0;
                 }
 
-                const lapData = {
-                    index: this.state.laps.length + 1,
-                    duration: lapDuration,
-                    distance: this.state.currentLap.distance,
-                    pace: paceSecPerUnit
-                };
-                
+                const lapData = { index: this.state.laps.length + 1, duration: lapDuration, distance: this.state.currentLap.distance, pace: paceSecPerUnit };
                 this.state.laps.push(lapData);
                 
                 if (this.state.settings.audio) this.playBeep();
@@ -810,72 +951,43 @@
                 this.state.currentLap.startTime = now;
                 this.state.currentLap.distance = 0;
                 this.state.currentLap.path = [this.state.lastPos];
-                
                 this.polylineLap.setLatLngs([]);
             },
 
             detectActivity: function(speedMs) {
                 const speedKmh = speedMs * 3.6;
                 let act = 'stopped';
-                
                 if (speedKmh < 0.5) act = 'stopped';
                 else if (speedKmh < 6) act = 'walking';
                 else if (speedKmh < 14) act = 'running';
                 else if (speedKmh < 35) act = 'cycling';
                 else act = 'driving';
-
                 this.state.activity = act;
             },
 
             updateStatusText: function(override) {
-                if (override) {
-                    this.ui.statusText.textContent = override;
-                    return;
-                }
-                
-                const map = {
-                    'stopped': '📍 Parado',
-                    'walking': '🚶 Caminando',
-                    'running': '🏃 Corriendo',
-                    'cycling': '🚴 Bicicleta',
-                    'driving': '🚗 Auto'
-                };
+                if (override) { this.ui.statusText.textContent = override; return; }
+                const map = { 'stopped': '📍 Parado', 'walking': '🚶 Caminando', 'running': '🏃 Corriendo', 'cycling': '🚴 Bicicleta', 'driving': '🚗 Auto' };
                 this.ui.statusText.textContent = map[this.state.activity] || '...';
             },
 
             getDistanceFromLatLonInM: function(lat1, lon1, lat2, lon2) {
-                var R = 6371;
-                var dLat = this.deg2rad(lat2-lat1);  
-                var dLon = this.deg2rad(lon2-lon1); 
-                var a = 
-                    Math.sin(dLat/2) * Math.sin(dLat/2) +
-                    Math.cos(this.deg2rad(lat1)) * Math.cos(this.deg2rad(lat2)) * 
-                    Math.sin(dLon/2) * Math.sin(dLon/2); 
-                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
-                var d = R * c;
-                return d * 1000;
+                var R = 6371, dLat = this.deg2rad(lat2-lat1), dLon = this.deg2rad(lon2-lon1);
+                var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(this.deg2rad(lat1))*Math.cos(this.deg2rad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
+                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                return d = R * c * 1000;
             },
 
-            deg2rad: function(deg) {
-                return deg * (Math.PI/180);
-            },
-
+            deg2rad: function(deg) { return deg * (Math.PI/180); },
             formatTime: function(ms) {
-                let seconds = Math.floor((ms / 1000) % 60);
-                let minutes = Math.floor((ms / (1000 * 60)) % 60);
-                let hours = Math.floor((ms / (1000 * 60 * 60)));
-
-                seconds = seconds < 10 ? '0' + seconds : seconds;
-                minutes = minutes < 10 ? '0' + minutes : minutes;
-                hours = hours < 10 ? '0' + hours : hours;
-
-                return `${hours}:${minutes}:${seconds}`;
+                let s = Math.floor((ms / 1000) % 60), m = Math.floor((ms / (1000 * 60)) % 60), h = Math.floor((ms / (1000 * 60 * 60)));
+                s = s < 10 ? '0'+s : s; m = m < 10 ? '0'+m : m; h = h < 10 ? '0'+h : h;
+                return `${h}:${m}:${s}`;
             },
 
             formatPace: function(secPerKm) {
                 if (secPerKm === 0 || !isFinite(secPerKm)) return "--:--";
-                let m = Math.floor(secPerKm / 60);
-                let s = Math.floor(secPerKm % 60);
+                let m = Math.floor(secPerKm / 60), s = Math.floor(secPerKm % 60);
                 return `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
             },
 
@@ -886,7 +998,6 @@
 
             updateUI: function() {
                 this.ui.timer.textContent = this.formatTime(this.state.totalElapsed);
-
                 const isMetric = this.state.units === 'metric';
                 const unitDist = isMetric ? 'km' : 'mi';
                 const unitSpeed = isMetric ? 'km/h' : 'mph';
@@ -894,8 +1005,7 @@
                 const factorDist = isMetric ? 1 : 0.621371;
                 const factorSpeed = isMetric ? 3.6 : 2.23694;
 
-                const displayAlt = isMetric ? this.state.altitude : Math.round(this.state.altitude * 3.28084);
-                document.getElementById('val-alt').textContent = displayAlt;
+                document.getElementById('val-alt').textContent = isMetric ? this.state.altitude : Math.round(this.state.altitude * 3.28084);
                 document.getElementById('unit-alt').textContent = altUnit;
 
                 const displayDist = (this.state.distance / 1000) * factorDist;
@@ -904,36 +1014,23 @@
 
                 this.ui.dist.textContent = displayDist.toFixed(2);
                 this.ui.distUnit.textContent = unitDist;
-
                 this.ui.speed.textContent = displaySpeed.toFixed(1);
                 this.ui.speedUnit.textContent = unitSpeed;
                 this.ui.avgSpeed.textContent = displayAvgSpeed.toFixed(1);
 
-                if(this.state.accuracy > 5000 || this.state.accuracy === 0) {
-                     document.getElementById('val-gps-acc').textContent = "--";
-                } else {
-                     document.getElementById('val-gps-acc').textContent = this.state.accuracy;
-                }
+                if(this.state.accuracy > 5000 || this.state.accuracy === 0) document.getElementById('val-gps-acc').textContent = "--";
+                else document.getElementById('val-gps-acc').textContent = this.state.accuracy;
 
                 let globalPace = 0;
-                if (this.state.movingTime > 0) {
-                    globalPace = (this.state.movingTime / 1000) / ((this.state.distance / 1000) * factorDist);
-                }
+                if (this.state.movingTime > 0) globalPace = (this.state.movingTime / 1000) / ((this.state.distance / 1000) * factorDist);
                 
-                if (displaySpeed < 0.5) {
-                    this.ui.pace.textContent = "--:--";
-                } else {
-                    this.ui.pace.textContent = this.formatPace(globalPace);
-                }
+                if (displaySpeed < 0.5) this.ui.pace.textContent = "--:--";
+                else this.ui.pace.textContent = this.formatPace(globalPace);
                 this.ui.pace.nextElementSibling.textContent = `min/${unitDist}`;
 
                 const lastLap = this.state.laps[this.state.laps.length - 1];
-                if (lastLap) {
-                    const lapPace = lastLap.pace * (isMetric ? 1 : (1/0.621371));
-                    this.ui.lastLap.textContent = this.formatPace(lapPace);
-                } else {
-                    this.ui.lastLap.textContent = "--:--";
-                }
+                if (lastLap) this.ui.lastLap.textContent = this.formatPace(lastLap.pace * (isMetric ? 1 : (1/0.621371)));
+                else this.ui.lastLap.textContent = "--:--";
             },
 
             toggleUnits: function() {
@@ -946,44 +1043,38 @@
                 this.ui.mapContainer.classList.toggle('expanded');
                 setTimeout(() => {
                     this.map.invalidateSize();
-                    if (this.state.path.length > 0) {
-                        this.map.fitBounds(this.polylineTotal.getBounds(), { padding: [50, 50] });
-                    }
+                    if (this.state.path.length > 0) this.map.fitBounds(this.polylineTotal.getBounds(), { padding: [50, 50] });
                 }, 300);
             },
 
-            showToast: function(lapData) {
+            showToast: function(lapData, overrideTitle) {
                 this.ui.toast.style.display = 'block';
+                this.ui.toast.querySelector('h3').textContent = overrideTitle || "✅ Lap Completado";
+                this.ui.toastTime.textContent = overrideTitle ? "" : this.formatTime(lapData.duration);
                 
-                this.ui.toastTime.textContent = this.formatTime(lapData.duration);
-                
-                const isMetric = this.state.units === 'metric';
-                const factor = isMetric ? 1 : (1/0.621371);
-                const paceVal = lapData.pace * factor;
-                
-                this.ui.toastPace.textContent = this.formatPace(paceVal) + ` /${isMetric ? 'km' : 'mi'}`;
+                if (!overrideTitle) {
+                    const isMetric = this.state.units === 'metric';
+                    const factor = isMetric ? 1 : (1/0.621371);
+                    const paceVal = lapData.pace * factor;
+                    this.ui.toastPace.textContent = this.formatPace(paceVal) + ` /${isMetric ? 'km' : 'mi'}`;
+                } else {
+                    this.ui.toastPace.textContent = "";
+                }
 
                 if (this.toastTimeout) clearTimeout(this.toastTimeout);
-                this.toastTimeout = setTimeout(() => {
-                    this.ui.toast.style.display = 'none';
-                }, 6000);
+                this.toastTimeout = setTimeout(() => { this.ui.toast.style.display = 'none'; }, 3000);
             },
 
             playBeep: function() {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-
+                const osc = ctx.createOscillator(), gain = ctx.createGain();
                 osc.type = 'sine';
                 osc.frequency.setValueAtTime(880, ctx.currentTime);
                 osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-                
                 gain.gain.setValueAtTime(0.5, ctx.currentTime);
                 gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-
                 osc.connect(gain);
                 gain.connect(ctx.destination);
-
                 osc.start();
                 osc.stop(ctx.currentTime + 0.3);
             },
@@ -1023,47 +1114,137 @@
                 this.state.settings.audio = document.getElementById('set-audio').checked;
             },
 
-            loadSettings: function() {
-                // Valores por defecto ya están en state
-            },
+            loadSettings: function() {},
 
             updateLapsTable: function() {
-                const tbody = this.ui.lapsTable;
-                tbody.innerHTML = '';
-                
-                if (this.state.laps.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#666;">Sin datos</td></tr>';
-                    return;
-                }
-
+                const tbody = this.ui.lapsTable; tbody.innerHTML = '';
+                if (this.state.laps.length === 0) { tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#666;">Sin datos</td></tr>'; return; }
                 const reversedLaps = [...this.state.laps].reverse();
-
                 const isMetric = this.state.units === 'metric';
                 const distUnit = isMetric ? 'km' : 'mi';
                 const factor = isMetric ? 0.001 : 0.000621371;
-
                 reversedLaps.forEach(lap => {
                     const row = document.createElement('tr');
-                    
                     const distDisplay = (lap.distance * factor).toFixed(2);
                     const paceVal = lap.pace * (isMetric ? 1 : (1/0.621371));
-
-                    row.innerHTML = `
-                        <td class="highlight">#${lap.index}</td>
-                        <td>${this.formatTime(lap.duration)}</td>
-                        <td>${distDisplay} ${distUnit}</td>
-                        <td>${this.formatPace(paceVal)}</td>
-                    `;
+                    row.innerHTML = `<td class="highlight">#${lap.index}</td><td>${this.formatTime(lap.duration)}</td><td>${distDisplay} ${distUnit}</td><td>${this.formatPace(paceVal)}</td>`;
                     tbody.appendChild(row);
                 });
+            },
+
+            // --- Workout Logic ---
+            openWorkoutModal: function() {
+                this.openSettings();
+                this.switchTab('workout');
+            },
+
+            addWorkoutStep: function() {
+                const type = document.getElementById('wk-type').value;
+                const valInput = parseFloat(document.getElementById('wk-value').value);
+                const unit = document.getElementById('wk-unit').value;
+                const target = document.getElementById('wk-target').value;
+
+                if (isNaN(valInput) || valInput <= 0) return alert("Ingresa un valor válido");
+
+                let realValue = valInput;
+                if (unit === 'min') realValue = valInput * 60;
+                else if (unit === 'km') realValue = valInput * 1000;
+
+                const step = {
+                    type: (type === 'time' ? 'time' : 'dist'),
+                    value: realValue,
+                    target: target,
+                    desc: `${valInput} ${unit} ${target !== 'none' ? '(' + this.getPaceName(target) + ')' : ''}`
+                };
+
+                this.state.workoutPlan.push(step);
+                this.renderWorkoutList();
+            },
+
+            removeWorkoutStep: function(index) {
+                this.state.workoutPlan.splice(index, 1);
+                this.renderWorkoutList();
+            },
+
+            clearWorkout: function() {
+                if(confirm("¿Borrar todo el plan?")) {
+                    this.state.workoutPlan = [];
+                    this.renderWorkoutList();
+                }
+            },
+
+            activateWorkout: function() {
+                if (this.state.workoutPlan.length === 0) return alert("Agrega pasos primero.");
+                this.state.isWorkoutActive = true;
+                this.ui.guidance.classList.add('active');
+                this.closeModals();
+                this.showToast({duration:0, pace:0}, "Plan Activado");
+            },
+
+            renderWorkoutList: function() {
+                const list = this.ui.workoutList;
+                list.innerHTML = '';
+                if (this.state.workoutPlan.length === 0) {
+                    list.innerHTML = '<div style="text-align:center; color:#666; font-size:0.8rem;">Vacío</div>';
+                    return;
+                }
+                this.state.workoutPlan.forEach((step, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'workout-step-item';
+                    let typeStr = step.type === 'time' ? 'Tiempo' : 'Distancia';
+                    let targetStr = step.target === 'none' ? 'Libre' : this.getPaceName(step.target);
+                    div.innerHTML = `
+                        <div class="step-info">
+                            <h4>Paso ${idx+1}: ${typeStr}</h4>
+                            <p>${this.formatStepValue(step)} - Objetivo: <strong>${targetStr}</strong></p>
+                        </div>
+                        <button class="step-delete" onclick="app.removeWorkoutStep(${idx})">&times;</button>
+                    `;
+                    list.appendChild(div);
+                });
+            },
+
+            formatStepValue: function(step) {
+                if (step.type === 'time') return (step.value / 60).toFixed(0) + " min";
+                else return (step.value < 1000 ? step.value + " m" : (step.value/1000).toFixed(1) + " km");
+            },
+
+            getPaceName: function(key) {
+                const map = { 'easy': 'Fondo', 'marathon': 'Maratón', 'half': 'Media', 'tenk': '10k', 'fivek': '5k', 'none': 'Libre' };
+                return map[key] || key;
+            },
+            
+            getPaceSec: function(key) {
+                if(!key || key === 'none') return 0;
+                return this.state.paces[key] || 0;
+            },
+
+            updateWorkoutUI: function() {
+                if (!this.state.isWorkoutActive || this.state.currentStepIndex >= this.state.workoutPlan.length) return;
+                const step = this.state.workoutPlan[this.state.currentStepIndex];
+                this.ui.guideTitle.textContent = `Paso ${this.state.currentStepIndex + 1} de ${this.state.workoutPlan.length}`;
+                this.ui.guideDesc.textContent = `${this.formatStepValue(step)} - ${this.getPaceName(step.target)}`;
+                const targetPace = this.getPaceSec(step.target);
+                if (targetPace > 0) {
+                    this.ui.guideTarget.textContent = `Objetivo: ${this.formatPace(targetPace)} min/km`;
+                    this.ui.guideTarget.style.color = '#04ff86';
+                } else {
+                    this.ui.guideTarget.textContent = "Ritmo Libre";
+                    this.ui.guideTarget.style.color = 'var(--text-dim)';
+                }
+            },
+
+            savePaces: function() {
+                this.state.paces.easy = parseFloat(document.getElementById('pace-easy').value) * 60 || 0;
+                this.state.paces.marathon = parseFloat(document.getElementById('pace-marathon').value) * 60 || 0;
+                this.state.paces.half = parseFloat(document.getElementById('pace-half').value) * 60 || 0;
+                this.state.paces.tenk = parseFloat(document.getElementById('pace-10k').value) * 60 || 0;
+                this.state.paces.fivek = parseFloat(document.getElementById('pace-5k').value) * 60 || 0;
+                alert("Ritmos guardados.");
             }
         };
 
-        // Iniciar App
-        window.addEventListener('load', () => {
-            app.init();
-        });
-
+        window.addEventListener('load', () => { app.init(); });
     </script>
 </body>
 </html>
