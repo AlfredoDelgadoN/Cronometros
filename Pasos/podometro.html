@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Entrenador Pro v5</title>
+    <title>Entrenador Pro v6</title>
     <style>
         :root {
             --primary: #00e676;
@@ -56,15 +56,29 @@
         }
 
         .timer-container { text-align: center; margin-bottom: 10px; width: 100%; }
+        
+        /* CORRECCIÓN: EL TIMER YA NO SE OSCURECE */
         .main-time {
             font-family: var(--font-digital);
             font-size: 3.2rem;
             font-weight: 700;
             color: var(--text);
-            transition: opacity 0.3s;
+            transition: color 0.3s, border 0.3s;
+            border: 0px solid transparent; /* Borde por defecto invisible */
+            border-radius: 10px;
+            padding: 5px;
         }
-        .main-time.paused { opacity: 0.4; color: #666; }
+
+        /* Estado Pausado: Opacidad 1 (completa), Color Gris Claro para diferenciar, Borde Naranja */
+        .main-time.paused {
+            opacity: 1; 
+            color: #d4d4d4; /* Gris muy claro, casi blanco, totalmente legible */
+            border: 2px solid var(--warn); /* Borde naranja para indicar pausa */
+            text-shadow: 0 0 10px rgba(255, 171, 0, 0.2); /* Brillo sutil */
+        }
+
         .lap-time { font-family: var(--font-digital); font-size: 1rem; color: var(--warn); min-height: 1.5rem; }
+        
         .spm-display {
             font-size: 1.1rem; font-weight: 700; color: var(--accent);
             background: rgba(41, 121, 255, 0.1); padding: 4px 12px; border-radius: 12px;
@@ -111,7 +125,19 @@
 
         .sensor-viz { width: 100%; height: 30px; background: #000; border-radius: 4px; margin-bottom: 10px; position: relative; overflow: hidden; display: flex; align-items: center; }
         .sensor-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.05s linear; }
-        .status-msg { font-size: 0.75rem; color: var(--text-secondary); text-align: center; font-weight: bold; min-height: 1rem; }
+        
+        /* Mejorar visibilidad del mensaje de estado */
+        .status-msg { 
+            font-size: 0.8rem; 
+            color: var(--warn); 
+            text-align: center; 
+            font-weight: bold; 
+            min-height: 1.2rem;
+            background: rgba(255, 171, 0, 0.1);
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid rgba(255, 171, 0, 0.2);
+        }
 
         /* --- CONTROLS --- */
         .controls {
@@ -150,8 +176,7 @@
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.95); z-index: 1000;
             display: flex; flex-direction: column; padding: 20px;
-            overflow-y: auto; /* Permite scroll si es largo */
-            transform: translateY(100%); transition: transform 0.3s ease-in-out;
+            overflow-y: auto; transform: translateY(100%); transition: transform 0.3s ease-in-out;
         }
         .modal.open { transform: translateY(0); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px; }
@@ -183,7 +208,6 @@
             <button class="modal-close" onclick="closeSettings()">×</button>
         </div>
 
-        <!-- General -->
         <div class="config-section">
             <h3>General</h3>
             <div class="config-item">
@@ -196,10 +220,8 @@
             </div>
         </div>
 
-        <!-- Caminar / Correr -->
         <div class="config-section">
             <h3>🚶 Caminar / 🏃 Correr</h3>
-            
             <div class="config-item">
                 <div class="config-label">
                     <span>⚡ Sensibilidad Caminar</span>
@@ -208,7 +230,6 @@
                 <input type="range" id="set-walk-sen" min="8.0" max="18.0" step="0.1" value="11.5">
                 <div class="config-desc">Baja=Detecta todo | Alta=Ignora movimientos leves.</div>
             </div>
-
             <div class="config-item">
                 <div class="config-label">
                     <span>⚡ Sensibilidad Correr</span>
@@ -217,10 +238,9 @@
                 <input type="range" id="set-run-sen" min="10.0" max="25.0" step="0.1" value="15.5">
                 <div class="config-desc">Ajusta si cuenta pasos dobles al correr rápido.</div>
             </div>
-
             <div class="config-item">
                 <div class="config-label">
-                    <span>⏳ Tiempo entre Pasos (Cooldown)</span>
+                    <span>⏳ Tiempo entre Pasos</span>
                     <span class="config-val" id="set-cool-val">320 ms</span>
                 </div>
                 <input type="range" id="set-cool" min="150" max="800" step="10" value="320">
@@ -228,7 +248,6 @@
             </div>
         </div>
 
-        <!-- Saltos -->
         <div class="config-section">
             <h3>⬆️ Saltos</h3>
             <div class="config-item">
@@ -257,7 +276,7 @@
 
     <!-- INTERFAZ PRINCIPAL -->
     <header>
-        <h1>Entrenador Pro v5</h1>
+        <h1>Entrenador Pro v6</h1>
         <div>
             <button class="btn-icon" onclick="openSettings()">⚙️</button>
             <button class="btn-icon" onclick="toggleFullScreen()">⛶</button>
@@ -322,24 +341,11 @@
     <script>
         // --- CONFIGURACIÓN POR DEFECTO ---
         const defaultConfig = {
-            walk: { 
-                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676', 
-                threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12 
-            },
-            run: { 
-                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff', 
-                threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14 
-            },
-            jump: { 
-                label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100', 
-                freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15 
-            },
-            general: {
-                inactivityDelay: 5000 // ms
-            }
+            walk: { label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676', threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12 },
+            run: { label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff', threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14 },
+            jump: { label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100', freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15 },
+            general: { inactivityDelay: 5000 }
         };
-
-        // --- OBJETO CONFIG ACTIVO (Se carga desde memoria o usa defecto) ---
         const config = JSON.parse(JSON.stringify(defaultConfig));
 
         // --- CARGAR CONFIGURACIÓN GUARDADA ---
@@ -348,7 +354,6 @@
             if (saved) {
                 try {
                     const parsed = JSON.parse(saved);
-                    // Merge simple (asumimos estructura igual)
                     if(parsed.general) config.general = {...config.general, ...parsed.general};
                     if(parsed.walk) config.walk = {...config.walk, ...parsed.walk};
                     if(parsed.run) config.run = {...config.run, ...parsed.run};
@@ -371,7 +376,6 @@
             lastStepsTimestamps: []
         };
 
-        // --- DOM ---
         const ui = {
             timerMain: document.getElementById('main-timer'),
             timerLap: document.getElementById('lap-timer'),
@@ -390,86 +394,55 @@
         };
         let timerInterval;
 
-        // --- GESTIÓN DE CONFIGURACIÓN UI ---
         function openSettings() {
             ui.modal.classList.add('open');
-            // Poblar inputs con valores actuales de 'config'
             document.getElementById('set-pause').value = config.general.inactivityDelay / 1000;
             document.getElementById('set-pause-val').textContent = (config.general.inactivityDelay / 1000) + ' s';
-
             document.getElementById('set-walk-sen').value = config.walk.threshold;
             document.getElementById('set-walk-sen-val').textContent = config.walk.threshold;
-
             document.getElementById('set-run-sen').value = config.run.threshold;
             document.getElementById('set-run-sen-val').textContent = config.run.threshold;
-
-            document.getElementById('set-cool').value = config.run.cooldown; // Usamos cooldown de run como base
+            document.getElementById('set-cool').value = config.run.cooldown;
             document.getElementById('set-cool-val').textContent = config.run.cooldown + ' ms';
-
             document.getElementById('set-jump-air').value = config.jump.freeFallThreshold;
             document.getElementById('set-jump-air-val').textContent = config.jump.freeFallThreshold + ' G';
-            
             document.getElementById('set-jump-land').value = config.jump.impactThreshold;
             document.getElementById('set-jump-land-val').textContent = config.jump.impactThreshold + ' G';
-
-            // Listeners para actualizar visualmente en tiempo real dentro del modal
             setupSliderListeners();
         }
-
         function setupSliderListeners() {
             const link = (id, suffix) => {
                 const el = document.getElementById(id);
                 el.oninput = (e) => document.getElementById(id+'-val').textContent = e.target.value + ' ' + suffix;
             };
-            link('set-pause', 's');
-            link('set-walk-sen', '');
-            link('set-run-sen', '');
-            link('set-cool', ' ms');
-            link('set-jump-air', ' G');
-            link('set-jump-land', ' G');
+            link('set-pause', 's'); link('set-walk-sen', ''); link('set-run-sen', '');
+            link('set-cool', ' ms'); link('set-jump-air', ' G'); link('set-jump-land', ' G');
         }
-
-        function closeSettings() {
-            ui.modal.classList.remove('open');
-        }
-
+        function closeSettings() { ui.modal.classList.remove('open'); }
         function saveSettings() {
-            // Leer inputs y actualizar 'config'
             config.general.inactivityDelay = parseInt(document.getElementById('set-pause').value) * 1000;
-            
             config.walk.threshold = parseFloat(document.getElementById('set-walk-sen').value);
-            config.walk.autoStartThreshold = config.walk.threshold + 0.5; // Auto start ligeramente más alto
-            
+            config.walk.autoStartThreshold = config.walk.threshold + 0.5;
             config.run.threshold = parseFloat(document.getElementById('set-run-sen').value);
             config.run.autoStartThreshold = config.run.threshold - 0.5;
-            
             const newCooldown = parseInt(document.getElementById('set-cool').value);
-            config.run.cooldown = newCooldown;
-            config.walk.cooldown = newCooldown + 50; // Caminar un poco más lento
-
+            config.run.cooldown = newCooldown; config.walk.cooldown = newCooldown + 50;
             config.jump.freeFallThreshold = parseFloat(document.getElementById('set-jump-air').value);
             config.jump.impactThreshold = parseFloat(document.getElementById('set-jump-land').value);
-
-            // Guardar en localStorage
             localStorage.setItem('entrenadorProSettings', JSON.stringify(config));
-            
-            closeSettings();
-            showToast("Configuración guardada");
+            closeSettings(); showToast("Configuración guardada");
         }
-
         function showToast(msg) {
             ui.debug.textContent = msg;
             setTimeout(() => { if(state.status === 'IDLE') ui.debug.textContent = "Listo para iniciar"; }, 2000);
         }
 
-        // --- LÓGICA PRINCIPAL (Cronómetro & Sensores) ---
         function toggleMainAction() {
             if (state.status === 'IDLE' || state.status === 'STOPPED') { armSystem(); }
             else if (state.status === 'WAITING') { resetSystemUI(); }
             else if (state.status === 'RUNNING') { stopSystem(); }
             else if (state.status === 'AUTO_PAUSED') { resumeSystem(); }
         }
-
         function armSystem() {
             state.status = 'WAITING';
             ui.btnMain.textContent = "Cancelar"; ui.btnMain.className = "btn-timer btn-cancel";
@@ -477,7 +450,6 @@
             ui.debug.style.color = "var(--warn)";
             startSensorsOnly();
         }
-
         function startRunning() {
             state.status = 'RUNNING'; state.timerRunning = true; state.timerStartedAt = Date.now();
             ui.timerMain.classList.remove('paused');
@@ -486,29 +458,25 @@
             timerInterval = setInterval(updateTimerDisplay, 30);
             resetAutoPauseTimer();
         }
-
         function stopSystem() {
             state.status = 'STOPPED'; pauseTimerLogic();
             ui.btnMain.textContent = "▶ Continuar"; ui.btnMain.className = "btn-timer btn-main";
             ui.btnLap.disabled = true; ui.debug.textContent = "PAUSADO MANUAL"; ui.debug.style.color = "#888";
             stopSensors();
         }
-
         function pauseSystemAuto() {
             state.status = 'AUTO_PAUSED'; pauseTimerLogic();
+            // ESTE ES EL CAMBIO VISUAL: No baja opacidad, sino que cambia clase
             ui.timerMain.classList.add('paused');
             ui.btnMain.textContent = "▶ Reanudar"; ui.btnMain.className = "btn-timer btn-main";
             ui.btnLap.disabled = true; ui.debug.textContent = "⏸ PAUSADO (Párate a descansar)";
             ui.debug.style.color = "var(--text-secondary)";
         }
-
         function resumeSystem() { startRunning(); }
-
         function pauseTimerLogic() {
             state.timerRunning = false; clearInterval(timerInterval); clearTimeout(state.autoPauseId);
             state.elapsed += Date.now() - state.timerStartedAt; updateTimerDisplay();
         }
-
         function resetAutoPauseTimer() {
             if (state.status !== 'RUNNING') return;
             clearTimeout(state.autoPauseId);
@@ -516,7 +484,6 @@
                 if (state.status === 'RUNNING') pauseSystemAuto();
             }, config.general.inactivityDelay);
         }
-
         function hardReset() {
             stopSystem(); state.status = 'IDLE'; state.elapsed = 0; state.lapStart = 0;
             state.count = 0; state.distance = 0; state.calories = 0;
@@ -526,7 +493,6 @@
             ui.debug.textContent = "Listo para iniciar"; ui.debug.style.color = "var(--text-secondary)";
             updateTimerDisplay(); updateStats();
         }
-
         function startSensorsOnly() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
                 DeviceMotionEvent.requestPermission().then(response => {
@@ -535,13 +501,11 @@
             } else { window.addEventListener('devicemotion', handleMotion); }
         }
         function stopSensors() { window.removeEventListener('devicemotion', handleMotion); }
-
         function handleMotion(event) {
             const acc = event.accelerationIncludingGravity; if (!acc) return;
             const now = Date.now();
             const magnitude = Math.sqrt(acc.x*acc.x + acc.y*acc.y + acc.z*acc.z);
             ui.vizBar.style.width = Math.min((magnitude / 25) * 100, 100) + '%';
-
             if (state.status === 'WAITING') {
                 if (magnitude > config[state.mode].autoStartThreshold) { startRunning(); } else return;
             }
@@ -549,17 +513,13 @@
                 if (magnitude > config[state.mode].autoStartThreshold) { resumeSystem(); }
             }
             if (state.status !== 'RUNNING') return;
-
             if (state.mode === 'jump') processJump(magnitude, now);
             else processRunWalk(magnitude, now);
         }
-
         function processRunWalk(magnitude, now) {
             const conf = config[state.mode];
             if (magnitude > conf.threshold) {
-                if ((now - state.lastStepTime) > conf.cooldown) {
-                    registerStep(now); state.lastStepTime = now;
-                }
+                if ((now - state.lastStepTime) > conf.cooldown) { registerStep(now); state.lastStepTime = now; }
             }
         }
         function processJump(magnitude, now) {
@@ -575,7 +535,6 @@
                 if ((now - state.jumpAirStartTime) > 800) state.jumpState = 'GROUND';
             }
         }
-
         function registerStep(now) {
             state.count++; state.distance += state.strideLength; state.calories += config[state.mode].kcalPerUnit;
             resetAutoPauseTimer(); calculateCadence(now); updateStats();
@@ -586,7 +545,6 @@
             resetAutoPauseTimer(); calculateCadence(now); updateStats();
             if(navigator.vibrate) navigator.vibrate(50);
         }
-
         function calculateCadence(now) {
             state.lastStepsTimestamps.push(now);
             if (state.lastStepsTimestamps.length > 3) state.lastStepsTimestamps.shift();
@@ -598,7 +556,6 @@
                 ui.spmBox.classList.remove('hidden');
             }
         }
-
         function formatTime(ms) {
             const totalSec = Math.floor(ms / 1000);
             const mins = Math.floor(totalSec / 60), secs = totalSec % 60;
@@ -606,7 +563,6 @@
             return `${pad(mins)}:${pad(secs)}.${pad(centis)}`;
         }
         function pad(n) { return n < 10 ? '0' + n : n; }
-
         function updateTimerDisplay() {
             if (state.timerRunning) {
                 const now = Date.now();
