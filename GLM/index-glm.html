@@ -975,7 +975,7 @@
                 if (this.state.totalElapsed > 0 && this.state.distance > 0) {
                     // Usar totalElapsed (tiempo total desde inicio)
                     // metros / milisegundos × 3.6 = km/h
-                    this.state.avgSpeed = (this.state.distance / this.state.totalElapsed) * 3.6;
+                    this.state.avgSpeed = (this.state.distance / this.state.totalElapsed) * 3600;
                 } else {
                     this.state.avgSpeed = 0;
                 }
@@ -1027,6 +1027,29 @@
                 }
             },
 
+            debugCalculations: function() {
+            console.log("=== DEBUG CALCULACIONES ===");
+            console.log("Distancia (m):", this.state.distance);
+            console.log("Distancia (km):", this.state.distance / 1000);
+            console.log("totalElapsed (ms):", this.state.totalElapsed);
+            console.log("totalElapsed (s):", this.state.totalElapsed / 1000);
+            console.log("totalElapsed (h):", this.state.totalElapsed / (1000*60*60));
+    
+            const km = this.state.distance / 1000;
+            const hours = this.state.totalElapsed / (1000*60*60);
+    
+            console.log("Velocidad (km/h) = km / h:", km / hours);
+            console.log("Velocidad fórmula actual:", (this.state.distance / this.state.totalElapsed) * 3600);
+            console.log("=== FIN DEBUG ===");
+        },
+
+        // Llámala en updateUI() temporalmente:
+        updateUI: function() {
+            // DEBUG: Descomentar para ver cálculos
+            // if (Math.random() < 0.1) this.debugCalculations();
+            // ... resto del código
+        },
+
             nextWorkoutStep: function() {
                 // Registrar el paso completado como un LAP automáticamente
                 const now = Date.now();
@@ -1045,12 +1068,23 @@
                     // Se fuerza actualización para limpiar UI por seguridad
                     this.updateWorkoutUI();
                     this.playLoudBeep();
+                    setTimeout(() => this.playLoudBeep(), 300);
+                    setTimeout(() => this.playLoudBeep(), 600);
+                    this.showToast({duration: this.state.totalElapsed, pace: 0}, "🏁 Workout Completado");
                 } else {
+                    this.state.stepStartTime = Date.now();
+                    this.state.stepStartDist = this.state.distance;
+                    this.state.stepWarningFired = false
                     this.updateWorkoutUI();
                     this.playLoudBeep();
                     setTimeout(() => this.playLoudBeep(), 200);
                     this.showToast({duration:0, pace:0}, "Fase Completada");
                 }
+                // Resetear currentLap para el próximo paso
+                this.state.currentLap.startTime = Date.now();
+                this.state.currentLap.distance = 0;
+                this.state.currentLap.path = this.state.lastPos ? [this.state.lastPos] : [];
+                this.polylineLap.setLatLngs([]);
             },
 
             checkAutoLap: function() {
@@ -1075,18 +1109,31 @@
 
                 let paceSecPerUnit = 0;
                 if (this.state.currentLap.distance > 0) {
-                    paceSecPerUnit = (lapDuration / 1000) / (this.state.currentLap.distance / 1000);
-                } else {
-                    paceSecPerUnit = 0;
+                    // Calcular segundos por kilómetro CORRECTO
+                    const lapSeconds = lapDuration / 1000;
+                    const lapKm = this.state.currentLap.distance / 1000;
+                    paceSecPerUnit = lapSeconds / lapKm;
                 }
 
-                const lapData = { index: this.state.laps.length + 1, duration: lapDuration, distance: this.state.currentLap.distance, pace: paceSecPerUnit };
+                const lapData = { index: this.state.laps.length + 1, duration: lapDuration, distance: this.state.currentLap.distance, pace: paceSecPerUnit, isWorkoutStep: isWorkoutStep };
                 this.state.laps.push(lapData);
+
+                // REPRODUCIR SONIDO Y TOAST PARA TODOS los LAPs
+                if (this.state.settings.audio) {
+                    if (isWorkoutStep) {
+                        this.playLoudBeep();  // Sonido diferente para pasos de workout
+                    } else {
+                        this.playBeep();
+                    }
+                }
                 
                 if (!isWorkoutStep) {
                     if (this.state.settings.audio) this.playBeep();
                     this.showToast(lapData);
                 }
+
+                // MOSTRAR TOAST PARA TODOS
+                this.showToast(lapData, isWorkoutStep ? "🎯 Paso Completado" : "✅ Lap Completado");
                 
                 this.updateLapsTable();
 
