@@ -711,6 +711,7 @@
 
             init: function() {
                 this.initMap();
+                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 this.loadSettings();
                 this.changeFont(this.state.font);
                 this.updateUI();
@@ -901,6 +902,10 @@
                 clearInterval(this.state.timerInterval);
                 navigator.geolocation.clearWatch(this.state.watchId);
                 this.releaseWakeLock();
+                this.state.movingTime = 0;
+                this.state.distance = 0;
+                this.state.path = [];
+                this.state.laps = [];
                 
                 this.ui.btnAction.textContent = "Iniciar";
                 this.ui.btnAction.classList.remove('paused');
@@ -930,7 +935,7 @@
                     const dist = this.getDistanceFromLatLonInM(this.state.lastPos[0], this.state.lastPos[1], lat, lng);
                     
                     // Filtro Caminando (Umbral > 1m)
-                    if (accuracy < 150 && dist > 1) {
+                    if (accuracy < 150 && dist > 5) {
                         this.state.distance += dist;
                         this.state.currentLap.distance += dist;
                         this.state.path.push(newPoint);
@@ -961,7 +966,12 @@
                 document.getElementById('val-clock').textContent = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
                 if (this.state.movingTime > 0) {
-                    this.state.avgSpeed = (this.state.distance / this.state.movingTime) * 1000 ; /* cambio 3.6 a 36 velocidad */
+                    // Convertir movingTime de ms a horas
+                    const movingTimeHours = this.state.movingTime / (1000 * 60 * 60);
+                    // distance está en metros, convertir a km
+                    const distanceKm = this.state.distance / 1000;
+                    // Calcular velocidad (km/h) = distancia(km) / tiempo(h)
+                    this.state.avgSpeed = distanceKm / movingTimeHours;
                 } else {
                     this.state.avgSpeed = 0;
                 }
