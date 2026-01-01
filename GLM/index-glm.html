@@ -16,8 +16,8 @@
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
-            --primary-color: #04ff86;
-            --secondary-color: #2979ff;
+            --primary-color: #04ff86; /* Verde Neón */
+            --secondary-color: #2979ff; /* Azul Eléctrico */
             --danger-color: #ff1744;
             --text-main: #ffffff;
             --text-dim: #fbff00;
@@ -148,8 +148,8 @@
         }
         .workout-guidance.active { display: block; }
         .workout-step-title { font-size: 0.8rem; color: #8bc34a; font-weight: bold; text-transform: uppercase; }
-        .workout-step-desc { font-size: 1rem; color: white; margin-top: 2px; margin-bottom: 4px; }
-        .workout-step-target { font-size: 1.5rem; color: white; font-family: var(--font-numbers); font-weight: bold; letter-spacing: -1px; }
+        .workout-step-desc { font-size: 1rem; color: white; margin-top: 2px; }
+        .workout-step-target { font-size: 1.5rem; color: white; font-family: var(--font-mono); font-weight: bold; letter-spacing: -1px; }
 
         /* Mapa */
         #map-container {
@@ -343,7 +343,7 @@
     <!-- Header -->
     <header>
         <div id="status-indicator" class="status-badge">
-            <svg class="status-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+            <svg class="status-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5-2.5 2.5z"/></svg>
             <span id="status-text">Listo</span>
         </div>
         <div class="top-controls">
@@ -604,9 +604,6 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
-        /**
-         * Lógica de la Aplicación
-         */
         const app = {
             state: {
                 isRunning: false,
@@ -615,7 +612,7 @@
                 pausedTime: 0,
                 totalElapsed: 0,
                 movingTime: 0,
-                distance: 0, // metros
+                distance: 0,
                 currentSpeed: 0,
                 avgSpeed: 0,
                 lastPos: null,
@@ -713,7 +710,7 @@
                     }
                 } catch (err) { console.error(err); }
             },
-            releaseWakeLock() {
+            releaseWakeLock: function() {
                 if (this.state.wakeLock !== null) {
                     this.state.wakeLock.release().then(() => { this.state.wakeLock = null; });
                 }
@@ -727,7 +724,6 @@
             switchTab: function(tabName) {
                 document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
                 document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-                
                 document.getElementById('tab-' + tabName).classList.add('active');
                 const index = ['general','paces','workout'].indexOf(tabName);
                 if(index >= 0) document.querySelectorAll('.tab-btn')[index].classList.add('active');
@@ -842,7 +838,8 @@
                 if (this.state.lastPos) {
                     const dist = this.getDistanceFromLatLonInM(this.state.lastPos[0], this.state.lastPos[1], lat, lng);
                     
-                    if (accuracy < 150 && dist > 2) {
+                    // CORRECCIÓN CAMINAR (Umbral > 1m)
+                    if (accuracy < 150 && dist > 1) {
                         this.state.distance += dist;
                         this.state.currentLap.distance += dist;
                         this.state.path.push(newPoint);
@@ -892,8 +889,9 @@
                             this.state.stepWarningFired = true; 
                         }
                     }
+
                     this.checkWorkoutProgress();
-                    // NUEVO: Actualizar cuenta regresiva UI constantemente
+                    // Actualizar cuenta regresiva UI constantemente
                     this.updateWorkoutUI();
                 }
 
@@ -925,13 +923,7 @@
             },
 
             nextWorkoutStep: function() {
-                // NUEVO: Registrar el paso completado como un LAP automáticamente
-                // Verificamos si tiene datos reales para evitar el error 00:00
-                const now = Date.now();
-                const lapDuration = now - this.state.currentLap.startTime;
-                if (lapDuration > 1000 || this.state.currentLap.distance > 10) {
-                    this.recordLap(false, true); 
-                }
+                this.recordLap(false, true);
 
                 this.state.currentStepIndex++;
                 this.state.stepStartTime = Date.now();
@@ -946,17 +938,12 @@
                     this.updateWorkoutUI();
                     this.playLoudBeep();
                     setTimeout(() => this.playLoudBeep(), 200);
-                    
-                    // NUEVO: Mostrar Toast de fase completada
                     this.showToast({duration:0, pace:0}, "Fase Completada");
                 }
             },
 
             checkAutoLap: function() {
-                // Si hay un plan activo, los pasos del plan ya generan laps.
-                // Evitamos doble registro.
                 if(this.state.isWorkoutActive) return;
-
                 let target = 0;
                 if (this.state.settings.lapType === 'distance') {
                     target = this.state.settings.lapDistValue;
@@ -970,7 +957,7 @@
                 const now = Date.now();
                 const lapDuration = now - this.state.currentLap.startTime;
                 
-                // FILTRO: Evitar registrar Laps fantasma de 00:00 (menos de 1 seg)
+                // FILTRO: Evitar registrar Laps fantasma de 00:00
                 if (lapDuration < 1000 && this.state.currentLap.distance < 10) {
                     return; 
                 }
@@ -985,7 +972,6 @@
                 const lapData = { index: this.state.laps.length + 1, duration: lapDuration, distance: this.state.currentLap.distance, pace: paceSecPerUnit };
                 this.state.laps.push(lapData);
                 
-                // Si no es cambio de fase automático (que ya tiene su sonido), tocamos el beep normal
                 if (!isWorkoutStep) {
                     if (this.state.settings.audio) this.playBeep();
                     this.showToast(lapData);
@@ -1110,7 +1096,6 @@
                 this.toastTimeout = setTimeout(() => { this.ui.toast.style.display = 'none'; }, 3000);
             },
 
-            // --- Sonidos ---
             playBeep: function() {
                 const ctx = new (window.AudioContext || window.webkitAudioContext)();
                 const osc = ctx.createOscillator(), gain = ctx.createGain();
@@ -1225,12 +1210,7 @@
                 if (unit === 'min') realValue = valInput * 60;
                 else if (unit === 'km') realValue = valInput * 1000;
 
-                const step = {
-                    type: (type === 'time' ? 'time' : 'dist'),
-                    value: realValue,
-                    target: target,
-                    desc: `${valInput} ${unit} ${target !== 'none' ? '(' + this.getPaceName(target) + ')' : ''}`
-                };
+                const step = { type: (type === 'time' ? 'time' : 'dist'), value: realValue, target: target, desc: `${valInput} ${unit} ${target !== 'none' ? '(' + this.getPaceName(target) + ')' : ''}` };
 
                 this.state.workoutPlan.push(step);
                 this.renderWorkoutList();
@@ -1302,7 +1282,7 @@
                 this.ui.guideTitle.textContent = `Paso ${this.state.currentStepIndex + 1} de ${this.state.workoutPlan.length}`;
                 this.ui.guideDesc.textContent = `${this.formatStepValue(step)} - ${this.getPaceName(step.target)}`;
                 
-                // NUEVO: Cálculo de cuenta regresiva
+                // Cálculo de cuenta regresiva
                 let remaining = 0;
                 let displayRemaining = "";
                 
