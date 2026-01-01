@@ -16,8 +16,8 @@
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
-            --primary-color: #04ff86; /* Verde Neón */
-            --secondary-color: #2979ff; /* Azul Eléctrico */
+            --primary-color: #04ff86;
+            --secondary-color: #2979ff;
             --danger-color: #ff1744;
             --text-main: #ffffff;
             --text-dim: #fbff00;
@@ -145,7 +145,6 @@
             margin: 0 10px 10px 10px;
             border-radius: 6px;
             display: none;
-            /* NUEVO LAYOUT EN FILA */
             display: flex;
             flex-direction: row;
             justify-content: space-between;
@@ -158,15 +157,15 @@
             flex-direction: column;
             justify-content: center;
             text-align: left;
-            flex: 1; /* Ocupa el espacio que sobre */
+            flex: 1;
             padding-right: 10px;
         }
 
-        .workout-step-title { font-size: 0.8rem; color: #8bc34a; font-weight: bold; text-transform: uppercase; margin: 0; line-height: 1.1; }
-        .workout-step-desc { font-size: 1.1rem; color: white; margin: 0; font-weight: 700; line-height: 1.2; }
+        .workout-step-title { font-size: 0.8rem; color: #8bc34a; font-weight: bold; text-transform: uppercase; }
+        .workout-step-desc { font-size: 1rem; color: white; margin-top: 2px; }
 
         .workout-step-target { 
-            font-size: 2rem; /* Texto gigante a la derecha */
+            font-size: 2rem;
             color: white; 
             font-family: var(--font-numbers); 
             font-weight: bold; 
@@ -368,14 +367,14 @@
     <!-- Header -->
     <header>
         <div id="status-indicator" class="status-badge">
-            <svg class="status-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5-2.5 2.5-2.5 2.5z"/></svg>
+            <svg class="status-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5-2.5 2.5z"/></svg>
             <span id="status-text">Listo</span>
         </div>
         <div class="top-controls">
-            <button onclick="app.toggleUnits()">Km/Mi</button>
-            <button onclick="app.openWorkoutModal()" title="Plan de Entreno">📋 Plan</button>
-            <button onclick="app.toggleFullScreen()" title="Pantalla Completa">⛶</button>
-            <button onclick="app.openSettings()">⚙️</button>
+            <button onclick="window.app.toggleUnits()">Km/Mi</button>
+            <button onclick="window.app.openWorkoutModal()" title="Plan de Entreno">📋 Plan</button>
+            <button onclick="window.app.toggleFullScreen()" title="Pantalla Completa">⛶</button>
+            <button onclick="window.app.openSettings()">⚙️</button>
         </div>
     </header>
 
@@ -385,7 +384,7 @@
             <div class="timer-value" id="main-timer">00:00:00</div>
         </div>
 
-        <!-- Guía de Entrenamiento (Layout Actualizado) -->
+        <!-- Guía de Entrenamiento -->
         <div id="workout-guidance" class="workout-guidance">
             <div class="workout-info-left">
                 <div class="workout-step-title" id="guide-title">Plan Activo</div>
@@ -440,18 +439,18 @@
         <!-- Mapa -->
         <div id="map-container">
             <div id="map"></div>
-            <button class="map-overlay-btn" onclick="app.toggleMapSize()">Expandir Mapa</button>
+            <button class="map-overlay-btn" onclick="window.app.toggleMapSize()">Expandir Mapa</button>
         </div>
     </main>
 
     <!-- Controles -->
     <section class="controls-area">
-        <button id="btn-lap" class="btn-big btn-lap" onclick="app.handleLeftButton()">
+        <button id="btn-lap" class="btn-big btn-lap" onclick="window.app.handleLeftButton()">
             Lap
             <small>Historial</small>
         </button>
 
-        <button id="btn-action" class="btn-big btn-action" onclick="app.handleRightButton()">
+        <button id="btn-action" class="btn-big btn-action" onclick="window.app.handleRightButton()">
             Iniciar
         </button>
     </section>
@@ -471,7 +470,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Historial de Laps</h3>
-                <button class="close-btn" onclick="app.closeModals()">&times;</button>
+                <button class="close-btn" onclick="window.app.closeModals()">&times;</button>
             </div>
             <div class="modal-body">
                 <table class="laps-table">
@@ -496,14 +495,14 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Configuración</h3>
-                <button class="close-btn" onclick="app.closeModals()">&times;</button>
+                <button class="close-btn" onclick="window.app.closeModals()">&times;</button>
             </div>
             
             <!-- Pestañas -->
             <div class="tabs">
-                <button class="tab-btn active" onclick="app.switchTab('general')">General</button>
-                <button class="tab-btn" onclick="app.switchTab('paces')">Ritmos</button>
-                <button class="tab-btn" onclick="app.switchTab('workout')">Plan Entreno</button>
+                <button class="tab-btn active" onclick="window.app.switchTab('general')">General</button>
+                <button class="tab-btn" onclick="window.app.switchTab('paces')">Ritmos</button>
+                <button class="tab-btn" onclick="window.app.switchTab('workout')">Plan Entreno</button>
             </div>
 
             <div class="modal-body">
@@ -512,7 +511,7 @@
                 <div id="tab-general" class="tab-content active">
                     <div class="form-group">
                         <label>Tipo de Letra</label>
-                        <select id="set-font" class="form-control" onchange="app.changeFont(this.value)">
+                        <select id="set-font" class="form-control" onchange="window.app.changeFont(this.value)">
                             <option value="'Teko', sans-serif">Teko (Deportiva)</option>
                             <option value="'Oswald', sans-serif">Oswald (Moderna)</option>
                             <option value="'Anton', sans-serif">Anton (Gruesa)</option>
@@ -530,7 +529,7 @@
                     
                     <div class="form-group">
                         <label>Tipo de Lap</label>
-                        <select id="set-lap-type" class="form-control" onchange="app.toggleLapInputs()">
+                        <select id="set-lap-type" class="form-control" onchange="window.app.toggleLapInputs()">
                             <option value="distance">Por Distancia</option>
                             <option value="time">Por Tiempo</option>
                         </select>
@@ -579,7 +578,7 @@
                         <label>Paso 5k</label>
                         <input type="number" id="pace-5k" class="form-control" step="0.01" placeholder="Ej: 4.20">
                     </div>
-                    <button class="btn-small" onclick="app.savePaces()">Guardar Ritmos</button>
+                    <button class="btn-small" onclick="window.app.savePaces()">Guardar Ritmos</button>
                 </div>
 
                 <!-- Tab: Plan de Entreno -->
@@ -608,7 +607,7 @@
                             <option value="tenk">Paso 10k</option>
                             <option value="fivek">Paso 5k</option>
                         </select>
-                        <button class="btn-small" onclick="app.addWorkoutStep()">+ Agregar a la lista</button>
+                        <button class="btn-small" onclick="window.app.addWorkoutStep()">+ Agregar a la lista</button>
                     </div>
 
                     <div style="border-top:1px solid #444; margin:10px 0;"></div>
@@ -619,8 +618,8 @@
                     </div>
                     
                     <div style="margin-top:10px;">
-                        <button class="btn-small" style="background:var(--danger-color);" onclick="app.clearWorkout()">Borrar Todo</button>
-                        <button class="btn-small" style="background:var(--primary-color); color:black;" onclick="app.activateWorkout()">Activar Plan</button>
+                        <button class="btn-small" style="background:var(--danger-color);" onclick="window.app.clearWorkout()">Borrar Todo</button>
+                        <button class="btn-small" style="background:var(--primary-color); color:black;" onclick="window.app.activateWorkout()">Activar Plan</button>
                     </div>
                 </div>
 
@@ -631,7 +630,7 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script>
-        const app = {
+        window.app = {
             state: {
                 isRunning: false,
                 isPaused: false,
@@ -742,16 +741,26 @@
                     this.state.wakeLock.release().then(() => { this.state.wakeLock = null; });
                 }
             },
+            
             toggleFullScreen: function() {
-                if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(e=>{});
-                else if (document.exitFullscreen) document.exitFullscreen();
+                if (!document.fullscreenElement) {
+                    const el = document.documentElement;
+                    if (el.requestFullscreen) {
+                        el.requestFullscreen().catch(err => {
+                            console.error("Fullscreen error:", err);
+                        });
+                    }
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
             },
 
             // --- Tabs UI ---
             switchTab: function(tabName) {
                 document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
                 document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-                
                 document.getElementById('tab-' + tabName).classList.add('active');
                 const index = ['general','paces','workout'].indexOf(tabName);
                 if(index >= 0) document.querySelectorAll('.tab-btn')[index].classList.add('active');
@@ -965,13 +974,13 @@
 
                 if (this.state.currentStepIndex >= this.state.workoutPlan.length) {
                     this.state.isWorkoutActive = false;
-                    this.ui.guidance.classList.remove('active');
+                    // Se fuerza actualización para limpiar UI por seguridad
+                    this.updateWorkoutUI();
                     this.playLoudBeep();
                 } else {
                     this.updateWorkoutUI();
                     this.playLoudBeep();
                     setTimeout(() => this.playLoudBeep(), 200);
-                    
                     this.showToast({duration:0, pace:0}, "Fase Completada");
                 }
             },
@@ -1244,12 +1253,7 @@
                 if (unit === 'min') realValue = valInput * 60;
                 else if (unit === 'km') realValue = valInput * 1000;
 
-                const step = {
-                    type: (type === 'time' ? 'time' : 'dist'),
-                    value: realValue,
-                    target: target,
-                    desc: `${valInput} ${unit} ${target !== 'none' ? '(' + this.getPaceName(target) + ')' : ''}`
-                };
+                const step = { type: (type === 'time' ? 'time' : 'dist'), value: realValue, target: target, desc: `${valInput} ${unit} ${target !== 'none' ? '(' + this.getPaceName(target) + ')' : ''}` };
 
                 this.state.workoutPlan.push(step);
                 this.renderWorkoutList();
@@ -1291,7 +1295,7 @@
                             <h4>Paso ${idx+1}: ${typeStr}</h4>
                             <p>${this.formatStepValue(step)} - Objetivo: <strong>${targetStr}</strong></p>
                         </div>
-                        <button class="step-delete" onclick="app.removeWorkoutStep(${idx})">&times;</button>
+                        <button class="step-delete" onclick="window.app.removeWorkoutStep(${idx})">&times;</button>
                     `;
                     list.appendChild(div);
                 });
@@ -1313,7 +1317,11 @@
             },
 
             updateWorkoutUI: function() {
-                if (!this.state.isWorkoutActive || this.state.currentStepIndex >= this.state.workoutPlan.length) return;
+                // Seguridad: Si terminó o índice fuera de límites, ocultar forzosamente
+                if (!this.state.isWorkoutActive || this.state.currentStepIndex >= this.state.workoutPlan.length) {
+                    this.ui.guidance.classList.remove('active');
+                    return;
+                }
 
                 const step = this.state.workoutPlan[this.state.currentStepIndex];
                 
@@ -1357,7 +1365,7 @@
             }
         };
 
-        window.addEventListener('load', () => { app.init(); });
+        window.addEventListener('DOMContentLoaded', () => { window.app.init(); });
     </script>
 </body>
 </html>
