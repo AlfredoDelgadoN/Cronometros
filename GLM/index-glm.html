@@ -141,15 +141,40 @@
         .workout-guidance {
             background-color: #1a2b1a; 
             border-left: 4px solid var(--primary-color);
-            padding: 10px;
+            padding: 12px 15px;
             margin: 0 10px 10px 10px;
-            border-radius: 4px;
+            border-radius: 6px;
             display: none;
+            /* NUEVO LAYOUT EN FILA */
+            display: flex;
+            flex-direction: row;
+            justify-content: space-between;
+            align-items: center;
         }
-        .workout-guidance.active { display: block; }
-        .workout-step-title { font-size: 0.8rem; color: #8bc34a; font-weight: bold; text-transform: uppercase; }
-        .workout-step-desc { font-size: 1rem; color: white; margin-top: 2px; }
-        .workout-step-target { font-size: 1.5rem; color: white; font-family: var(--font-mono); font-weight: bold; letter-spacing: -1px; }
+        .workout-guidance.active { display: flex; }
+        
+        .workout-info-left {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: left;
+            flex: 1; /* Ocupa el espacio que sobre */
+            padding-right: 10px;
+        }
+
+        .workout-step-title { font-size: 0.8rem; color: #8bc34a; font-weight: bold; text-transform: uppercase; margin: 0; line-height: 1.1; }
+        .workout-step-desc { font-size: 1.1rem; color: white; margin: 0; font-weight: 700; line-height: 1.2; }
+
+        .workout-step-target { 
+            font-size: 2rem; /* Texto gigante a la derecha */
+            color: white; 
+            font-family: var(--font-numbers); 
+            font-weight: bold; 
+            letter-spacing: -1px;
+            text-align: right;
+            line-height: 1;
+            white-space: nowrap;
+        }
 
         /* Mapa */
         #map-container {
@@ -343,7 +368,7 @@
     <!-- Header -->
     <header>
         <div id="status-indicator" class="status-badge">
-            <svg class="status-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5-2.5 2.5z"/></svg>
+            <svg class="status-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5-2.5 2.5-2.5 2.5z"/></svg>
             <span id="status-text">Listo</span>
         </div>
         <div class="top-controls">
@@ -360,11 +385,13 @@
             <div class="timer-value" id="main-timer">00:00:00</div>
         </div>
 
-        <!-- Guía de Entrenamiento -->
+        <!-- Guía de Entrenamiento (Layout Actualizado) -->
         <div id="workout-guidance" class="workout-guidance">
-            <div class="workout-step-title" id="guide-title">Plan Activo</div>
-            <div class="workout-step-desc" id="guide-desc">Sigue el plan...</div>
-            <div class="workout-step-target" id="guide-target">Objetivo: --</div>
+            <div class="workout-info-left">
+                <div class="workout-step-title" id="guide-title">Plan Activo</div>
+                <div class="workout-step-desc" id="guide-desc">Sigue el plan...</div>
+            </div>
+            <div class="workout-step-target" id="guide-target">--:--</div>
         </div>
 
         <div class="stats-grid">
@@ -612,7 +639,7 @@
                 pausedTime: 0,
                 totalElapsed: 0,
                 movingTime: 0,
-                distance: 0,
+                distance: 0, // metros
                 currentSpeed: 0,
                 avgSpeed: 0,
                 lastPos: null,
@@ -724,6 +751,7 @@
             switchTab: function(tabName) {
                 document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
                 document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+                
                 document.getElementById('tab-' + tabName).classList.add('active');
                 const index = ['general','paces','workout'].indexOf(tabName);
                 if(index >= 0) document.querySelectorAll('.tab-btn')[index].classList.add('active');
@@ -838,7 +866,7 @@
                 if (this.state.lastPos) {
                     const dist = this.getDistanceFromLatLonInM(this.state.lastPos[0], this.state.lastPos[1], lat, lng);
                     
-                    // CORRECCIÓN CAMINAR (Umbral > 1m)
+                    // Filtro Caminando (Umbral > 1m)
                     if (accuracy < 150 && dist > 1) {
                         this.state.distance += dist;
                         this.state.currentLap.distance += dist;
@@ -923,7 +951,12 @@
             },
 
             nextWorkoutStep: function() {
-                this.recordLap(false, true);
+                // Registrar el paso completado como un LAP automáticamente
+                const now = Date.now();
+                const lapDuration = now - this.state.currentLap.startTime;
+                if (lapDuration > 1000 || this.state.currentLap.distance > 10) {
+                    this.recordLap(false, true); 
+                }
 
                 this.state.currentStepIndex++;
                 this.state.stepStartTime = Date.now();
@@ -938,6 +971,7 @@
                     this.updateWorkoutUI();
                     this.playLoudBeep();
                     setTimeout(() => this.playLoudBeep(), 200);
+                    
                     this.showToast({duration:0, pace:0}, "Fase Completada");
                 }
             },
@@ -1210,7 +1244,12 @@
                 if (unit === 'min') realValue = valInput * 60;
                 else if (unit === 'km') realValue = valInput * 1000;
 
-                const step = { type: (type === 'time' ? 'time' : 'dist'), value: realValue, target: target, desc: `${valInput} ${unit} ${target !== 'none' ? '(' + this.getPaceName(target) + ')' : ''}` };
+                const step = {
+                    type: (type === 'time' ? 'time' : 'dist'),
+                    value: realValue,
+                    target: target,
+                    desc: `${valInput} ${unit} ${target !== 'none' ? '(' + this.getPaceName(target) + ')' : ''}`
+                };
 
                 this.state.workoutPlan.push(step);
                 this.renderWorkoutList();
