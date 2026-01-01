@@ -743,19 +743,73 @@
             },
             
             toggleFullScreen: function() {
-                if (!document.fullscreenElement) {
-                    const el = document.documentElement;
-                    if (el.requestFullscreen) {
-                        el.requestFullscreen().catch(err => {
-                            console.error("Fullscreen error:", err);
-                        });
-                    }
-                } else {
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen();
-                    }
+            // Función universal para detectar si estamos en fullscreen
+            function getFullscreenElement() {
+                return document.fullscreenElement || 
+                    document.webkitFullscreenElement ||  // Safari/Chrome legacy
+                    document.mozFullScreenElement ||     // Firefox
+                    document.msFullscreenElement;        // IE/Edge
+            }
+    
+            // Función universal para solicitar fullscreen
+            function requestFullscreen(element) {
+                if (element.requestFullscreen) {
+                    return element.requestFullscreen();
+                } else if (element.webkitRequestFullscreen) { // Safari, Chrome <15
+                    return element.webkitRequestFullscreen();
+                } else if (element.mozRequestFullScreen) {    // Firefox
+                    return element.mozRequestFullScreen();
+                } else if (element.msRequestFullscreen) {     // IE/Edge
+                    return element.msRequestFullscreen();
                 }
-            },
+                return Promise.reject(new Error('Fullscreen API not supported'));
+            }
+    
+            // Función universal para salir del fullscreen
+            function exitFullscreen() {
+                if (document.exitFullscreen) {
+                    return document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { // Safari, Chrome <15
+                    return document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {  // Firefox
+                    return document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {     // IE/Edge
+                    return document.msExitFullscreen();
+                }
+                return Promise.reject(new Error('Fullscreen API not supported'));
+            }
+    
+            // IMPORTANTE: En iOS, la Fullscreen API solo funciona en elementos <video>
+            // y requiere el atributo `playsinline` y `webkit-playsinline`
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    
+            if (isIOS) {
+                console.warn('iOS tiene limitaciones con Fullscreen API');
+                // En iOS, considera usar:
+                // 1. Video elements con atributos especiales
+                // 2. O pantalla completa nativa del video player
+                // 3. O implementación alternativa usando CSS/transform
+                alert('Pantalla completa no disponible en iOS. Usa el modo pantalla completa nativo del video.');
+                return;
+            }
+    
+            // Lógica principal toggle
+            if (!getFullscreenElement()) {
+                const el = document.documentElement;
+                requestFullscreen(el).catch(err => {
+                    console.error("Fullscreen error:", err);
+                    // Fallback para dispositivos móviles
+                    if (err.name === 'TypeError' || err.name === 'SecurityError') {
+                        alert('Tu dispositivo o navegador no soporta pantalla completa. Intenta rotar la pantalla manualmente.');
+                    }
+                });
+            } else {
+                exitFullscreen().catch(err => {
+                    console.error("Exit fullscreen error:", err);
+                });
+            }
+        },
+        
 
             // --- Tabs UI ---
             switchTab: function(tabName) {
