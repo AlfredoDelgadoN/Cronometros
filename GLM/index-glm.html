@@ -789,7 +789,7 @@
                 // 1. Video elements con atributos especiales
                 // 2. O pantalla completa nativa del video player
                 // 3. O implementación alternativa usando CSS/transform
-                alert('Pantalla completa no disponible en iOS. Usa el modo pantalla completa nativo del video.');
+                alert('Pantalla completa no disponible en iOS.');
                 return;
             }
     
@@ -961,7 +961,7 @@
                 document.getElementById('val-clock').textContent = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
                 if (this.state.movingTime > 0) {
-                    this.state.avgSpeed = (this.state.distance / this.state.movingTime) * 1000 * 3.6; 
+                    this.state.avgSpeed = (this.state.distance / this.state.movingTime) * 1000 * 36; /* cambio 3.6 a 36 velocidad */
                 } else {
                     this.state.avgSpeed = 0;
                 }
