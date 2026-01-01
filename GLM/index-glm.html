@@ -646,6 +646,7 @@
                 accuracy: 0,
                 path: [],
                 laps: [],
+                lastMovementTime: null,  // Para calcular movingTime real
                 currentLap: { startTime: 0, distance: 0, path: [] },
                 activity: 'stopped',
                 watchId: null,
@@ -915,63 +916,66 @@
 
             // --- Lógica GPS y Entrenos ---
             onPositionUpdate: function(position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                const accuracy = position.coords.accuracy;
-                const speed = position.coords.speed;
-                
-                this.state.accuracy = Math.round(accuracy);
-                this.state.altitude = position.coords.altitude ? Math.round(position.coords.altitude) : 0; 
+            const lat = position.coords.latitude;
+            const lng = position.coords.longitude;
+            const accuracy = position.coords.accuracy;
+            const speed = position.coords.speed;
+    
+            this.state.accuracy = Math.round(accuracy);
+            this.state.altitude = position.coords.altitude ? Math.round(position.coords.altitude) : 0; 
+            this.state.currentSpeed = speed || 0;
 
-                if (!speed && speed !== 0) return;
+            this.detectActivity(this.state.currentSpeed);
+            this.updateStatusText();
+    
+            const newPoint = [lat, lng];
+            const now = Date.now();
+    
+            if (this.state.lastPos) {
+                const dist = this.getDistanceFromLatLonInM(this.state.lastPos[0], this.state.lastPos[1], lat, lng);
+        
+                // Filtro mejorado
+                if (accuracy < 150 && dist > 3) {  // ↑ Aumentado a 3m mínimo
+                    this.state.distance += dist;
+                    this.state.currentLap.distance += dist;
+                    this.state.path.push(newPoint);
+                    this.state.currentLap.path.push(newPoint);
+            
+                    // ACTUALIZAR movingTime SOLO CUANDO HAY MOVIMIENTO
+                    if (this.state.lastMovementTime) {
+                        const timeDiff = now - this.state.lastMovementTime;
+                        this.state.movingTime += Math.min(timeDiff, 3000); // Máximo 3 segundos entre updates
+                    }
+                    this.state.lastMovementTime = now;
+            
+                    this.polylineTotal.setLatLngs(this.state.path);
+                    this.polylineLap.setLatLngs(this.state.currentLap.path);
+                    this.map.panTo(newPoint);
 
-                this.state.currentSpeed = speed;
-                this.detectActivity(speed);
-                this.updateStatusText();
-                
-                const newPoint = [lat, lng];
-                
-                if (this.state.lastPos) {
-                    const dist = this.getDistanceFromLatLonInM(this.state.lastPos[0], this.state.lastPos[1], lat, lng);
-                    
-                    // Filtro Caminando (Umbral > 1m)
-                    if (accuracy < 150 && dist > 5) {
-                        this.state.distance += dist;
-                        this.state.currentLap.distance += dist;
-                        this.state.path.push(newPoint);
-                        this.state.currentLap.path.push(newPoint);
-                        
-                        this.polylineTotal.setLatLngs(this.state.path);
-                        this.polylineLap.setLatLngs(this.state.currentLap.path);
-                        this.map.panTo(newPoint);
-
-                        if (this.state.settings.autoLap) {
-                            this.checkAutoLap();
-                        }
+                    if (this.state.settings.autoLap && !this.state.isWorkoutActive) {
+                        this.checkAutoLap();
                     }
                 }
-                this.state.lastPos = newPoint;
-                this.updateUI();
-            },
+            } else {
+                // Primera posición
+                this.state.lastMovementTime = now;
+            }
+    
+            this.state.lastPos = newPoint;
+            this.updateUI();
+        },
 
             tick: function() {
                 const now = Date.now();
                 this.state.totalElapsed = now - this.state.startTime;
 
-                if (this.state.isRunning) {
-                    this.state.movingTime += 1000;
-                }
-
                 const dateObj = new Date();
                 document.getElementById('val-clock').textContent = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
-                if (this.state.movingTime > 0) {
-                    // Convertir movingTime de ms a horas
-                    const movingTimeHours = this.state.movingTime / (1000 * 60 * 60);
-                    // distance está en metros, convertir a km
-                    const distanceKm = this.state.distance / 1000;
-                    // Calcular velocidad (km/h) = distancia(km) / tiempo(h)
-                    this.state.avgSpeed = distanceKm / movingTimeHours;
+                if (this.state.totalElapsed > 0 && this.state.distance > 0) {
+                    // Usar totalElapsed (tiempo total desde inicio)
+                    // metros / milisegundos × 3.6 = km/h
+                    this.state.avgSpeed = (this.state.distance / this.state.totalElapsed) * 3.6;
                 } else {
                     this.state.avgSpeed = 0;
                 }
@@ -1160,7 +1164,12 @@
                 else document.getElementById('val-gps-acc').textContent = this.state.accuracy;
 
                 let globalPace = 0;
-                if (this.state.movingTime > 0) globalPace = (this.state.movingTime / 1000) / ((this.state.distance / 1000) * factorDist);
+                if (this.state.distance > 0 && this.state.totalElapsed > 0) {
+                    // totalElapsed en segundos / distancia en km
+                    const totalSeconds = this.state.totalElapsed / 1000;
+                    const distanceKm = (this.state.distance / 1000) * (isMetric ? 1 : 0.621371);
+                    globalPace = totalSeconds / distanceKm;  // segundos por unidad
+                }
                 
                 if (displaySpeed < 0.5) this.ui.pace.textContent = "--:--";
                 else this.ui.pace.textContent = this.formatPace(globalPace);
