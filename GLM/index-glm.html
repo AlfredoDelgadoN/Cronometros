@@ -961,7 +961,7 @@
                 document.getElementById('val-clock').textContent = dateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 
                 if (this.state.movingTime > 0) {
-                    this.state.avgSpeed = (this.state.distance / this.state.movingTime) * 1000 * 36; /* cambio 3.6 a 36 velocidad */
+                    this.state.avgSpeed = (this.state.distance / this.state.movingTime) * 1000 ; /* cambio 3.6 a 36 velocidad */
                 } else {
                     this.state.avgSpeed = 0;
                 }
