@@ -413,6 +413,17 @@
                 <div class="stat-label">Último Lap</div>
                 <div><span class="stat-value" id="val-last-lap">--:--</span> <span class="stat-unit">min/km</span></div>
             </div>
+            <div class="stat-card">
+                <div class="stat-label">Promedio</div>
+                <div>
+                    <span class="stat-value" id="val-avg-speed">0.0</span> 
+                    <span class="stat-unit" id="unit-speed">km/h</span>
+                    <div class="stat-sub">
+                        <span id="val-avg-moving">0.0</span> (mov) • 
+                        <span id="val-avg-total">0.0</span> (total)
+                    </div>
+                </div>
+            </div>
         </div>
 
         <div class="stats-row-secondary">
@@ -654,6 +665,9 @@
                 wakeLock: null,
                 units: 'metric',
                 font: "'Teko', sans-serif",
+                activityMode: 'auto', // 'auto', 'walking', 'running', 'cycling', 'driving'
+                autoPauseEnabled: true, // Pausar automáticamente al detenerse
+                autoPauseThreshold: 10, // Segundos para auto-pausa
                 
                 settings: {
                     autoLap: false,
@@ -664,11 +678,30 @@
                 },
 
                 paces: {
-                    easy: 0,
-                    marathon: 0,
-                    half: 0,
-                    tenk: 0,
-                    fivek: 0
+                    easy: 8,
+                    marathon: 5,
+                    half: 4.5,
+                    tenk: 4.1,
+                    fivek: 3.8
+                },
+
+                activityStates: {
+                    stopped: { minSpeed: 0, maxSpeed: 0.5 },     // < 0.5 km/h
+                    walking: { minSpeed: 0.5, maxSpeed: 6 },     // 0.5-6 km/h
+                    running: { minSpeed: 6, maxSpeed: 14 },      // 6-14 km/h
+                    cycling: { minSpeed: 14, maxSpeed: 35 },     // 14-35 km/h
+                    driving: { minSpeed: 35, maxSpeed: 200 }     // >35 km/h
+                },
+
+                currentActivity: 'stopped',
+                activityStartTime: null,
+                // Tiempos por actividad
+                activityTimes: {
+                    stopped: 0,
+                    walking: 0,
+                    running: 0,
+                    cycling: 0,
+                    driving: 0
                 },
 
                 workoutPlan: [], 
@@ -862,6 +895,17 @@
                     this.updateWorkoutUI();
                 }
 
+                // RESETEAR TIEMPOS DE ACTIVIDAD
+                this.state.activityTimes = {
+                    stopped: 0,
+                    walking: 0,
+                    running: 0,
+                    cycling: 0,
+                    driving: 0
+                };
+                this.state.currentActivity = 'stopped';
+                this.state.activityStartTime = Date.now();
+
                 this.ui.btnAction.textContent = "Pausar";
                 this.ui.btnAction.classList.remove('stopped');
                 this.ui.status.classList.add('active');
@@ -1046,6 +1090,64 @@
                     this.state.avgSpeed = 0;
                 }
 
+                // 1. DETECTAR ACTIVIDAD ACTUAL basada en velocidad GPS
+                const speedKmh = this.state.currentSpeed * 3.6;
+                let newActivity = 'stopped';
+
+                if (speedKmh < 0.5) newActivity = 'stopped';
+                else if (speedKmh < 6) newActivity = 'walking';
+                else if (speedKmh < 14) newActivity = 'running';
+                else if (speedKmh < 35) newActivity = 'cycling';
+                else newActivity = 'driving';
+
+                // 2. ACTUALIZAR TIEMPOS POR ACTIVIDAD
+                const now = Date.now();
+                if (this.state.currentActivity !== newActivity) {
+                    // Cambio de actividad: guardar tiempo de la actividad anterior
+                    if (this.state.activityStartTime && this.state.currentActivity) {
+                        const activityDuration = now - this.state.activityStartTime;
+                        this.state.activityTimes[this.state.currentActivity] += activityDuration;
+                    }
+                    // Iniciar nueva actividad
+                    this.state.currentActivity = newActivity;
+                    this.state.activityStartTime = now;                
+                }
+
+                // 3. CALCULAR VELOCIDAD PROMEDIO CORRECTAMENTE
+                // Opción A: Usar SOLO tiempo en movimiento (walking/running/cycling/driving)
+                const movingTimeMs = this.state.activityTimes.walking + 
+                                     this.state.activityTimes.running + 
+                                     this.state.activityTimes.cycling + 
+                                     this.state.activityTimes.driving;
+
+                if (this.state.lastMovementTime) {
+                    // Sumar tiempo parcial de la actividad actual
+                    const currentActivityTime = now - this.state.activityStartTime;
+                    movingTimeMs += currentActivityTime;
+                }
+
+                if (movingTimeMs > 0 && this.state.distance > 0) {
+                    // Método PRECISO: km/h = (metros / milisegundos) × 3600
+                    this.state.avgSpeed = (this.state.distance / movingTimeMs) * 3600;
+                } else {
+                    this.state.avgSpeed = 0;
+                }
+
+                // 4. CALCULAR VELOCIDAD ACTUAL (si no hay GPS)
+                if (this.state.lastPosTime && this.state.lastPos) {
+                    const timeDiff = (now - this.state.lastPosTime) / 1000; // segundos
+                    if (timeDiff < 5) { // Solo si datos recientes (<5 segundos)
+                        // Usar distancia entre últimos puntos
+                        const dist = this.getDistanceFromLatLonInM(
+                            this.state.lastPos[0], this.state.lastPos[1],
+                            lat, lng
+                        );
+                        if (dist > 0 && timeDiff > 0) {
+                            this.state.currentSpeed = dist / timeDiff; // m/s
+                        }
+                    }
+                }
+
                 // CHECK WORKOUT STEPS & WARNING
                 if (this.state.isWorkoutActive && this.state.currentStepIndex < this.state.workoutPlan.length) {
                     const step = this.state.workoutPlan[this.state.currentStepIndex];
@@ -1114,7 +1216,40 @@
             // DEBUG: Descomentar para ver cálculos
             // if (Math.random() < 0.1) this.debugCalculations();
             // ... resto del código
-        },
+            // CALCULAR DIFERENTES PROMEDIOS
+            const isMetric = this.state.units === 'metric';
+            const factorSpeed = isMetric ? 3.6 : 2.23694;
+    
+            // 1. Promedio TOTAL (desde inicio)
+            let avgTotal = 0;
+            if (this.state.totalElapsed > 0 && this.state.distance > 0) {
+                avgTotal = (this.state.distance / this.state.totalElapsed) * 3600;
+            }
+    
+            // 2. Promedio en MOVIMIENTO (solo cuando te mueves)
+            let avgMoving = 0;
+            const movingTimeMs = this.state.activityTimes.walking + 
+                                this.state.activityTimes.running + 
+                                this.state.activityTimes.cycling + 
+                                this.state.activityTimes.driving;
+    
+            // Añadir tiempo de actividad actual si no es "stopped"
+            if (this.state.currentActivity !== 'stopped' && this.state.activityStartTime) {
+                const currentActivityTime = Date.now() - this.state.activityStartTime;
+                movingTimeMs += currentActivityTime;
+            }
+    
+            if (movingTimeMs > 0 && this.state.distance > 0) {
+                avgMoving = (this.state.distance / movingTimeMs) * 3600;
+            }
+    
+            // 3. Mostrar en UI
+            this.state.avgSpeed = avgMoving; // Usar promedio en movimiento como principal
+    
+            this.ui.avgSpeed.textContent = (avgMoving * factorSpeed).toFixed(1);
+            document.getElementById('val-avg-moving').textContent = (avgMoving * factorSpeed).toFixed(1);
+            document.getElementById('val-avg-total').textContent = (avgTotal * factorSpeed).toFixed(1);
+            },
 
             nextWorkoutStep: function() {
                 // Registrar el paso completado como un LAP automáticamente
@@ -1211,13 +1346,39 @@
 
             detectActivity: function(speedMs) {
                 const speedKmh = speedMs * 3.6;
-                let act = 'stopped';
-                if (speedKmh < 0.5) act = 'stopped';
-                else if (speedKmh < 6) act = 'walking';
-                else if (speedKmh < 14) act = 'running';
-                else if (speedKmh < 35) act = 'cycling';
-                else act = 'driving';
-                this.state.activity = act;
+    
+                // Si hay modo manual, usarlo
+                if (this.state.settings.activityMode !== 'auto') {
+                    this.state.activity = this.state.settings.activityMode;
+                    return;
+                }
+    
+                // Detección automática
+                if (speedKmh < 0.5) this.state.activity = 'stopped';
+                else if (speedKmh < 6) this.state.activity = 'walking';
+                else if (speedKmh < 14) this.state.activity = 'running';
+                else if (speedKmh < 35) this.state.activity = 'cycling';
+                else this.state.activity = 'driving';
+    
+                // Auto-pausa si está habilitado
+                if (this.state.settings.autoPauseEnabled && this.state.activity === 'stopped') {
+                    if (!this.state.autoPauseTimer) {
+                        this.state.autoPauseTimer = setTimeout(() => {
+                            if (this.state.isRunning && this.state.activity === 'stopped') {
+                                this.pauseTracking();
+                            }
+                            this.state.autoPauseTimer = null;
+                        }, this.state.settings.autoPauseThreshold * 1000);
+                    }
+                } else {
+                    // Cancelar auto-pausa si se reanuda movimiento
+                    if (this.state.autoPauseTimer) {
+                        clearTimeout(this.state.autoPauseTimer);
+                        this.state.autoPauseTimer = null;
+                    }
+                }
+    
+                this.updateStatusText();
             },
 
             updateStatusText: function(override) {
