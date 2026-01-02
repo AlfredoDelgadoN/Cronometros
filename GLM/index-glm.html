@@ -375,6 +375,7 @@
             <button onclick="window.app.openWorkoutModal()" title="Plan de Entreno">📋 Plan</button>
             <button onclick="window.app.toggleFullScreen()" title="Pantalla Completa">⛶</button>
             <button onclick="window.app.openSettings()">⚙️</button>
+            <button onclick="window.app.debugState()" style="background:red; color:white; font-size:0.7rem;">DEBUG</button>
         </div>
     </header>
 
@@ -1064,6 +1065,39 @@
                 this.updateUI();
             },
 
+            debugState: function() {
+                console.log("=== DEBUG ESTADO COMPLETO ===");
+                console.log("Distancia total:", this.state.distance + "m", "=" + (this.state.distance/1000).toFixed(3) + "km");
+                console.log("Tiempo total:", this.formatTime(this.state.totalElapsed));
+                console.log("Velocidad actual:", (this.state.currentSpeed * 3.6).toFixed(1) + " km/h");
+                console.log("Velocidad promedio:", this.state.avgSpeed.toFixed(1) + " km/h");
+    
+                // Calcular velocidad teórica
+                const km = this.state.distance / 1000;
+                const hours = this.state.totalElapsed / (1000 * 60 * 60);
+                console.log("Velocidad teórica (distancia/tiempo):", (km/hours).toFixed(1) + " km/h");
+    
+                console.log("LAPs registrados:", this.state.laps.length);
+                this.state.laps.forEach((lap, i) => {
+                    console.log(`LAP ${i+1}:`, {
+                        tiempo: this.formatTime(lap.duration),
+                        distancia: lap.distance + "m",
+                        ritmo: this.formatPace(lap.pace) + " min/km"
+                    });
+                });
+    
+                console.log("Actividad:", this.state.activity);
+                console.log("GPS precisión:", this.state.accuracy + "m");
+                console.log("=== FIN DEBUG ===");
+    
+                alert(
+                    "DISTANCIA: " + (this.state.distance/1000).toFixed(3) + " km\n" +
+                    "TIEMPO: " + this.formatTime(this.state.totalElapsed) + "\n" +
+                    "VEL PROMEDIO: " + (km/hours).toFixed(1) + " km/h\n" +
+                    "LAPs: " + this.state.laps.length + " registrados"
+                );
+            },
+
             tick: function() {
                 const now = Date.now();
                 this.state.totalElapsed = now - this.state.startTime;
@@ -1074,81 +1108,38 @@
                     minute: '2-digit' 
                 });
     
-                // 1. DETECTAR ACTIVIDAD ACTUAL basada en velocidad GPS
-                const speedKmh = this.state.currentSpeed * 3.6;
-                let newActivity = 'stopped';
-
-                if (speedKmh < 0.5) newActivity = 'stopped';
-                else if (speedKmh < 6) newActivity = 'walking';
-                else if (speedKmh < 14) newActivity = 'running';
-                else if (speedKmh < 35) newActivity = 'cycling';
-                else newActivity = 'driving';
-
-                // 2. ACTUALIZAR TIEMPOS POR ACTIVIDAD (CORREGIDO)
-                if (this.state.activityStartTime) {
-                    const activityDuration = now - this.state.activityStartTime;
+                // CALCULAR VELOCIDAD PROMEDIO SIMPLE Y CORRECTA
+                // Opción A: Promedio TOTAL (desde inicio)
+                if (this.state.totalElapsed > 0 && this.state.distance > 0) {
+                    // km/h = (metros / milisegundos) × 3600
+                    const avgTotal = (this.state.distance / this.state.totalElapsed) * 3600;
         
-                    // Sumar tiempo a la actividad actual
-                    if (this.state.currentActivity) {
-                        this.state.activityTimes[this.state.currentActivity] += activityDuration;
-                    }
-        
-                    // Si cambió la actividad, resetear timer
-                    if (this.state.currentActivity !== newActivity) {
-                        this.state.currentActivity = newActivity;
-                        this.state.activityStartTime = now;
-                    }
-                } else {
-                    // Primera vez
-                    this.state.currentActivity = newActivity;
-                    this.state.activityStartTime = now;
-                }
-
-                // 3. CALCULAR VELOCIDAD PROMEDIO CORRECTA
-                // Calcular tiempo total en movimiento (excluyendo 'stopped')
-                let totalMovingTimeMs = 0;
-                const movingActivities = ['walking', 'running', 'cycling', 'driving'];
-    
-                movingActivities.forEach(activity => {
-                    totalMovingTimeMs += this.state.activityTimes[activity];
-                });
-    
-                // Añadir tiempo parcial de actividad actual si no está parado
-                if (this.state.currentActivity !== 'stopped' && this.state.activityStartTime) {
-                    const currentActivityTime = now - this.state.activityStartTime;
-                    totalMovingTimeMs += currentActivityTime;
-                }
-    
-                // CALCULAR PROMEDIO EN MOVIMIENTO
-                if (totalMovingTimeMs > 0 && this.state.distance > 0) {
-                    // Convertir: metros / milisegundos → km/h
-                    // metros/ms × (1000 ms/1 s) × (3600 s/1 h) × (1 km/1000 m) = × 3.6
-                    // O: (metros / milisegundos) × 3600
-                    this.state.avgSpeed = (this.state.distance / totalMovingTimeMs) * 3600;
+                    // Opción B: Promedio basado en velocidad actual (más precisa para actividad actual)
+                    // Usamos avgTotal como principal
+                    this.state.avgSpeed = avgTotal;
                 } else {
                     this.state.avgSpeed = 0;
                 }
     
-                // DEBUG: Verificar cálculos
-                if (Math.random() < 0.05) { // 5% de probabilidad
-                    console.log("DEBUG:", {
-                        distance: this.state.distance,
-                        totalMovingTimeMs: totalMovingTimeMs,
-                        totalMovingTimeH: totalMovingTimeMs / (1000 * 60 * 60),
-                        avgSpeedCalc: this.state.avgSpeed,
-                        expected: (this.state.distance / 1000) / (totalMovingTimeMs / (1000 * 60 * 60))
-                    });
-                }
+                // DETECTAR ACTIVIDAD SOLO para mostrar estado
+                const speedKmh = this.state.currentSpeed * 3.6;
+                if (speedKmh < 0.5) this.state.activity = 'stopped';
+                else if (speedKmh < 6) this.state.activity = 'walking';
+                else if (speedKmh < 14) this.state.activity = 'running';
+                else if (speedKmh < 35) this.state.activity = 'cycling';
+                else this.state.activity = 'driving';
+    
+                this.updateStatusText();
 
                 // CHECK WORKOUT STEPS & WARNING
                 if (this.state.isWorkoutActive && this.state.currentStepIndex < this.state.workoutPlan.length) {
                     const step = this.state.workoutPlan[this.state.currentStepIndex];
-                    
+        
                     // Alerta 15 segs antes
                     if (step.type === 'time') {
                         const currentStepTime = (Date.now() - this.state.stepStartTime) / 1000;
                         const remaining = step.value - currentStepTime;
-                        
+            
                         if (remaining <= 15 && remaining > 14 && !this.state.stepWarningFired) {
                             if (this.state.settings.audio) this.playWarningSound();
                             this.state.stepWarningFired = true; 
@@ -1166,7 +1157,7 @@
                         this.recordLap(false);
                     }
                 }
-                
+
                 this.updateUI();
             },
 
@@ -1256,7 +1247,8 @@
                 
                 // FILTRO: Evitar registrar Laps fantasma de 00:00
                 if (lapDuration < 1000 && this.state.currentLap.distance < 10) {
-                    return; 
+                    console.log("Lap descartado (duración o distancia muy pequeña)");
+                    return null;
                 }
 
                 let paceSecPerUnit = 0;
@@ -1265,6 +1257,17 @@
                     const lapSeconds = lapDuration / 1000;
                     const lapKm = this.state.currentLap.distance / 1000;
                     paceSecPerUnit = lapSeconds / lapKm;
+        
+                    // DEBUG
+                    console.log("Nuevo LAP:", {
+                        distancia: this.state.currentLap.distance + "m",
+                        tiempo: this.formatTime(lapDuration),
+                        ritmo: this.formatPace(paceSecPerUnit) + " min/km",
+                        manual: isManual,
+                        workout: isWorkoutStep
+                    });
+                } else {
+                    console.warn("Lap con distancia 0, pace no calculado");
                 }
 
                 const lapData = { 
@@ -1274,9 +1277,12 @@
                     pace: paceSecPerUnit, 
                     isWorkoutStep: isWorkoutStep 
                 };
+    
+                // AÑADIR A LA LISTA
                 this.state.laps.push(lapData);
+                console.log("Total LAPs registrados:", this.state.laps.length);
 
-                // REPRODUCIR SONIDO Y TOAST PARA TODOS los LAPs
+                // SONIDO
                 if (this.state.settings.audio) {
                     if (isWorkoutStep) {
                         this.playLoudBeep();
@@ -1284,18 +1290,20 @@
                         this.playBeep();
                     }
                 }
-                
-                // MOSTRAR TOAST PARA TODOS
+    
+                // MOSTRAR TOAST
                 this.showToast(lapData, isWorkoutStep ? "🎯 Paso Completado" : "✅ Lap Completado");
-                
+    
+                // ACTUALIZAR TABLA INMEDIATAMENTE
                 this.updateLapsTable();
 
+                // RESETEAR LAP
                 this.state.currentLap.startTime = now;
                 this.state.currentLap.distance = 0;
                 this.state.currentLap.path = this.state.lastPos ? [this.state.lastPos] : [];
                 this.polylineLap.setLatLngs([]);
-
-                return lapData;  // Retornar los datos para usarlos después
+    
+                return lapData;
             },
 
             detectActivity: function(speedMs) {
@@ -1406,9 +1414,21 @@
                     Math.round(this.state.altitude * 3.28084);
                 document.getElementById('unit-alt').textContent = altUnit;
 
+                // Calcular valores de visualización
                 const displayDist = (this.state.distance / 1000) * factorDist;
                 const displaySpeed = this.state.currentSpeed * factorSpeed;
-                const displayAvgSpeed = this.state.avgSpeed * factorSpeed;
+    
+                // Calcular velocidad promedio CORRECTA
+                let displayAvgSpeed = 0;
+                if (this.state.totalElapsed > 0 && this.state.distance > 0) {
+                    // Fórmula: km/h = (metros / milisegundos) × 3600
+                    const km = this.state.distance / 1000;
+                    const hours = this.state.totalElapsed / (1000 * 60 * 60);
+                    displayAvgSpeed = km / hours;
+                }
+    
+                // Calcular velocidad promedio en movimiento (simplificado)
+                let displayAvgMoving = displayAvgSpeed; // Por ahora, usamos el mismo
 
                 // Actualizar valores principales
                 this.ui.dist.textContent = displayDist.toFixed(2);
@@ -1418,6 +1438,10 @@
                 this.ui.avgSpeed.textContent = displayAvgSpeed.toFixed(1);
                 this.ui.avgSpeedSub.textContent = displayAvgSpeed.toFixed(1);
 
+                // Mostrar promedios en UI
+                document.getElementById('val-avg-moving').textContent = displayAvgMoving.toFixed(1);
+                document.getElementById('val-avg-total').textContent = displayAvgSpeed.toFixed(1);
+
                 // Mostrar precisión GPS
                 if(this.state.accuracy > 5000 || this.state.accuracy === 0) {
                     document.getElementById('val-gps-acc').textContent = "--";
@@ -1425,43 +1449,19 @@
                     document.getElementById('val-gps-acc').textContent = this.state.accuracy;
                 }
 
-                // CALCULAR DIFERENTES PROMEDIOS
-                // 1. Promedio TOTAL (desde inicio)
-                let avgTotal = 0;
-                if (this.state.totalElapsed > 0 && this.state.distance > 0) {
-                    avgTotal = (this.state.distance / this.state.totalElapsed) * 3600;
-                }
-
-                // 2. Promedio en MOVIMIENTO (solo cuando te mueves)
-                let avgMoving = 0;
-                let movingTimeMsCalc = this.state.activityTimes.walking + 
-                                      this.state.activityTimes.running + 
-                                      this.state.activityTimes.cycling + 
-                                      this.state.activityTimes.driving;
-
-                // Añadir tiempo de actividad actual si no es "stopped"
-                if (this.state.currentActivity !== 'stopped' && this.state.activityStartTime) {
-                    const currentActivityTime = Date.now() - this.state.activityStartTime;
-                    movingTimeMsCalc += currentActivityTime;
-                }
-
-                if (movingTimeMsCalc > 0 && this.state.distance > 0) {
-                    avgMoving = (this.state.distance / movingTimeMsCalc) * 3600;
-                }
-
-                // Mostrar promedios en UI
-                document.getElementById('val-avg-moving').textContent = (avgMoving * factorSpeed).toFixed(1);
-                document.getElementById('val-avg-total').textContent = (avgTotal * factorSpeed).toFixed(1);
-
-                // Calcular ritmo (pace)
+                // Calcular ritmo (pace) - CORREGIDO
                 let globalPace = 0;
                 if (this.state.distance > 0 && this.state.totalElapsed > 0) {
+                    // segundos por unidad de distancia
                     const totalSeconds = this.state.totalElapsed / 1000;
-                    const distanceKm = (this.state.distance / 1000) * (isMetric ? 1 : 0.621371);
-                    globalPace = totalSeconds / distanceKm;  // segundos por unidad
+                    const distanceUnit = (this.state.distance / 1000) * factorDist; // en km o mi
+                    if (distanceUnit > 0) {
+                        globalPace = totalSeconds / distanceUnit;
+                    }
                 }
-                
-                if (displaySpeed < 0.5) {
+    
+                // Mostrar ritmo
+                if (displaySpeed < 0.5 || globalPace === 0) {
                     this.ui.pace.textContent = "--:--";
                 } else {
                     this.ui.pace.textContent = this.formatPace(globalPace);
@@ -1471,10 +1471,20 @@
                 // Mostrar último lap
                 const lastLap = this.state.laps[this.state.laps.length - 1];
                 if (lastLap) {
-                    this.ui.lastLap.textContent = this.formatPace(lastLap.pace * (isMetric ? 1 : (1/0.621371)));
+                    const lapPace = lastLap.pace * (isMetric ? 1 : (1/0.621371));
+                    this.ui.lastLap.textContent = this.formatPace(lapPace);
                 } else {
                     this.ui.lastLap.textContent = "--:--";
                 }
+    
+                // DEBUG: Mostrar cálculos en consola (temporal)
+                console.log("UI Update:", {
+                    distance: displayDist.toFixed(2) + unitDist,
+                    speed: displaySpeed.toFixed(1) + unitSpeed,
+                    avgSpeed: displayAvgSpeed.toFixed(1) + unitSpeed,
+                    pace: this.formatPace(globalPace) + " min/" + unitDist,
+                    totalElapsed: this.formatTime(this.state.totalElapsed)
+                });
             },
 
             toggleUnits: function() {
