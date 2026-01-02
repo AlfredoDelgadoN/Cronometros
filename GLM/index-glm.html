@@ -873,7 +873,7 @@
                     this.state.watchId = navigator.geolocation.watchPosition(
                         (pos) => this.onPositionUpdate(pos),
                         (err) => console.error("GPS Error:", err),
-                        { enableHighAccuracy: true, maximumAge: 0, timeout: 5000 }
+                        { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
                     );
                 } else {
                     alert("GPS no soportado.");
@@ -921,47 +921,113 @@
             const accuracy = position.coords.accuracy;
             const speed = position.coords.speed;
     
+            // GUARDAR DATOS GPS
             this.state.accuracy = Math.round(accuracy);
             this.state.altitude = position.coords.altitude ? Math.round(position.coords.altitude) : 0; 
-            this.state.currentSpeed = speed || 0;
+            
+            // Usar velocidad del GPS si está disponible (es más precisa)
+            if (speed !== null && speed >= 0) {
+                this.state.currentSpeed = speed; // m/s
+            }
 
             this.detectActivity(this.state.currentSpeed);
             this.updateStatusText();
     
             const newPoint = [lat, lng];
             const now = Date.now();
+            
+            // PRIMERA POSICIÓN
+            if (!this.state.lastPos) {
+                this.state.lastPos = newPoint;
+                this.state.lastPosTime = now;
+                this.state.lastMovementTime = now;
+                this.updateUI();
+                return;
+            }
     
-            if (this.state.lastPos) {
-                const dist = this.getDistanceFromLatLonInM(this.state.lastPos[0], this.state.lastPos[1], lat, lng);
+            // CALCULAR DISTANCIA DESDE ÚLTIMO PUNTO
+            const dist = this.getDistanceFromLatLonInM(
+                this.state.lastPos[0], this.state.lastPos[1], 
+                lat, lng
+            );
+    
+            // TIEMPO DESDE ÚLTIMO PUNTO (segundos)
+            const timeDiff = (now - this.state.lastPosTime) / 1000;
+    
+            // FILTRO MEJORADO: ¿Es un punto válido?
+            const isHighAccuracy = accuracy < 20;  // GPS muy preciso (<20m)
+            const isMediumAccuracy = accuracy < 50; // GPS aceptable (<50m)
+    
+            let shouldAddDistance = false;
+    
+            if (isHighAccuracy) {
+                // GPS de alta precisión: aceptar más puntos
+                shouldAddDistance = dist > 0.5;  // Más de 0.5 metros
+            } else if (isMediumAccuracy) {
+                // GPS medio: filtro más estricto
+                shouldAddDistance = dist > 2 && timeDiff > 0.5;
+            }
+    
+            // ADICIONAL: Verificar velocidad coherente
+            if (timeDiff > 0) {
+                const instantSpeed = dist / timeDiff; // m/s
+                const instantSpeedKmh = instantSpeed * 3.6;
         
-                // Filtro mejorado
-                if (accuracy < 150 && dist > 3) {  // ↑ Aumentado a 3m mínimo
-                    this.state.distance += dist;
-                    this.state.currentLap.distance += dist;
+                // Velocidad máxima realista para running: 30 km/h
+                if (instantSpeedKmh > 30) {
+                    shouldAddDistance = false;
+                    console.warn("Velocidad imposible descartada:", instantSpeedKmh, "km/h");
+                }
+            }
+    
+            // PROCESAR PUNTO VÁLIDO
+            if (shouldAddDistance) {
+                // 1. SUMAR DISTANCIA
+                this.state.distance += dist;
+                this.state.currentLap.distance += dist;
+        
+                // 2. SUMAR TIEMPO EN MOVIMIENTO
+                if (this.state.lastMovementTime) {
+                    const movementTimeDiff = now - this.state.lastMovementTime;
+                    // Limitar a máximo 3 segundos entre puntos
+                    this.state.movingTime += Math.min(movementTimeDiff, 3000);
+                }
+                this.state.lastMovementTime = now;
+        
+                // 3. AGREGAR AL PATH (con filtro de puntos cercanos)
+                const MIN_DISTANCE_BETWEEN_POINTS = 5; // metros
+                const lastPathPoint = this.state.path[this.state.path.length - 1];
+        
+                if (!lastPathPoint || 
+                    this.getDistanceFromLatLonInM(lastPathPoint[0], lastPathPoint[1], lat, lng) > MIN_DISTANCE_BETWEEN_POINTS) {
                     this.state.path.push(newPoint);
                     this.state.currentLap.path.push(newPoint);
             
-                    // ACTUALIZAR movingTime SOLO CUANDO HAY MOVIMIENTO
-                    if (this.state.lastMovementTime) {
-                        const timeDiff = now - this.state.lastMovementTime;
-                        this.state.movingTime += Math.min(timeDiff, 3000); // Máximo 3 segundos entre updates
-                    }
-                    this.state.lastMovementTime = now;
-            
+                    // Actualizar mapas
                     this.polylineTotal.setLatLngs(this.state.path);
                     this.polylineLap.setLatLngs(this.state.currentLap.path);
-                    this.map.panTo(newPoint);
-
-                    if (this.state.settings.autoLap && !this.state.isWorkoutActive) {
-                        this.checkAutoLap();
-                    }
                 }
-            } else {
-                // Primera posición
-                this.state.lastMovementTime = now;
+        
+                // 4. CENTRAR MAPA (ocasionalmente)
+                if (this.state.path.length % 10 === 0) {
+                    this.map.panTo(newPoint);
+                }
+        
+                // 5. VERIFICAR AUTO-LAP
+                if (this.state.settings.autoLap && !this.state.isWorkoutActive) {
+                    this.checkAutoLap();
+                }
             }
     
+            // ACTUALIZAR ÚLTIMA POSICIÓN Y TIEMPO
             this.state.lastPos = newPoint;
+            this.state.lastPosTime = now;
+    
+            // CALCULAR VELOCIDAD INSTANTÁNEA SI EL GPS NO LA PROVEE
+            if ((speed === null || speed < 0) && timeDiff > 0) {
+                this.state.currentSpeed = dist / timeDiff;
+            }
+            
             this.updateUI();
         },
 
@@ -1161,10 +1227,22 @@
             },
 
             getDistanceFromLatLonInM: function(lat1, lon1, lat2, lon2) {
-                var R = 6371, dLat = this.deg2rad(lat2-lat1), dLon = this.deg2rad(lon2-lon1);
-                var a = Math.sin(dLat/2)*Math.sin(dLat/2) + Math.cos(this.deg2rad(lat1))*Math.cos(this.deg2rad(lat2))*Math.sin(dLon/2)*Math.sin(dLon/2);
-                var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                return d = R * c * 1000;
+                // Fórmula Haversine mejorada
+                const R = 6371000; // Radio de la Tierra en METROS (no km)
+                const φ1 = lat1 * Math.PI / 180;
+                const φ2 = lat2 * Math.PI / 180;
+                const Δφ = (lat2 - lat1) * Math.PI / 180;
+                const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+                const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+                        Math.cos(φ1) * Math.cos(φ2) *
+                        Math.sin(Δλ/2) * Math.sin(Δλ/2);
+    
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+                const distance = R * c;
+    
+                // Filtro: eliminar distancias imposibles (>200m/s = 720 km/h)
+                return distance > 200 ? 0 : distance;
             },
 
             deg2rad: function(deg) { return deg * (Math.PI/180); },
