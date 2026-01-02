@@ -1073,7 +1073,7 @@
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
-                
+    
                 // 1. DETECTAR ACTIVIDAD ACTUAL basada en velocidad GPS
                 const speedKmh = this.state.currentSpeed * 3.6;
                 let newActivity = 'stopped';
@@ -1084,36 +1084,60 @@
                 else if (speedKmh < 35) newActivity = 'cycling';
                 else newActivity = 'driving';
 
-                // 2. ACTUALIZAR TIEMPOS POR ACTIVIDAD
-                if (this.state.currentActivity !== newActivity) {
-                    // Cambio de actividad: guardar tiempo de la actividad anterior
-                    if (this.state.activityStartTime && this.state.currentActivity) {
-                        const activityDuration = now - this.state.activityStartTime;
+                // 2. ACTUALIZAR TIEMPOS POR ACTIVIDAD (CORREGIDO)
+                if (this.state.activityStartTime) {
+                    const activityDuration = now - this.state.activityStartTime;
+        
+                    // Sumar tiempo a la actividad actual
+                    if (this.state.currentActivity) {
                         this.state.activityTimes[this.state.currentActivity] += activityDuration;
                     }
-                    // Iniciar nueva actividad
+        
+                    // Si cambió la actividad, resetear timer
+                    if (this.state.currentActivity !== newActivity) {
+                        this.state.currentActivity = newActivity;
+                        this.state.activityStartTime = now;
+                    }
+                } else {
+                    // Primera vez
                     this.state.currentActivity = newActivity;
-                    this.state.activityStartTime = now;                
+                    this.state.activityStartTime = now;
                 }
 
-                // 3. CALCULAR VELOCIDAD PROMEDIO CORRECTAMENTE
-                // Usar SOLO tiempo en movimiento (walking/running/cycling/driving)
-                let movingTimeMs = this.state.activityTimes.walking + 
-                                   this.state.activityTimes.running + 
-                                   this.state.activityTimes.cycling + 
-                                   this.state.activityTimes.driving;
-
+                // 3. CALCULAR VELOCIDAD PROMEDIO CORRECTA
+                // Calcular tiempo total en movimiento (excluyendo 'stopped')
+                let totalMovingTimeMs = 0;
+                const movingActivities = ['walking', 'running', 'cycling', 'driving'];
+    
+                movingActivities.forEach(activity => {
+                    totalMovingTimeMs += this.state.activityTimes[activity];
+                });
+    
+                // Añadir tiempo parcial de actividad actual si no está parado
                 if (this.state.currentActivity !== 'stopped' && this.state.activityStartTime) {
-                    // Sumar tiempo parcial de la actividad actual
                     const currentActivityTime = now - this.state.activityStartTime;
-                    movingTimeMs += currentActivityTime;
+                    totalMovingTimeMs += currentActivityTime;
                 }
-
-                if (movingTimeMs > 0 && this.state.distance > 0) {
-                    // Método PRECISO: km/h = (metros / milisegundos) × 3600
-                    this.state.avgSpeed = (this.state.distance / movingTimeMs) * 3600;
+    
+                // CALCULAR PROMEDIO EN MOVIMIENTO
+                if (totalMovingTimeMs > 0 && this.state.distance > 0) {
+                    // Convertir: metros / milisegundos → km/h
+                    // metros/ms × (1000 ms/1 s) × (3600 s/1 h) × (1 km/1000 m) = × 3.6
+                    // O: (metros / milisegundos) × 3600
+                    this.state.avgSpeed = (this.state.distance / totalMovingTimeMs) * 3600;
                 } else {
                     this.state.avgSpeed = 0;
+                }
+    
+                // DEBUG: Verificar cálculos
+                if (Math.random() < 0.05) { // 5% de probabilidad
+                    console.log("DEBUG:", {
+                        distance: this.state.distance,
+                        totalMovingTimeMs: totalMovingTimeMs,
+                        totalMovingTimeH: totalMovingTimeMs / (1000 * 60 * 60),
+                        avgSpeedCalc: this.state.avgSpeed,
+                        expected: (this.state.distance / 1000) / (totalMovingTimeMs / (1000 * 60 * 60))
+                    });
                 }
 
                 // CHECK WORKOUT STEPS & WARNING
@@ -1142,7 +1166,7 @@
                         this.recordLap(false);
                     }
                 }
-
+                
                 this.updateUI();
             },
 
