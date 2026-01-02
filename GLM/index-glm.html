@@ -1182,6 +1182,7 @@
             nextWorkoutStep: function() {
                 const now = Date.now();
                 const lapDuration = now - this.state.currentLap.startTime;
+                let lapData = null;
                 
                 // REGISTRAR LAP del paso completado
                 if (lapDuration > 1000 || this.state.currentLap.distance > 10) {
@@ -1269,6 +1270,8 @@
                 this.state.currentLap.distance = 0;
                 this.state.currentLap.path = this.state.lastPos ? [this.state.lastPos] : [];
                 this.polylineLap.setLatLngs([]);
+
+                return lapData;  // Retornar los datos para usarlos después
             },
 
             detectActivity: function(speedMs) {
@@ -1467,11 +1470,27 @@
             },
 
             showToast: function(lapData, overrideTitle) {
+                // Validar que lapData existe
+                if (!lapData) {
+                    console.warn("showToast llamado sin datos");
+                    return;
+                }
                 this.ui.toast.style.display = 'block';
+    
+                // Establecer título
                 this.ui.toastTitle.textContent = overrideTitle || "✅ Lap Completado";
-                this.ui.toastTime.textContent = overrideTitle ? "" : this.formatTime(lapData.duration);
-                
-                if (!overrideTitle) {
+    
+                // MOSTRAR TIEMPO - siempre que haya duración
+                if (lapData.duration && lapData.duration > 0) {
+                    this.ui.toastTime.textContent = this.formatTime(lapData.duration);
+                    document.querySelector('.lap-toast-label:nth-of-type(1)').style.display = 'block';
+                } else {
+                    this.ui.toastTime.textContent = "";
+                    document.querySelector('.lap-toast-label:nth-of-type(1)').style.display = 'none';
+                }
+    
+                // MOSTRAR SIEMPRE el ritmo (si está disponible)
+                if (lapData.pace > 0 && isFinite(lapData.pace)) {
                     const isMetric = this.state.units === 'metric';
                     const factor = isMetric ? 1 : (1/0.621371);
                     const paceVal = lapData.pace * factor;
