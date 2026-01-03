@@ -4,52 +4,40 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Cronómetro Pro GPS</title>
-    <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    
-    <!-- Fuentes -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Oswald:wght@500;700&family=Roboto+Mono:wght@500&family=Teko:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Teko:wght@500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
             --bg-color: #121212;
             --surface-color: #1e1e1e;
             --primary-color: #04ff86;
-            --secondary-color: #2979ff;
             --danger-color: #ff1744;
             --text-main: #ffffff;
-            --text-dim: #fbff00;
-            --font-main: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             --font-numbers: 'Teko', sans-serif; 
         }
 
-        * { box-sizing: border-box; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        * { box-sizing: border-box; touch-action: manipulation; }
         
         body {
             margin: 0;
             padding: 0;
             background-color: var(--bg-color);
             color: var(--text-main);
-            font-family: var(--font-main);
+            font-family: 'Segoe UI', sans-serif;
             height: 100dvh;
-            height: 100vh;
             display: flex;
             flex-direction: column;
         }
 
-        /* --- Header --- */
+        /* Header */
         header {
             padding: 10px 15px;
-            padding-top: max(10px, env(safe-area-inset-top));
             background-color: var(--surface-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #333;
-            height: auto;
-            flex-shrink: 0;            
         }
 
         .status-badge {
@@ -58,19 +46,12 @@
             gap: 8px;
             font-size: 0.8rem;
             font-weight: bold;
-            color: var(--text-dim);
+            color: #fbff00;
             background: #2c2c2c;
             padding: 4px 8px;
             border-radius: 20px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
         }
         
-        .status-icon { width: 16px; height: 16px; fill: currentColor; flex-shrink: 0; }
-        .status-badge.active { color: var(--primary-color); background: rgba(0, 230, 118, 0.1); }
-        .status-badge.paused { color: var(--danger-color); background: rgba(255, 23, 68, 0.1); }
-
         .top-controls button {
             background: none;
             border: 1px solid #444;
@@ -80,19 +61,28 @@
             font-size: 0.75rem;
             margin-left: 3px;
             cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
         }
 
-        /* --- Main Dashboard --- */
+        /* Main Content */
         main {
             flex: 1;
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            position: relative;
             min-height: 0;
+        }
+
+        .timer-display { 
+            text-align: center; 
+            padding: 10px 0;
+            background: #1a1a1a;
+        }
+        
+        .timer-value { 
+            font-size: 4rem; 
+            font-family: var(--font-numbers); 
+            color: var(--primary-color); 
+            line-height: 0.85; 
         }
 
         .stats-grid {
@@ -100,137 +90,116 @@
             grid-template-columns: 1fr 1fr;
             gap: 8px;
             padding: 10px;
-            flex-shrink: 0;
+        }
+
+        .stat-card {
+            background-color: var(--surface-color);
+            padding: 12px;
+            border-radius: 10px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .stat-label { 
+            font-size: 0.7rem; 
+            color: #aaa; 
+            text-transform: uppercase; 
+            margin-bottom: 3px; 
+        }
+        
+        .stat-value { 
+            font-size: 1.8rem; 
+            font-family: var(--font-numbers); 
+            color: var(--primary-color); 
+            line-height: 0.9; 
+        }
+        
+        .stat-unit { 
+            font-size: 0.8rem; 
+            color: #aaa; 
         }
 
         .stats-row-secondary {
             display: flex;
             justify-content: space-around;
-            padding: 6px 10px;
+            padding: 8px 10px;
             background-color: #181818;
             border-top: 1px solid #333;
             border-bottom: 1px solid #333;
-            margin-bottom: 8px;
-            flex-shrink: 0;
         }
 
-        .mini-stat { text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .mini-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 2px; }
-        .mini-val { font-size: 1.1rem; font-weight: bold; color: white; font-family: var(--font-numbers); line-height: 0.9; }
-        .mini-unit { font-size: 0.7rem; color: var(--text-dim); margin-left: 2px; font-family: var(--font-main); }
-
-        .stat-card {
-            background-color: var(--surface-color);
-            padding: 10px;
-            border-radius: 10px;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            min-height: 80px;
+        .mini-stat { 
+            text-align: center; 
         }
-
-        .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
-        .stat-value { font-size: 1.8rem; font-weight: 700; font-family: var(--font-numbers); color: var(--primary-color); line-height: 0.9; }
-        .stat-unit { font-size: 0.8rem; color: var(--text-dim); font-family: var(--font-main); }
-        .stat-sub { font-size: 0.7rem; color: var(--text-dim); margin-top: 2px; }
-
-        .timer-display { text-align: center; padding: 2px 0; }
-        .timer-value { font-size: 4rem; font-family: var(--font-numbers); font-weight: 500; letter-spacing: -1px; line-height: 0.85; color: var(--primary-color); }
         
-        /* Workout Guidance - Mejorada */
-        .workout-guidance {
-            background-color: #1a2b1a; 
-            border-left: 4px solid var(--primary-color);
-            padding: 12px 15px;
-            margin: 0 10px 10px 10px;
-            border-radius: 6px;
-            display: none;
-            flex-direction: row;
-            justify-content: space-between;
-            align-items: center;
+        .mini-label { 
+            font-size: 0.6rem; 
+            color: #aaa; 
+            margin-bottom: 2px; 
         }
-        .workout-guidance.active { display: flex; }
         
-        .workout-info-left {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            text-align: left;
-            flex: 1;
-            padding-right: 10px;
-        }
-
-        .workout-step-title { font-size: 0.8rem; color: #8bc34a; font-weight: bold; text-transform: uppercase; }
-        .workout-step-desc { font-size: 1rem; color: white; margin-top: 2px; }
-
-        .workout-step-target { 
-            font-size: 1.5rem;
-            color: white; 
+        .mini-val { 
+            font-size: 1.1rem; 
             font-family: var(--font-numbers); 
-            font-weight: bold; 
-            letter-spacing: -1px;
-            text-align: right;
-            line-height: 1;
-            white-space: nowrap;
+            color: white; 
         }
 
-        /* Mapa - Optimizado */
+        /* Mapa más grande */
         #map-container {
-            height: 280px; /* Reducido de 200px */
+            height: 280px;
             width: 100%;
             background: #000;
             position: relative;
-            z-index: 1;
-            flex-shrink: 0;
             margin-top: auto;
-            border-top: 1px solid #333;
         }
-        #map { width: 100%; height: 100%; }
         
-        /* Se elimina el botón de expandir mapa */
+        #map { 
+            width: 100%; 
+            height: 100%; 
+        }
 
-        /* --- Controles --- */
+        /* Controles simplificados */
         .controls-area {
             background-color: var(--surface-color);
-            padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
+            padding: 15px 20px;
             display: flex;
             gap: 10px;
             justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
-            flex-shrink: 0;
         }
 
         .btn-big {
             border: none;
             border-radius: 50px;
-            padding: 10px 0;
+            padding: 12px 0;
             font-size: 1rem;
             font-weight: bold;
-            text-transform: uppercase;
             flex: 1;
             cursor: pointer;
-            transition: transform 0.1s, opacity 0.2s;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 70px;
+            height: 60px;
         }
-        .btn-big:active { transform: scale(0.96); }
         
-        .btn-lap { background-color: #5c5b5b; color: white; border: 2px solid #0159fc; }
-        .btn-lap small { font-size: 0.65rem; font-weight: normal; opacity: 0.9; margin-top: 2px; display: block;}
+        .btn-lap { 
+            background-color: #444; 
+            color: white; 
+        }
+        
+        .btn-action { 
+            background-color: var(--primary-color); 
+            color: black; 
+        }
+        
+        .btn-action.paused { 
+            background-color: #888; 
+            color: black; 
+        }
 
-        .btn-action { background-color: var(--primary-color); color: black; }
-        .btn-action.paused { background-color: var(--text-main); color: black; }
-        .btn-action.stopped { background-color: var(--danger-color); color: white; }
-
-        /* --- Lap Overlay --- */
+        /* Toast */
         #lap-toast {
             position: absolute;
-            top: 15%;
+            top: 20%;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(30, 30, 30, 0.95);
@@ -240,484 +209,146 @@
             text-align: center;
             z-index: 1000;
             display: none;
-            backdrop-filter: blur(5px);
             min-width: 250px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
         }
-        #lap-toast h3 { margin: 0 0 10px; font-size: 1rem; color: var(--primary-color); }
-        #lap-toast .lap-toast-data { font-size: 2rem; font-family: var(--font-numbers); font-weight: bold; line-height: 0.9; }
-        #lap-toast .lap-toast-label { font-size: 0.8rem; color: var(--text-dim); }
-
-        /* --- Modales --- */
-        .modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 2000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding-bottom: env(safe-area-inset-bottom);
-        }
-        .modal.open { display: flex; }
-        .modal-content {
-            background: var(--surface-color);
-            width: 90%;
-            max-width: 500px;
-            max-height: 85vh;
-            border-radius: 12px;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        .modal-header {
-            padding: 15px;
-            padding-top: max(15px, env(safe-area-inset-top));
-            border-bottom: 1px solid #333;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .modal-body { padding: 15px; overflow-y: auto; flex: 1; }
-        .close-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
-
-        /* Tabs Settings */
-        .tabs { display: flex; border-bottom: 1px solid #333; }
-        .tab-btn {
-            flex: 1;
-            padding: 10px;
-            background: none;
-            border: none;
-            color: #888;
-            cursor: pointer;
-            font-weight: bold;
-        }
-        .tab-btn.active { color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-
-        /* Tabla de Laps */
-        table.laps-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-        table.laps-table th { text-align: left; color: var(--text-dim); padding: 8px; border-bottom: 1px solid #444; }
-        table.laps-table td { padding: 10px 8px; border-bottom: 1px solid #2a2a2a; }
-        table.laps-table tr:last-child td { border-bottom: none; }
-        table.laps-table td.highlight { color: var(--primary-color); font-weight: bold; font-family: var(--font-numbers); font-size: 1.2rem; }
-
-        /* Form Settings */
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; margin-bottom: 5px; color: var(--text-dim); font-size: 0.9rem; }
-        .form-control {
-            width: 100%; padding: 8px; background: #121212; border: 1px solid #444;
-            color: white; border-radius: 6px; font-size: 1rem;
-        }
-        .toggle-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .switch {
-            position: relative; display: inline-block; width: 50px; height: 26px;
-        }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #444; transition: .4s; border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px;
-            background-color: white; transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider { background-color: var(--primary-color); }
-        input:checked + .slider:before { transform: translateX(24px); }
-
-        /* Workout Builder Styles */
-        .workout-step-item {
-            background: #2c2c2c;
-            padding: 10px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            border-left: 4px solid var(--secondary-color);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .step-info h4 { margin: 0 0 4px 0; font-size: 1rem; color: white; }
-        .step-info p { margin: 0; font-size: 0.85rem; color: var(--text-dim); }
-        .step-delete { background: none; border: none; color: var(--danger-color); font-size: 1.2rem; cursor: pointer; }
         
-        .btn-small {
-            background: var(--secondary-color); color: white; border: none; padding: 8px 12px;
-            border-radius: 4px; font-size: 0.9rem; width: 100%; cursor: pointer; margin-top: 5px;
+        #lap-toast h3 { 
+            margin: 0 0 10px; 
+            color: var(--primary-color); 
         }
-
+        
+        .lap-toast-data { 
+            font-size: 2rem; 
+            font-family: var(--font-numbers); 
+        }
     </style>
 </head>
 <body>
 
-    <!-- Header -->
+    <!-- Header simple -->
     <header>
         <div id="status-indicator" class="status-badge">
-            <svg class="status-icon" viewBox="0 0 24 24"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5-2.5 2.5z"/></svg>
             <span id="status-text">Listo</span>
         </div>
         <div class="top-controls">
-            <button onclick="window.app.toggleUnits()">Km/Mi</button>
-            <button onclick="window.app.openWorkoutModal()" title="Plan de Entreno">📋 Plan</button>
-            <button onclick="window.app.toggleFullScreen()" title="Pantalla Completa">⛶</button>
             <button onclick="window.app.openSettings()">⚙️</button>
-            <!-- <button onclick="window.app.debugState()" style="background:red; color:white; font-size:0.7rem;">DEBUG</button> -->
         </div>
     </header>
 
-    <!-- Main Content -->
+    <!-- Contenido principal -->
     <main>
         <div class="timer-display">
             <div class="timer-value" id="main-timer">00:00:00</div>
         </div>
 
-        <!-- Guía de Entrenamiento - OCULTA POR DEFECTO -->
-        <div id="workout-guidance" class="workout-guidance">
-            <div class="workout-info-left">
-                <div class="workout-step-title" id="guide-title">Plan Activo</div>
-                <div class="workout-step-desc" id="guide-desc">Sigue el plan...</div>
-            </div>
-            <div class="workout-step-target" id="guide-target">--:--</div>
-        </div>
-
+        <!-- Estadísticas principales -->
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-label">Distancia</div>
-                <div><span class="stat-value" id="val-dist">0.00</span> <span class="stat-unit" id="unit-dist">km</span></div>
+                <div><span class="stat-value" id="val-dist">0.00</span> <span class="stat-unit">km</span></div>
             </div>
             <div class="stat-card">
                 <div class="stat-label">Velocidad</div>
-                <div>
-                    <span class="stat-value" id="val-speed">0.0</span> <span class="stat-unit" id="unit-speed">km/h</span>
-                    <div class="stat-sub">Prom: <span id="val-avg-speed-sub">0.0</span></div>
-                </div>
+                <div><span class="stat-value" id="val-speed">0.0</span> <span class="stat-unit">km/h</span></div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Ritmo (Pace)</div>
+                <div class="stat-label">Ritmo</div>
                 <div><span class="stat-value" id="val-pace">--:--</span> <span class="stat-unit">min/km</span></div>
             </div>
             <div class="stat-card">
-                <div class="stat-label">Último Lap</div>
-                <div><span class="stat-value" id="val-last-lap">--:--</span> <span class="stat-unit">min/km</span></div>
+                <div class="stat-label">Promedio</div>
+                <div><span class="stat-value" id="val-avg-speed">0.0</span> <span class="stat-unit">km/h</span></div>
             </div>
         </div>
 
+        <!-- Estadísticas secundarias -->
         <div class="stats-row-secondary">
             <div class="mini-stat">
-                <div class="mini-label">Altitud</div>
-                <div>
-                    <span class="mini-val" id="val-alt">--</span> 
-                    <span class="mini-unit" id="unit-alt">m</span>
-                </div>
+                <div class="mini-label">GPS Error</div>
+                <div class="mini-val" id="val-gps-acc">-- m</div>
             </div>
             <div class="mini-stat">
                 <div class="mini-label">Hora</div>
                 <div class="mini-val" id="val-clock">--:--</div>
             </div>
             <div class="mini-stat">
-                <div class="mini-label">GPS Error</div>
-                <div>
-                    <span class="mini-val" id="val-gps-acc">--</span> 
-                    <span class="mini-unit">m</span>
-                </div>
-            </div>
-            <div class="mini-stat">
-                <div class="mini-label">Promedio</div>
-                <div>
-                    <span class="mini-val" id="val-avg-speed">0.0</span> 
-                    <span class="mini-unit">km/h</span>
-                </div>
+                <div class="mini-label">Último Lap</div>
+                <div class="mini-val" id="val-last-lap">--:--</div>
             </div>
         </div>
 
-        <!-- Mapa - SIN BOTÓN DE EXPANDIR -->
+        <!-- Mapa grande -->
         <div id="map-container">
             <div id="map"></div>
         </div>
     </main>
 
-    <!-- Controles -->
+    <!-- Controles SIMPLIFICADOS -->
     <section class="controls-area">
-        <button id="btn-lap" class="btn-big btn-lap" onclick="window.app.handleLeftButton()">
-            Lap/Reset
-            <small>Historial / Reiniciar</small>
+        <button id="btn-lap" class="btn-big btn-lap" onclick="window.app.handleLapButton()">
+            LAP
         </button>
-
-        <button id="btn-action" class="btn-big btn-action" onclick="window.app.handleRightButton()">
-            Iniciar
+        <button id="btn-action" class="btn-big btn-action" onclick="window.app.handleActionButton()">
+            INICIAR
         </button>
     </section>
 
-    <!-- Overlay de Lap -->
+    <!-- Toast de Lap -->
     <div id="lap-toast">
-        <h3 id="toast-title">✅ Lap Completado</h3>
-        <div class="lap-toast-label">Tiempo</div>
-        <div class="lap-toast-data" id="toast-time">00:05:30</div>
-        <div style="height:10px"></div>
-        <div class="lap-toast-label">Ritmo</div>
-        <div class="lap-toast-data" id="toast-pace">05'30"</div>
+        <h3 id="toast-title">LAP COMPLETADO</h3>
+        <div class="lap-toast-data" id="toast-time">00:00:00</div>
+        <div style="margin-top: 10px; font-size: 0.9rem;" id="toast-pace">--:-- min/km</div>
     </div>
 
-    <!-- Modal Lista de Laps -->
-    <div id="modal-laps" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Historial de Laps</h3>
-                <button class="close-btn" onclick="window.app.closeModals()">&times;</button>
+    <!-- Modal simple -->
+    <div id="modal-laps" class="modal" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center;">
+        <div style="background: #1e1e1e; padding: 20px; border-radius: 10px; width: 90%; max-width: 500px; max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 style="margin: 0;">Historial de Laps</h3>
+                <button onclick="document.getElementById('modal-laps').style.display='none'" style="background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer;">×</button>
             </div>
-            <div class="modal-body">
-                <table class="laps-table">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Tiempo</th>
-                            <th>Dist</th>
-                            <th>Ritmo</th>
-                        </tr>
-                    </thead>
-                    <tbody id="laps-table-body">
-                        <tr><td colspan="4" style="text-align:center; color:#666;">Sin datos</td></tr>
-                    </tbody>
-                </table>
+            <div id="laps-table-body" style="text-align: center; color: #666;">
+                Sin datos
             </div>
         </div>
     </div>
 
-    <!-- Modal Configuración y Planes -->
-    <div id="modal-settings" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Configuración</h3>
-                <button class="close-btn" onclick="window.app.closeModals()">&times;</button>
-            </div>
-            
-            <!-- Pestañas -->
-            <div class="tabs">
-                <button class="tab-btn active" onclick="window.app.switchTab('general')">General</button>
-                <button class="tab-btn" onclick="window.app.switchTab('paces')">Ritmos</button>
-                <button class="tab-btn" onclick="window.app.switchTab('workout')">Plan Entreno</button>
-            </div>
-
-            <div class="modal-body">
-                
-                <!-- Tab: General -->
-                <div id="tab-general" class="tab-content active">
-                    <div class="form-group">
-                        <label>Tipo de Letra</label>
-                        <select id="set-font" class="form-control" onchange="window.app.changeFont(this.value)">
-                            <option value="'Teko', sans-serif">Teko (Deportiva)</option>
-                            <option value="'Oswald', sans-serif">Oswald (Moderna)</option>
-                            <option value="'Anton', sans-serif">Anton (Gruesa)</option>
-                            <option value="'Roboto Mono', monospace">Roboto Mono (Técnica)</option>
-                        </select>
-                    </div>
-
-                    <div class="toggle-row">
-                        <span>Auto Laps</span>
-                        <label class="switch">
-                            <input type="checkbox" id="set-autolap">
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label>Tipo de Lap</label>
-                        <select id="set-lap-type" class="form-control" onchange="window.app.toggleLapInputs()">
-                            <option value="distance">Por Distancia</option>
-                            <option value="time">Por Tiempo</option>
-                        </select>
-                    </div>
-
-                    <div class="form-group" id="input-dist-group">
-                        <label>Distancia por Lap (km)</label>
-                        <input type="number" id="set-lap-dist" class="form-control" value="1.0" step="0.1">
-                    </div>
-
-                    <div class="form-group" id="input-time-group" style="display:none;">
-                        <label>Tiempo por Lap (minutos)</label>
-                        <input type="number" id="set-lap-time" class="form-control" value="10" step="1">
-                    </div>
-
-                    <div class="toggle-row">
-                        <span>Audio Alerta</span>
-                        <label class="switch">
-                            <input type="checkbox" id="set-audio" checked>
-                            <span class="slider"></span>
-                        </label>
-                    </div>
-                </div>
-
-                <!-- Tab: Ritmos de Referencia -->
-                <div id="tab-paces" class="tab-content">
-                    <p style="color:var(--text-dim); font-size:0.8rem;">Define tus ritmos para usarlos en el plan (min/km).</p>
-                    
-                    <div class="form-group">
-                        <label>Paso Fondo / Recuperación</label>
-                        <input type="number" id="pace-easy" class="form-control" step="0.01" placeholder="Ej: 6.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Paso Maratón (42k)</label>
-                        <input type="number" id="pace-marathon" class="form-control" step="0.01" placeholder="Ej: 5.30">
-                    </div>
-                    <div class="form-group">
-                        <label>Paso Media Maratón (21k)</label>
-                        <input type="number" id="pace-half" class="form-control" step="0.01" placeholder="Ej: 5.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Paso 10k</label>
-                        <input type="number" id="pace-10k" class="form-control" step="0.01" placeholder="Ej: 4.40">
-                    </div>
-                    <div class="form-group">
-                        <label>Paso 5k</label>
-                        <input type="number" id="pace-5k" class="form-control" step="0.01" placeholder="Ej: 4.20">
-                    </div>
-                    <button class="btn-small" onclick="window.app.savePaces()">Guardar Ritmos</button>
-                </div>
-
-                <!-- Tab: Plan de Entreno -->
-                <div id="tab-workout" class="tab-content">
-                    <div class="form-group" style="background:#222; padding:10px; border-radius:6px;">
-                        <label>Agregar Paso</label>
-                        <select id="wk-type" class="form-control" style="margin-bottom:5px;">
-                            <option value="time">Por Tiempo</option>
-                            <option value="dist">Por Distancia</option>
-                        </select>
-                        
-                        <div style="display:flex; gap:5px;">
-                            <input type="number" id="wk-value" class="form-control" placeholder="Ej: 10 o 1000">
-                            <select id="wk-unit" class="form-control" style="width:80px;">
-                                <option value="min">Min</option>
-                                <option value="m">Mts</option>
-                                <option value="km">Km</option>
-                            </select>
-                        </div>
-
-                        <select id="wk-target" class="form-control" style="margin-top:5px;">
-                            <option value="none">Sin objetivo</option>
-                            <option value="easy">Fondo / Suelta</option>
-                            <option value="marathon">Paso Maratón</option>
-                            <option value="half">Paso Media</option>
-                            <option value="tenk">Paso 10k</option>
-                            <option value="fivek">Paso 5k</option>
-                        </select>
-                        <button class="btn-small" onclick="window.app.addWorkoutStep()">+ Agregar a la lista</button>
-                    </div>
-
-                    <div style="border-top:1px solid #444; margin:10px 0;"></div>
-                    <h4 style="margin:0 0 10px 0; font-size:0.9rem; color:white;">Lista de Pasos:</h4>
-                    <div id="workout-list">
-                        <!-- Pasos renderizados aquí -->
-                        <div style="text-align:center; color:#666; font-size:0.8rem;">Vacío</div>
-                    </div>
-                    
-                    <div style="margin-top:10px;">
-                        <button class="btn-small" style="background:var(--danger-color);" onclick="window.app.clearWorkout()">Borrar Todo</button>
-                        <button class="btn-small" style="background:var(--primary-color); color:black;" onclick="window.app.activateWorkout()">Activar Plan</button>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <!-- Scripts -->
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
         window.app = {
             state: {
                 isRunning: false,
                 isPaused: false,
                 startTime: 0,
-                pausedTime: 0,
                 totalElapsed: 0,
-                movingTime: 0,
-                distance: 0, // metros
+                distance: 0,
                 currentSpeed: 0,
                 avgSpeed: 0,
                 lastPos: null,
-                altitude: 0,
                 accuracy: 0,
                 path: [],
                 laps: [],
-                lastMovementTime: null,
-                lastPosTime: null,
-                currentLap: { startTime: 0, distance: 0, path: [] },
-                activity: 'stopped',
+                currentLap: { startTime: 0, distance: 0 },
                 watchId: null,
                 timerInterval: null,
-                wakeLock: null,
                 units: 'metric',
-                font: "'Teko', sans-serif",
-                
                 settings: {
-                    autoLap: false,
-                    lapType: 'distance',
-                    lapDistValue: 1000,
-                    lapTimeValue: 600,
-                    audio: true
-                },
-
-                paces: {
-                    easy: 480,
-                    marathon: 300,
-                    half: 270,
-                    tenk: 240,
-                    fivek: 210
-                },
-
-                workoutPlan: [], 
-                isWorkoutActive: false,
-                currentStepIndex: -1,
-                stepStartTime: 0,
-                stepStartDist: 0,
-                stepWarningFired: false
+                    autoLap: true,
+                    lapDistValue: 1000
+                }
             },
             
-            ui: {
-                timer: document.getElementById('main-timer'),
-                dist: document.getElementById('val-dist'),
-                distUnit: document.getElementById('unit-dist'),
-                speed: document.getElementById('val-speed'),
-                speedUnit: document.getElementById('unit-speed'),
-                avgSpeed: document.getElementById('val-avg-speed'),
-                avgSpeedSub: document.getElementById('val-avg-speed-sub'),
-                pace: document.getElementById('val-pace'),
-                lastLap: document.getElementById('val-last-lap'),
-                status: document.getElementById('status-indicator'),
-                statusText: document.getElementById('status-text'),
-                btnAction: document.getElementById('btn-action'),
-                btnLap: document.getElementById('btn-lap'),
-                mapContainer: document.getElementById('map-container'),
-                toast: document.getElementById('lap-toast'),
-                lapsTable: document.getElementById('laps-table-body'),
-                toastTime: document.getElementById('toast-time'),
-                toastPace: document.getElementById('toast-pace'),
-                toastTitle: document.getElementById('toast-title'),
-                workoutList: document.getElementById('workout-list'),
-                guidance: document.getElementById('workout-guidance'),
-                guideTitle: document.getElementById('guide-title'),
-                guideDesc: document.getElementById('guide-desc'),
-                guideTarget: document.getElementById('guide-target')
-            },
-
-            map: null,
-            polylineTotal: null,
-            polylineLap: null,
-            markers: [],
-
             init: function() {
                 this.initMap();
-                this.loadSettings();
-                this.changeFont(this.state.font);
                 this.updateUI();
-                // Asegurar que la guía esté oculta al inicio
-                this.ui.guidance.style.display = 'none';
+                this.updateClock();
+                setInterval(() => this.updateClock(), 1000);
             },
 
             initMap: function() {
                 this.map = L.map('map', { 
                     zoomControl: false,
-                    attributionControl: false
+                    attributionControl: false 
                 }).setView([0, 0], 2);
                 
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {                
@@ -725,181 +356,64 @@
                     maxZoom: 19
                 }).addTo(this.map);
                 
-                this.polylineTotal = L.polyline([], { 
-                    color: '#2979ff', 
+                this.polyline = L.polyline([], { 
+                    color: '#04ff86', 
                     weight: 4,
                     opacity: 0.8
                 }).addTo(this.map);
+            },
+
+            // FUNCIONES SIMPLIFICADAS
+            handleActionButton: function() {
+                const btn = document.getElementById('btn-action');
                 
-                this.polylineLap = L.polyline([], { 
-                    color: '#ff1744', 
-                    weight: 4, 
-                    dashArray: '8, 8',
-                    opacity: 0.8
-                }).addTo(this.map);
-            },
-
-            // --- Wake Lock & Full Screen ---
-            async requestWakeLock() {
-                try {
-                    if ('wakeLock' in navigator) {
-                        this.state.wakeLock = await navigator.wakeLock.request('screen');
-                    }
-                } catch (err) { console.error(err); }
-            },
-            
-            releaseWakeLock: function() {
-                if (this.state.wakeLock !== null) {
-                    this.state.wakeLock.release().then(() => { this.state.wakeLock = null; });
-                }
-            },
-            
-            toggleFullScreen: function() {
-                function getFullscreenElement() {
-                    return document.fullscreenElement || 
-                        document.webkitFullscreenElement ||
-                        document.mozFullScreenElement ||
-                        document.msFullscreenElement;
-                }
-    
-                function requestFullscreen(element) {
-                    if (element.requestFullscreen) {
-                        return element.requestFullscreen();
-                    } else if (element.webkitRequestFullscreen) {
-                        return element.webkitRequestFullscreen();
-                    } else if (element.mozRequestFullScreen) {
-                        return element.mozRequestFullScreen();
-                    } else if (element.msRequestFullscreen) {
-                        return element.msRequestFullscreen();
-                    }
-                    return Promise.reject(new Error('Fullscreen API not supported'));
-                }
-    
-                function exitFullscreen() {
-                    if (document.exitFullscreen) {
-                        return document.exitFullscreen();
-                    } else if (document.webkitExitFullscreen) {
-                        return document.webkitExitFullscreen();
-                    } else if (document.mozCancelFullScreen) {
-                        return document.mozCancelFullScreen();
-                    } else if (document.msExitFullscreen) {
-                        return document.msExitFullscreen();
-                    }
-                    return Promise.reject(new Error('Fullscreen API not supported'));
-                }
-    
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    
-                if (isIOS) {
-                    alert('Pantalla completa no disponible en iOS.');
-                    return;
-                }
-    
-                if (!getFullscreenElement()) {
-                    const el = document.documentElement;
-                    requestFullscreen(el).catch(err => {
-                        console.error("Fullscreen error:", err);
-                        if (err.name === 'TypeError' || err.name === 'SecurityError') {
-                            alert('Tu dispositivo o navegador no soporta pantalla completa.');
-                        }
-                    });
-                } else {
-                    exitFullscreen().catch(err => {
-                        console.error("Exit fullscreen error:", err);
-                    });
-                }
-            },
-        
-            // --- Tabs UI ---
-            switchTab: function(tabName) {
-                document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-                document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-                document.getElementById('tab-' + tabName).classList.add('active');
-                const index = ['general','paces','workout'].indexOf(tabName);
-                if(index >= 0) document.querySelectorAll('.tab-btn')[index].classList.add('active');
-            },
-
-            // --- Gestión de Estado ---
-            handleRightButton: function() {
                 if (!this.state.isRunning && !this.state.isPaused) {
+                    // INICIAR
                     this.startTracking();
+                    btn.textContent = "PAUSAR";
+                    btn.classList.remove('paused');
                 } else if (this.state.isRunning) {
+                    // PAUSAR
                     this.pauseTracking();
+                    btn.textContent = "REANUDAR";
+                    btn.classList.add('paused');
                 } else if (this.state.isPaused) {
-                    this.stopTracking();
+                    // REANUDAR
+                    this.resumeTracking();
+                    btn.textContent = "PAUSAR";
+                    btn.classList.remove('paused');
                 }
             },
 
-            handleLeftButton: function() {
-                if (!this.state.isRunning && !this.state.isPaused) {
-                    // Si no hay actividad en curso, abrir LAPs
-                    this.openLaps();
-                    return;
-                }
-    
+            handleLapButton: function() {
                 if (this.state.isRunning) {
-                    this.recordLap(true);  // LAP manual
+                    // Durante actividad: LAP normal
+                    this.recordLap();
                 } else if (this.state.isPaused) {
-                    // En pausa: preguntar si resetear o ver LAPs
-                    if (confirm("¿Ver historial de LAPs o reiniciar actividad?\n\nAceptar: Ver LAPs\nCancelar: Reiniciar actividad")) {
-                        this.openLaps();
-                    } else {
-                        this.resetActivity();
-                    }
+                    // En pausa: ver historial
+                    this.showLapsHistory();
+                } else {
+                    // Sin actividad: resetear
+                    this.resetAll();
                 }
             },
 
             startTracking: function() {
-                // Si hay datos previos y no estamos en pausa, preguntar
-                if ((this.state.totalElapsed > 0 || this.state.distance > 0) && !this.state.isPaused) {
-                    if (!confirm("Hay una actividad en curso. ¿Iniciar nueva actividad? (Se borrarán datos actuales)")) {
-                        return;
-                    }
-                    this.resetActivity();
-                }
-
                 this.state.isRunning = true;
                 this.state.isPaused = false;
-                this.state.startTime = Date.now() - this.state.totalElapsed; // Usar totalElapsed existente si hay
+                this.state.startTime = Date.now() - this.state.totalElapsed;
                 this.state.currentLap.startTime = Date.now();
-                this.state.currentLap.distance = 0;
-                this.state.currentLap.path = [];
-
-                // Activar guía solo si hay workout activo
-                if (this.state.isWorkoutActive && this.state.workoutPlan.length > 0) {
-                    this.state.currentStepIndex = 0;
-                    this.state.stepStartTime = Date.now();
-                    this.state.stepStartDist = 0;
-                    this.state.stepWarningFired = false;
-                    this.ui.guidance.style.display = 'flex';
-                    this.updateWorkoutUI();
-                } else {
-                    this.ui.guidance.style.display = 'none';
-                }
-
-                this.ui.btnAction.textContent = "Pausar";
-                this.ui.btnAction.classList.remove('stopped');
-                this.ui.status.classList.add('active');
-                this.ui.status.classList.remove('paused');
-                
-                this.requestWakeLock();
                 
                 if ("geolocation" in navigator) {
                     this.state.watchId = navigator.geolocation.watchPosition(
                         (pos) => this.onPositionUpdate(pos),
                         (err) => console.error("GPS Error:", err),
-                        { 
-                            enableHighAccuracy: true, 
-                            maximumAge: 1000, 
-                            timeout: 10000 
-                        }
+                        { enableHighAccuracy: true, maximumAge: 1000 }
                     );
-                } else {
-                    alert("GPS no soportado.");
                 }
 
                 this.state.timerInterval = setInterval(() => this.tick(), 1000);
-                this.updateStatusText("Iniciando GPS...");
+                document.getElementById('status-text').textContent = "Activo";
             },
 
             pauseTracking: function() {
@@ -908,341 +422,216 @@
                 clearInterval(this.state.timerInterval);
                 if (this.state.watchId) {
                     navigator.geolocation.clearWatch(this.state.watchId);
-                    this.state.watchId = null;
                 }
-                this.releaseWakeLock();
-
-                this.ui.btnAction.textContent = "Detener";
-                this.ui.btnAction.classList.add('paused');
-                this.ui.status.classList.remove('active');
-                this.ui.status.classList.add('paused');
-                this.updateStatusText("Pausado");
+                document.getElementById('status-text').textContent = "Pausado";
             },
 
-            stopTracking: function() {
-                this.state.isRunning = false;
+            resumeTracking: function() {
+                this.state.isRunning = true;
                 this.state.isPaused = false;
-                clearInterval(this.state.timerInterval);
-                if (this.state.watchId) {
-                    navigator.geolocation.clearWatch(this.state.watchId);
-                    this.state.watchId = null;
-                }
-                this.releaseWakeLock();                
+                this.state.startTime = Date.now() - this.state.totalElapsed;
                 
-                this.ui.btnAction.textContent = "Iniciar";
-                this.ui.btnAction.classList.remove('paused');
-                this.ui.status.classList.remove('paused');
-                this.updateStatusText("Terminado");
-                this.updateUI();
-            },
-
-            resetActivity: function() {
-                if (confirm("¿Borrar todos los datos de esta actividad?")) {
-                    this.state.totalElapsed = 0;
-                    this.state.distance = 0;
-                    this.state.currentSpeed = 0;
-                    this.state.avgSpeed = 0;
-                    this.state.path = [];
-                    this.state.laps = [];
-                    this.state.currentLap = { startTime: 0, distance: 0, path: [] };
-                    this.polylineTotal.setLatLngs([]);
-                    this.polylineLap.setLatLngs([]);
-                    this.updateUI();
-                    alert("Datos reiniciados. Listo para nueva actividad.");
+                if ("geolocation" in navigator) {
+                    this.state.watchId = navigator.geolocation.watchPosition(
+                        (pos) => this.onPositionUpdate(pos),
+                        (err) => console.error("GPS Error:", err),
+                        { enableHighAccuracy: true }
+                    );
                 }
+
+                this.state.timerInterval = setInterval(() => this.tick(), 1000);
+                document.getElementById('status-text').textContent = "Activo";
             },
 
-            // --- Lógica GPS ---
             onPositionUpdate: function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 const accuracy = position.coords.accuracy;
                 const speed = position.coords.speed;
-    
+
                 this.state.accuracy = Math.round(accuracy);
-                this.state.altitude = position.coords.altitude ? Math.round(position.coords.altitude) : 0; 
-                
                 if (speed !== null && speed >= 0) {
                     this.state.currentSpeed = speed;
-                };
-
-                this.detectActivity(this.state.currentSpeed);
-    
-                const newPoint = [lat, lng];
-                const now = Date.now();
-                
-                if (!this.state.lastPos) {
-                    this.state.lastPos = newPoint;
-                    this.state.lastPosTime = now;
-                    this.state.lastMovementTime = now;
-                    this.updateUI();
-                    return;
-                };
-    
-                const dist = this.getDistanceFromLatLonInM(
-                    this.state.lastPos[0], this.state.lastPos[1], 
-                    lat, lng
-                );
-    
-                const timeDiff = (now - this.state.lastPosTime) / 1000;
-    
-                // Filtro mejorado
-                let shouldAddDistance = false;
-                if (accuracy < 50 && dist > 2 && timeDiff > 0.5) {
-                    shouldAddDistance = true;
-                } else if (accuracy < 20 && dist > 0.5) {
-                    shouldAddDistance = true;
                 }
-    
-                if (shouldAddDistance) {
-                    this.state.distance += dist;
-                    this.state.currentLap.distance += dist;
-            
-                    if (this.state.lastMovementTime) {
-                        const movementTimeDiff = now - this.state.lastMovementTime;
-                        this.state.movingTime += Math.min(movementTimeDiff, 3000);
-                    }
-                    this.state.lastMovementTime = now;
-            
-                    const MIN_DISTANCE_BETWEEN_POINTS = 3;
-                    const lastPathPoint = this.state.path[this.state.path.length - 1];
-            
-                    if (!lastPathPoint || 
-                        this.getDistanceFromLatLonInM(lastPathPoint[0], lastPathPoint[1], lat, lng) > MIN_DISTANCE_BETWEEN_POINTS) {
+
+                const newPoint = [lat, lng];
+                
+                if (this.state.lastPos) {
+                    const dist = this.getDistanceFromLatLonInM(
+                        this.state.lastPos[0], this.state.lastPos[1], 
+                        lat, lng
+                    );
+                    
+                    if (accuracy < 50 && dist > 2) {
+                        this.state.distance += dist;
+                        this.state.currentLap.distance += dist;
                         this.state.path.push(newPoint);
-                        this.state.currentLap.path.push(newPoint);
+                        this.polyline.setLatLngs(this.state.path);
+                        
+                        // Centrar mapa en la ruta automáticamente
+                        if (this.state.path.length > 1) {
+                            this.map.fitBounds(this.polyline.getBounds(), {
+                                padding: [30, 30],
+                                maxZoom: 18
+                            });
+                        }
+                        
+                        // Auto-lap por distancia
+                        if (this.state.settings.autoLap && 
+                            this.state.currentLap.distance >= this.state.settings.lapDistValue) {
+                            this.recordLap();
+                        }
+                    }
+                }
                 
-                        this.polylineTotal.setLatLngs(this.state.path);
-                        this.polylineLap.setLatLngs(this.state.currentLap.path);
-                    }
-            
-                    if (this.state.path.length % 5 === 0) {
-                        this.map.panTo(newPoint);
-                    }
-            
-                    if (this.state.settings.autoLap && !this.state.isWorkoutActive) {
-                        this.checkAutoLap();
-                    }
-                };
-    
                 this.state.lastPos = newPoint;
-                this.state.lastPosTime = now;
-    
-                if ((speed === null || speed < 0) && timeDiff > 0) {
-                    this.state.currentSpeed = dist / timeDiff;
-                };
-                
                 this.updateUI();
             },
 
             tick: function() {
                 const now = Date.now();
                 this.state.totalElapsed = now - this.state.startTime;
-
-                const dateObj = new Date();
-                document.getElementById('val-clock').textContent = dateObj.toLocaleTimeString([], { 
-                    hour: '2-digit', 
-                    minute: '2-digit' 
-                });
                 
-                // CALCULAR VELOCIDAD PROMEDIO CON TU FÓRMULA
-                let displayAvgSpeed = 0;
+                // CALCULAR VELOCIDAD PROMEDIO CORRECTA
                 if (this.state.totalElapsed > 0 && this.state.distance > 0) {
-                    // Tu fórmula: 3600 / (tiempo_seg / distancia_km)
-                    const tiempoSeg = this.state.totalElapsed / 1000;
-                    const distanciaKm = this.state.distance / 1000;
-                    displayAvgSpeed = 3600 / (tiempoSeg / distanciaKm);  // = (distanciaKm / tiempoSeg) * 3600
-        
-                    // O más simple: km/h = (metros / milisegundos) × 3600
-                    // displayAvgSpeed = (this.state.distance / this.state.totalElapsed) * 3600;
+                    // Fórmula: km/h = (metros / milisegundos) × 3600
+                    this.state.avgSpeed = (this.state.distance / this.state.totalElapsed) * 3600;
                 }
-
-                // Convertir a unidades imperiales si es necesario
-                const factorSpeed = isMetric ? 1 : 2.23694; // km/h a mph
-                const finalAvgSpeed = displayAvgSpeed * factorSpeed;
-    
-                // Actualizar en UI
-                this.ui.avgSpeed.textContent = finalAvgSpeed.toFixed(1);
-                this.ui.avgSpeedSub.textContent = finalAvgSpeed.toFixed(1);
-    
-                // Workout steps
-                if (this.state.isWorkoutActive && this.state.currentStepIndex < this.state.workoutPlan.length) {
-                    const step = this.state.workoutPlan[this.state.currentStepIndex];
-                    
-                    if (step.type === 'time') {
-                        const currentStepTime = (Date.now() - this.state.stepStartTime) / 1000;
-                        const remaining = step.value - currentStepTime;
-                        
-                        if (remaining <= 15 && remaining > 14 && !this.state.stepWarningFired) {
-                            if (this.state.settings.audio) this.playWarningSound();
-                            this.state.stepWarningFired = true; 
-                        }
-                    }
-
-                    this.checkWorkoutProgress();
-                    this.updateWorkoutUI();
-                }
-
-                // Auto-lap por tiempo
-                if (this.state.settings.autoLap && this.state.settings.lapType === 'time') {
-                    const currentLapDuration = (now - this.state.currentLap.startTime) / 1000;
-                    if (currentLapDuration >= this.state.settings.lapTimeValue) {
-                        this.recordLap(false);
-                    }
-                }
-
+                
                 this.updateUI();
             },
 
-            checkWorkoutProgress: function() {
-                if (!this.state.isWorkoutActive || this.state.currentStepIndex >= this.state.workoutPlan.length) {
-                    return;
-                }
-                
-                const step = this.state.workoutPlan[this.state.currentStepIndex];
-                let completed = false;
-
-                if (step.type === 'time') {
-                    const currentStepTime = (Date.now() - this.state.stepStartTime) / 1000;
-                    if (currentStepTime >= step.value) completed = true;
-                } else if (step.type === 'dist') {
-                    const currentStepDist = this.state.distance - this.state.stepStartDist;
-                    if (currentStepDist >= step.value) completed = true;
-                }
-
-                if (completed) {
-                    this.nextWorkoutStep();
-                }
-            },
-
-            nextWorkoutStep: function() {
+            recordLap: function() {
                 const now = Date.now();
                 const lapDuration = now - this.state.currentLap.startTime;
                 
-                // Registrar LAP del paso completado
-                if (lapDuration > 1000 || this.state.currentLap.distance > 10) {
-                    this.recordLap(false, true); 
-                }
-
-                this.state.currentStepIndex++;
-                this.state.stepStartTime = Date.now();
-                this.state.stepStartDist = this.state.distance;
-                this.state.stepWarningFired = false;
-
-                if (this.state.currentStepIndex >= this.state.workoutPlan.length) {
-                    // WORKOUT COMPLETADO
-                    this.state.isWorkoutActive = false;
-                    this.ui.guidance.style.display = 'none';
-                    
-                    this.playLoudBeep();
-                    setTimeout(() => this.playLoudBeep(), 300);
-                    
-                    // Mostrar toast final
-                    const totalKm = this.state.distance / 1000;
-                    const totalHours = this.state.totalElapsed / (1000 * 60 * 60);
-                    const avgPace = totalHours > 0 ? (this.state.totalElapsed / 1000) / totalKm : 0;
-                    
-                    this.showToast({
-                        duration: this.state.totalElapsed,
-                        pace: avgPace,
-                        distance: this.state.distance
-                    }, "🏁 Workout Completado");
-                } else {
-                    // SIGUIENTE PASO
-                    this.updateWorkoutUI();
-                    this.playLoudBeep();
-                    setTimeout(() => this.playLoudBeep(), 200);
-                }
+                if (lapDuration < 1000) return; // Evitar laps muy cortos
                 
-                // Resetear currentLap
-                this.state.currentLap.startTime = Date.now();
-                this.state.currentLap.distance = 0;
-                this.state.currentLap.path = this.state.lastPos ? [this.state.lastPos] : [];
-                this.polylineLap.setLatLngs([]);
-            },
-
-            checkAutoLap: function() {
-                if (this.state.isWorkoutActive) return;
-                
-                if (this.state.settings.lapType === 'distance') {
-                    if (this.state.currentLap.distance >= this.state.settings.lapDistValue) {
-                        this.recordLap(false);
-                    }
-                }
-            },
-
-            recordLap: function(isManual, isWorkoutStep = false) {
-                const now = Date.now();
-                const lapDuration = now - this.state.currentLap.startTime;
-                
-                if (lapDuration < 1000 && this.state.currentLap.distance < 10) {
-                    return null;
-                }
-
-                let paceSecPerUnit = 0;
+                let pace = 0;
                 if (this.state.currentLap.distance > 0) {
                     const lapSeconds = lapDuration / 1000;
                     const lapKm = this.state.currentLap.distance / 1000;
-                    paceSecPerUnit = lapSeconds / lapKm;
+                    pace = lapSeconds / lapKm;
                 }
-
+                
                 const lapData = { 
                     index: this.state.laps.length + 1, 
                     duration: lapDuration, 
                     distance: this.state.currentLap.distance, 
-                    pace: paceSecPerUnit, 
-                    isWorkoutStep: isWorkoutStep 
+                    pace: pace 
                 };
                 
                 this.state.laps.push(lapData);
-
-                if (this.state.settings.audio) {
-                    if (isWorkoutStep) {
-                        this.playLoudBeep();
-                    } else {
-                        this.playBeep();
-                    }
-                }
                 
-                this.showToast(lapData, isWorkoutStep ? "🎯 Paso Completado" : "✅ Lap Completado");
+                // Mostrar toast
+                this.showToast(lapData);
                 
-                this.updateLapsTable();
-
+                // Resetear lap actual
                 this.state.currentLap.startTime = now;
                 this.state.currentLap.distance = 0;
-                this.state.currentLap.path = this.state.lastPos ? [this.state.lastPos] : [];
-                this.polylineLap.setLatLngs([]);
                 
-                return lapData;
+                this.updateUI();
             },
 
-            detectActivity: function(speedMs) {
-                const speedKmh = speedMs * 3.6;
-    
-                if (speedKmh < 0.5) this.state.activity = 'stopped';
-                else if (speedKmh < 6) this.state.activity = 'walking';
-                else if (speedKmh < 14) this.state.activity = 'running';
-                else if (speedKmh < 35) this.state.activity = 'cycling';
-                else this.state.activity = 'driving';
-    
-                this.updateStatusText();
+            showToast: function(lapData) {
+                const toast = document.getElementById('lap-toast');
+                document.getElementById('toast-time').textContent = this.formatTime(lapData.duration);
+                document.getElementById('toast-pace').textContent = this.formatPace(lapData.pace) + ' min/km';
+                
+                toast.style.display = 'block';
+                setTimeout(() => {
+                    toast.style.display = 'none';
+                }, 2000);
             },
 
-            updateStatusText: function(override) {
-                if (override) { 
-                    this.ui.statusText.textContent = override; 
-                    return; 
+            showLapsHistory: function() {
+                const modal = document.getElementById('modal-laps');
+                const tbody = document.getElementById('laps-table-body');
+                
+                if (this.state.laps.length === 0) {
+                    tbody.innerHTML = '<div style="padding: 20px;">Sin datos</div>';
+                } else {
+                    let html = '<table style="width:100%; border-collapse: collapse;">';
+                    html += '<tr><th style="text-align:left; padding:8px;">#</th><th style="text-align:left; padding:8px;">Tiempo</th><th style="text-align:left; padding:8px;">Dist</th><th style="text-align:left; padding:8px;">Ritmo</th></tr>';
+                    
+                    this.state.laps.slice().reverse().forEach(lap => {
+                        html += `<tr>
+                            <td style="padding:8px;">#${lap.index}</td>
+                            <td style="padding:8px;">${this.formatTime(lap.duration)}</td>
+                            <td style="padding:8px;">${(lap.distance/1000).toFixed(2)} km</td>
+                            <td style="padding:8px;">${this.formatPace(lap.pace)}</td>
+                        </tr>`;
+                    });
+                    
+                    html += '</table>';
+                    tbody.innerHTML = html;
                 }
-                const map = { 
-                    'stopped': '📍 Parado', 
-                    'walking': '🚶 Caminando', 
-                    'running': '🏃 Corriendo', 
-                    'cycling': '🚴 Bicicleta', 
-                    'driving': '🚗 Auto' 
-                };
-                this.ui.statusText.textContent = map[this.state.activity] || '...';
+                
+                modal.style.display = 'flex';
             },
 
+            resetAll: function() {
+                if (confirm("¿Reiniciar todos los datos?")) {
+                    this.state.totalElapsed = 0;
+                    this.state.distance = 0;
+                    this.state.currentSpeed = 0;
+                    this.state.avgSpeed = 0;
+                    this.state.path = [];
+                    this.state.laps = [];
+                    this.state.currentLap = { startTime: 0, distance: 0 };
+                    this.state.lastPos = null;
+                    this.polyline.setLatLngs([]);
+                    this.map.setView([0, 0], 2);
+                    
+                    document.getElementById('btn-action').textContent = "INICIAR";
+                    document.getElementById('btn-action').classList.remove('paused');
+                    document.getElementById('status-text').textContent = "Listo";
+                    
+                    this.updateUI();
+                }
+            },
+
+            updateUI: function() {
+                // Tiempo
+                document.getElementById('main-timer').textContent = this.formatTime(this.state.totalElapsed);
+                
+                // Distancia
+                const distKm = this.state.distance / 1000;
+                document.getElementById('val-dist').textContent = distKm.toFixed(2);
+                
+                // Velocidad actual
+                const speedKmh = this.state.currentSpeed * 3.6;
+                document.getElementById('val-speed').textContent = speedKmh.toFixed(1);
+                
+                // Velocidad promedio CORRECTA
+                document.getElementById('val-avg-speed').textContent = this.state.avgSpeed.toFixed(1);
+                
+                // Ritmo
+                let pace = 0;
+                if (distKm > 0 && this.state.totalElapsed > 0) {
+                    const totalSeconds = this.state.totalElapsed / 1000;
+                    pace = totalSeconds / distKm;
+                }
+                document.getElementById('val-pace').textContent = this.formatPace(pace);
+                
+                // GPS Error
+                document.getElementById('val-gps-acc').textContent = 
+                    this.state.accuracy > 5000 ? '-- m' : this.state.accuracy + ' m';
+                
+                // Último Lap
+                const lastLap = this.state.laps[this.state.laps.length - 1];
+                document.getElementById('val-last-lap').textContent = lastLap ? 
+                    this.formatPace(lastLap.pace) : '--:--';
+            },
+
+            updateClock: function() {
+                const now = new Date();
+                document.getElementById('val-clock').textContent = 
+                    now.getHours().toString().padStart(2, '0') + ':' + 
+                    now.getMinutes().toString().padStart(2, '0');
+            },
+
+            // Funciones utilitarias
             getDistanceFromLatLonInM: function(lat1, lon1, lat2, lon2) {
                 const R = 6371000;
                 const φ1 = lat1 * Math.PI / 180;
@@ -1255,428 +644,37 @@
                           Math.sin(Δλ/2) * Math.sin(Δλ/2);
     
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-                const distance = R * c;
-    
-                return distance > 200 ? 0 : distance;
+                return R * c;
             },
 
             formatTime: function(ms) {
-                let s = Math.floor((ms / 1000) % 60);
-                let m = Math.floor((ms / (1000 * 60)) % 60);
-                let h = Math.floor((ms / (1000 * 60 * 60)));
-                s = s < 10 ? '0'+s : s; 
-                m = m < 10 ? '0'+m : m; 
-                h = h < 10 ? '0'+h : h;
-                return `${h}:${m}:${s}`;
+                const totalSeconds = Math.floor(ms / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                
+                return hours.toString().padStart(2, '0') + ':' + 
+                       minutes.toString().padStart(2, '0') + ':' + 
+                       seconds.toString().padStart(2, '0');
             },
 
             formatPace: function(secPerKm) {
                 if (secPerKm === 0 || !isFinite(secPerKm) || secPerKm > 3600) return "--:--";
-                let m = Math.floor(secPerKm / 60);
-                let s = Math.floor(secPerKm % 60);
-                return `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
-            },
-
-            changeFont: function(fontFamily) {
-                this.state.font = fontFamily;
-                document.documentElement.style.setProperty('--font-numbers', fontFamily);
-            },
-
-            updateUI: function() {
-                this.ui.timer.textContent = this.formatTime(this.state.totalElapsed);
-                const isMetric = this.state.units === 'metric';
-                const unitDist = isMetric ? 'km' : 'mi';
-                const unitSpeed = isMetric ? 'km/h' : 'mph';
-                const altUnit = isMetric ? 'm' : 'ft';
-                const factorDist = isMetric ? 1 : 0.621371;
-                const factorSpeed = isMetric ? 3.6 : 2.23694;
-
-                document.getElementById('val-alt').textContent = isMetric ? 
-                    this.state.altitude : 
-                    Math.round(this.state.altitude * 3.28084);
-                document.getElementById('unit-alt').textContent = altUnit;
-
-                const displayDist = (this.state.distance / 1000) * factorDist;
-                const displaySpeed = this.state.currentSpeed * factorSpeed;
-                const displayAvgSpeed = this.state.avgSpeed * factorSpeed;
-
-                this.ui.dist.textContent = displayDist.toFixed(2);
-                this.ui.distUnit.textContent = unitDist;
-                this.ui.speed.textContent = displaySpeed.toFixed(1);
-                this.ui.speedUnit.textContent = unitSpeed;
-                this.ui.avgSpeed.textContent = displayAvgSpeed.toFixed(1);
-                this.ui.avgSpeedSub.textContent = displayAvgSpeed.toFixed(1);
-
-                if(this.state.accuracy > 5000 || this.state.accuracy === 0) {
-                    document.getElementById('val-gps-acc').textContent = "--";
-                } else {
-                    document.getElementById('val-gps-acc').textContent = this.state.accuracy;
-                }
-
-                let globalPace = 0;
-                if (this.state.distance > 0 && this.state.totalElapsed > 0) {
-                    const totalSeconds = this.state.totalElapsed / 1000;
-                    const distanceUnit = (this.state.distance / 1000) * factorDist;
-                    if (distanceUnit > 0) {
-                        globalPace = totalSeconds / distanceUnit;
-                    }
-                }
-                
-                if (displaySpeed < 0.5 || globalPace === 0) {
-                    this.ui.pace.textContent = "--:--";
-                } else {
-                    this.ui.pace.textContent = this.formatPace(globalPace);
-                }
-                this.ui.pace.nextElementSibling.textContent = `min/${unitDist}`;
-
-                const lastLap = this.state.laps[this.state.laps.length - 1];
-                if (lastLap) {
-                    const lapPace = lastLap.pace * (isMetric ? 1 : (1/0.621371));
-                    this.ui.lastLap.textContent = this.formatPace(lapPace);
-                } else {
-                    this.ui.lastLap.textContent = "--:--";
-                }
-            },
-
-            toggleUnits: function() {
-                this.state.units = this.state.units === 'metric' ? 'imperial' : 'metric';
-                this.updateUI();
-                this.updateLapsTable();
-            },
-
-            // Se eliminó toggleMapSize()
-
-            showToast: function(lapData, overrideTitle) {
-                if (!lapData) return;
-                
-                this.ui.toast.style.display = 'block';
-                this.ui.toastTitle.textContent = overrideTitle || "✅ Lap Completado";
-                
-                // Siempre mostrar tiempo si hay datos
-                if (lapData.duration && lapData.duration > 0) {
-                    this.ui.toastTime.textContent = this.formatTime(lapData.duration);
-                } else {
-                    this.ui.toastTime.textContent = "";
-                }
-                
-                // Siempre mostrar ritmo si es válido
-                if (lapData.pace && lapData.pace > 0 && isFinite(lapData.pace)) {
-                    const isMetric = this.state.units === 'metric';
-                    const factor = isMetric ? 1 : (1/0.621371);
-                    const paceVal = lapData.pace * factor;
-                    this.ui.toastPace.textContent = this.formatPace(paceVal) + ` /${isMetric ? 'km' : 'mi'}`;
-                } else {
-                    this.ui.toastPace.textContent = "";
-                }
-
-                if (this.toastTimeout) clearTimeout(this.toastTimeout);
-                this.toastTimeout = setTimeout(() => { 
-                    this.ui.toast.style.display = 'none'; 
-                }, 3000);
-            },
-
-            playBeep: function() {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(880, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-                    gain.gain.setValueAtTime(0.5, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.3);
-                } catch(e) {
-                    console.log("Audio no disponible:", e);
-                }
-            },
-
-            playWarningSound: function() {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const now = ctx.currentTime;
-                    [0, 0.15, 0.3].forEach(delay => {
-                        const osc = ctx.createOscillator();
-                        const gain = ctx.createGain();
-                        osc.type = 'square';
-                        osc.frequency.setValueAtTime(600, now + delay);
-                        gain.gain.setValueAtTime(0.5, now + delay);
-                        gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.1);
-                        osc.connect(gain);
-                        gain.connect(ctx.destination);
-                        osc.start(now + delay);
-                        osc.stop(now + delay + 0.1);
-                    });
-                } catch(e) {
-                    console.log("Audio no disponible:", e);
-                }
-            },
-
-            playLoudBeep: function() {
-                try {
-                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'triangle';
-                    osc.frequency.setValueAtTime(1200, ctx.currentTime);
-                    gain.gain.setValueAtTime(1.0, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.4);
-                } catch(e) {
-                    console.log("Audio no disponible:", e);
-                }
-            },
-
-            openLaps: function() {
-                document.getElementById('modal-laps').classList.add('open');
-                this.updateLapsTable();
+                const minutes = Math.floor(secPerKm / 60);
+                const seconds = Math.floor(secPerKm % 60);
+                return minutes.toString().padStart(2, '0') + ':' + seconds.toString().padStart(2, '0');
             },
 
             openSettings: function() {
-                document.getElementById('modal-settings').classList.add('open');
-                document.getElementById('set-autolap').checked = this.state.settings.autoLap;
-                document.getElementById('set-lap-type').value = this.state.settings.lapType;
-                document.getElementById('set-lap-dist').value = (this.state.settings.lapDistValue / 1000).toFixed(1);
-                document.getElementById('set-lap-time').value = (this.state.settings.lapTimeValue / 60).toFixed(0);
-                document.getElementById('set-audio').checked = this.state.settings.audio;
-                document.getElementById('set-font').value = this.state.font;
-                this.toggleLapInputs();
-                
-                // Cargar ritmos si existen
-                if (this.state.paces.easy) document.getElementById('pace-easy').value = this.state.paces.easy / 60;
-                if (this.state.paces.marathon) document.getElementById('pace-marathon').value = this.state.paces.marathon / 60;
-                if (this.state.paces.half) document.getElementById('pace-half').value = this.state.paces.half / 60;
-                if (this.state.paces.tenk) document.getElementById('pace-10k').value = this.state.paces.tenk / 60;
-                if (this.state.paces.fivek) document.getElementById('pace-5k').value = this.state.paces.fivek / 60;
-            },
-
-            closeModals: function() {
-                document.querySelectorAll('.modal').forEach(m => m.classList.remove('open'));
-                this.saveSettings();
-            },
-
-            toggleLapInputs: function() {
-                const type = document.getElementById('set-lap-type').value;
-                document.getElementById('input-dist-group').style.display = type === 'distance' ? 'block' : 'none';
-                document.getElementById('input-time-group').style.display = type === 'time' ? 'block' : 'none';
-            },
-
-            saveSettings: function() {
-                this.state.settings.autoLap = document.getElementById('set-autolap').checked;
-                this.state.settings.lapType = document.getElementById('set-lap-type').value;
-                this.state.settings.lapDistValue = parseFloat(document.getElementById('set-lap-dist').value) * 1000;
-                this.state.settings.lapTimeValue = parseFloat(document.getElementById('set-lap-time').value) * 60;
-                this.state.settings.audio = document.getElementById('set-audio').checked;
-                
-                // Guardar ritmos
-                this.state.paces.easy = parseFloat(document.getElementById('pace-easy').value) * 60 || 0;
-                this.state.paces.marathon = parseFloat(document.getElementById('pace-marathon').value) * 60 || 0;
-                this.state.paces.half = parseFloat(document.getElementById('pace-half').value) * 60 || 0;
-                this.state.paces.tenk = parseFloat(document.getElementById('pace-10k').value) * 60 || 0;
-                this.state.paces.fivek = parseFloat(document.getElementById('pace-5k').value) * 60 || 0;
-            },
-
-            loadSettings: function() {
-                // Cargar configuraciones desde localStorage si existen
-                try {
-                    const saved = localStorage.getItem('cronometroSettings');
-                    if (saved) {
-                        const settings = JSON.parse(saved);
-                        Object.assign(this.state.settings, settings);
-                    }
-                } catch(e) {
-                    console.log("Error cargando settings:", e);
-                }
-            },
-
-            updateLapsTable: function() {
-                const tbody = this.ui.lapsTable; 
-                tbody.innerHTML = '';
-                
-                if (this.state.laps.length === 0) { 
-                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#666;">Sin datos</td></tr>'; 
-                    return; 
-                }
-                
-                const reversedLaps = [...this.state.laps].reverse();
-                const isMetric = this.state.units === 'metric';
-                const distUnit = isMetric ? 'km' : 'mi';
-                const factor = isMetric ? 0.001 : 0.000621371;
-                
-                reversedLaps.forEach(lap => {
-                    const row = document.createElement('tr');
-                    const distDisplay = (lap.distance * factor).toFixed(2);
-                    const paceVal = lap.pace * (isMetric ? 1 : (1/0.621371));
-                    
-                    row.innerHTML = `
-                        <td class="highlight">#${lap.index}</td>
-                        <td>${this.formatTime(lap.duration)}</td>
-                        <td>${distDisplay} ${distUnit}</td>
-                        <td>${this.formatPace(paceVal)}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
-            },
-            
-            openWorkoutModal: function() {
-                this.openSettings();
-                this.switchTab('workout');
-                this.renderWorkoutList();
-            },
-
-            addWorkoutStep: function() {
-                const type = document.getElementById('wk-type').value;
-                const valInput = parseFloat(document.getElementById('wk-value').value);
-                const unit = document.getElementById('wk-unit').value;
-                const target = document.getElementById('wk-target').value;
-
-                if (isNaN(valInput) || valInput <= 0) {
-                    alert("Ingresa un valor válido");
-                    return;
-                }
-
-                let realValue = valInput;
-                if (unit === 'min') realValue = valInput * 60;
-                else if (unit === 'km') realValue = valInput * 1000;
-
-                const step = { 
-                    type: (type === 'time' ? 'time' : 'dist'), 
-                    value: realValue, 
-                    target: target
-                };
-
-                this.state.workoutPlan.push(step);
-                this.renderWorkoutList();
-            },
-
-            removeWorkoutStep: function(index) {
-                this.state.workoutPlan.splice(index, 1);
-                this.renderWorkoutList();
-            },
-
-            clearWorkout: function() {
-                if(confirm("¿Borrar todo el plan?")) {
-                    this.state.workoutPlan = [];
-                    this.state.isWorkoutActive = false;
-                    this.ui.guidance.style.display = 'none';
-                    this.renderWorkoutList();
-                }
-            },
-
-            activateWorkout: function() {
-                if (this.state.workoutPlan.length === 0) {
-                    alert("Agrega pasos primero.");
-                    return;
-                }
-                this.state.isWorkoutActive = true;
-                this.closeModals();
-                this.showToast({duration:0, pace:0, distance:0}, "Plan Activado");
-            },
-
-            renderWorkoutList: function() {
-                const list = this.ui.workoutList; 
-                list.innerHTML = '';
-                
-                if (this.state.workoutPlan.length === 0) {
-                    list.innerHTML = '<div style="text-align:center; color:#666; font-size:0.8rem;">Vacío</div>';
-                    return;
-                }
-                
-                this.state.workoutPlan.forEach((step, idx) => {
-                    const div = document.createElement('div');
-                    div.className = 'workout-step-item';
-                    let typeStr = step.type === 'time' ? 'Tiempo' : 'Distancia';
-                    let targetStr = step.target === 'none' ? 'Libre' : this.getPaceName(step.target);
-                    let valueStr = step.type === 'time' ? 
-                        (step.value / 60).toFixed(0) + " min" : 
-                        (step.value < 1000 ? step.value + " m" : (step.value/1000).toFixed(1) + " km");
-                    
-                    div.innerHTML = `
-                        <div class="step-info">
-                            <h4>Paso ${idx+1}: ${typeStr}</h4>
-                            <p>${valueStr} - Objetivo: <strong>${targetStr}</strong></p>
-                        </div>
-                        <button class="step-delete" onclick="window.app.removeWorkoutStep(${idx})">&times;</button>
-                    `;
-                    list.appendChild(div);
-                });
-            },
-
-            getPaceName: function(key) {
-                const map = { 
-                    'easy': 'Fondo', 
-                    'marathon': 'Maratón', 
-                    'half': 'Media', 
-                    'tenk': '10k', 
-                    'fivek': '5k', 
-                    'none': 'Libre' 
-                };
-                return map[key] || key;
-            },
-            
-            getPaceSec: function(key) {
-                if(!key || key === 'none') return 0;
-                return this.state.paces[key] || 0;
-            },
-
-            updateWorkoutUI: function() {
-                if (!this.state.isWorkoutActive || this.state.currentStepIndex >= this.state.workoutPlan.length) {
-                    this.ui.guidance.style.display = 'none';
-                    return;
-                }
-
-                const step = this.state.workoutPlan[this.state.currentStepIndex];
-                
-                this.ui.guideTitle.textContent = `Paso ${this.state.currentStepIndex + 1} de ${this.state.workoutPlan.length}`;
-                
-                let stepDesc = step.type === 'time' ? 
-                    (step.value / 60).toFixed(0) + " min" : 
-                    (step.value < 1000 ? step.value + " m" : (step.value/1000).toFixed(1) + " km");
-                stepDesc += " - " + this.getPaceName(step.target);
-                this.ui.guideDesc.textContent = stepDesc;
-                
-                let remaining = 0;
-                let displayRemaining = "";
-                
-                if (step.type === 'time') {
-                    const elapsed = (Date.now() - this.state.stepStartTime) / 1000;
-                    remaining = Math.max(0, step.value - elapsed);
-                    
-                    const mins = Math.floor(remaining / 60);
-                    const secs = Math.floor(remaining % 60);
-                    displayRemaining = `${mins}:${secs < 10 ? '0'+secs : secs}`;
-                } else {
-                    const covered = this.state.distance - this.state.stepStartDist;
-                    remaining = Math.max(0, step.value - covered);
-                    
-                    if (remaining < 1000) {
-                        displayRemaining = Math.round(remaining) + " m";
-                    } else {
-                        displayRemaining = (remaining / 1000).toFixed(2) + " km";
-                    }
-                }
-
-                this.ui.guideTarget.innerHTML = `Faltan: <span style="color:white; font-weight:bold; font-size:1.3rem;">${displayRemaining}</span>`;
-                this.ui.guidance.style.display = 'flex';
-            },
-
-            savePaces: function() {
-                this.state.paces.easy = parseFloat(document.getElementById('pace-easy').value) * 60 || 0;
-                this.state.paces.marathon = parseFloat(document.getElementById('pace-marathon').value) * 60 || 0;
-                this.state.paces.half = parseFloat(document.getElementById('pace-half').value) * 60 || 0;
-                this.state.paces.tenk = parseFloat(document.getElementById('pace-10k').value) * 60 || 0;
-                this.state.paces.fivek = parseFloat(document.getElementById('pace-5k').value) * 60 || 0;
-                alert("Ritmos guardados.");
+                alert("Configuración:\n\n• Auto Laps: " + (this.state.settings.autoLap ? "Activado (cada 1km)" : "Desactivado") + 
+                      "\n• Para cambiar distancia de Auto Lap, modifica el código en: state.settings.lapDistValue");
             }
         };
 
-        window.addEventListener('DOMContentLoaded', () => { window.app.init(); });
+        // Inicializar cuando se carga la página
+        window.addEventListener('DOMContentLoaded', () => { 
+            window.app.init(); 
+        });
     </script>
 </body>
 </html>
