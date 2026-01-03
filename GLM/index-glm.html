@@ -658,11 +658,11 @@
                 },
 
                 paces: {
-                    easy: 8,
-                    marathon: 5,
-                    half: 4.5,
-                    tenk: 4.1,
-                    fivek: 3.8
+                    easy: 480,
+                    marathon: 300,
+                    half: 270,
+                    tenk: 240,
+                    fivek: 210
                 },
 
                 workoutPlan: [], 
@@ -1031,9 +1031,11 @@
                 // Calcular velocidad promedio CORRECTA
                 if (this.state.totalElapsed > 0 && this.state.distance > 0) {
                     // km/h = (metros / milisegundos) × 3600
-                    const km = this.state.distance / 1000;
-                    const hours = this.state.totalElapsed / (1000 * 60 * 60);
-                    this.state.avgSpeed = km / hours;
+                    // const km = this.state.distance / 1000;
+                    // const hours = this.state.totalElapsed / (1000 * 60 * 60);
+                    // this.state.avgSpeed = km / hours;
+                    const avgTotal = (this.state.distance / this.state.totalElapsed) * 3600;
+                    this.state.avgSpeed = avgTotal
                 } else {
                     this.state.avgSpeed = 0;
                 }
