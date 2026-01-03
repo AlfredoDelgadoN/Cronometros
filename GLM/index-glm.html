@@ -127,6 +127,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            min-height: 80px;
         }
 
         .stat-label { font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px; }
@@ -137,7 +138,7 @@
         .timer-display { text-align: center; padding: 2px 0; }
         .timer-value { font-size: 4rem; font-family: var(--font-numbers); font-weight: 500; letter-spacing: -1px; line-height: 0.85; color: var(--primary-color); }
         
-        /* Workout Guidance */
+        /* Workout Guidance - Mejorada */
         .workout-guidance {
             background-color: #1a2b1a; 
             border-left: 4px solid var(--primary-color);
@@ -145,7 +146,6 @@
             margin: 0 10px 10px 10px;
             border-radius: 6px;
             display: none;
-            display: flex;
             flex-direction: row;
             justify-content: space-between;
             align-items: center;
@@ -165,7 +165,7 @@
         .workout-step-desc { font-size: 1rem; color: white; margin-top: 2px; }
 
         .workout-step-target { 
-            font-size: 2rem;
+            font-size: 1.5rem;
             color: white; 
             font-family: var(--font-numbers); 
             font-weight: bold; 
@@ -175,34 +175,20 @@
             white-space: nowrap;
         }
 
-        /* Mapa */
+        /* Mapa - Optimizado */
         #map-container {
-            height: 200px;
+            height: 280px; /* Reducido de 200px */
             width: 100%;
             background: #000;
-            transition: height 0.3s ease;
             position: relative;
             z-index: 1;
             flex-shrink: 0;
             margin-top: auto;
+            border-top: 1px solid #333;
         }
-        #map-container.expanded { height: 60vh; }
         #map { width: 100%; height: 100%; }
         
-        .map-overlay-btn {
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            z-index: 500;
-            background: var(--surface-color);
-            border: 1px solid #fffdfd;
-            color: white;
-            padding: 5px 10px;
-            border-radius: 4px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-        }
+        /* Se elimina el botón de expandir mapa */
 
         /* --- Controles --- */
         .controls-area {
@@ -375,7 +361,7 @@
             <button onclick="window.app.openWorkoutModal()" title="Plan de Entreno">📋 Plan</button>
             <button onclick="window.app.toggleFullScreen()" title="Pantalla Completa">⛶</button>
             <button onclick="window.app.openSettings()">⚙️</button>
-            <button onclick="window.app.debugState()" style="background:red; color:white; font-size:0.7rem;">DEBUG</button>
+            <!-- <button onclick="window.app.debugState()" style="background:red; color:white; font-size:0.7rem;">DEBUG</button> -->
         </div>
     </header>
 
@@ -385,7 +371,7 @@
             <div class="timer-value" id="main-timer">00:00:00</div>
         </div>
 
-        <!-- Guía de Entrenamiento -->
+        <!-- Guía de Entrenamiento - OCULTA POR DEFECTO -->
         <div id="workout-guidance" class="workout-guidance">
             <div class="workout-info-left">
                 <div class="workout-step-title" id="guide-title">Plan Activo</div>
@@ -414,17 +400,6 @@
                 <div class="stat-label">Último Lap</div>
                 <div><span class="stat-value" id="val-last-lap">--:--</span> <span class="stat-unit">min/km</span></div>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Promedio</div>
-                <div>
-                    <span class="stat-value" id="val-avg-speed">0.0</span> 
-                    <span class="stat-unit">km/h</span>
-                    <div class="stat-sub">
-                        <span id="val-avg-moving">0.0</span> (mov) • 
-                        <span id="val-avg-total">0.0</span> (total)
-                    </div>
-                </div>
-            </div>
         </div>
 
         <div class="stats-row-secondary">
@@ -446,12 +421,18 @@
                     <span class="mini-unit">m</span>
                 </div>
             </div>
+            <div class="mini-stat">
+                <div class="mini-label">Promedio</div>
+                <div>
+                    <span class="mini-val" id="val-avg-speed">0.0</span> 
+                    <span class="mini-unit">km/h</span>
+                </div>
+            </div>
         </div>
 
-        <!-- Mapa -->
+        <!-- Mapa - SIN BOTÓN DE EXPANDIR -->
         <div id="map-container">
             <div id="map"></div>
-            <button class="map-overlay-btn" onclick="window.app.toggleMapSize()">Expandir Mapa</button>
         </div>
     </main>
 
@@ -667,10 +648,6 @@
                 wakeLock: null,
                 units: 'metric',
                 font: "'Teko', sans-serif",
-                activityMode: 'auto',
-                autoPauseEnabled: true,
-                autoPauseThreshold: 10,
-                autoPauseTimer: null,
                 
                 settings: {
                     autoLap: false,
@@ -681,29 +658,11 @@
                 },
 
                 paces: {
-                    easy: 8,
-                    marathon: 5,
-                    half: 4.5,
-                    tenk: 4.1,
-                    fivek: 3.8
-                },
-
-                activityStates: {
-                    stopped: { minSpeed: 0, maxSpeed: 0.5 },
-                    walking: { minSpeed: 0.5, maxSpeed: 6 },
-                    running: { minSpeed: 6, maxSpeed: 14 },
-                    cycling: { minSpeed: 14, maxSpeed: 35 },
-                    driving: { minSpeed: 35, maxSpeed: 200 }
-                },
-
-                currentActivity: 'stopped',
-                activityStartTime: null,
-                activityTimes: {
-                    stopped: 0,
-                    walking: 0,
-                    running: 0,
-                    cycling: 0,
-                    driving: 0
+                    easy: 480,
+                    marathon: 300,
+                    half: 270,
+                    tenk: 240,
+                    fivek: 210
                 },
 
                 workoutPlan: [], 
@@ -748,22 +707,36 @@
 
             init: function() {
                 this.initMap();
-                this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 this.loadSettings();
                 this.changeFont(this.state.font);
                 this.updateUI();
+                // Asegurar que la guía esté oculta al inicio
+                this.ui.guidance.style.display = 'none';
             },
 
             initMap: function() {
-                this.map = L.map('map', { zoomControl: false }).setView([0, 0], 2);
+                this.map = L.map('map', { 
+                    zoomControl: false,
+                    attributionControl: false
+                }).setView([0, 0], 2);
+                
                 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {                
-                    attribution: '&copy; OpenStreetMap &copy; CARTO',
                     subdomains: 'abcd',
                     maxZoom: 19
                 }).addTo(this.map);
                 
-                this.polylineTotal = L.polyline([], { color: '#2979ff', weight: 5 }).addTo(this.map);
-                this.polylineLap = L.polyline([], { color: '#ff1744', weight: 5, dashArray: '10, 10' }).addTo(this.map);
+                this.polylineTotal = L.polyline([], { 
+                    color: '#2979ff', 
+                    weight: 4,
+                    opacity: 0.8
+                }).addTo(this.map);
+                
+                this.polylineLap = L.polyline([], { 
+                    color: '#ff1744', 
+                    weight: 4, 
+                    dashArray: '8, 8',
+                    opacity: 0.8
+                }).addTo(this.map);
             },
 
             // --- Wake Lock & Full Screen ---
@@ -774,6 +747,7 @@
                     }
                 } catch (err) { console.error(err); }
             },
+            
             releaseWakeLock: function() {
                 if (this.state.wakeLock !== null) {
                     this.state.wakeLock.release().then(() => { this.state.wakeLock = null; });
@@ -826,7 +800,7 @@
                     requestFullscreen(el).catch(err => {
                         console.error("Fullscreen error:", err);
                         if (err.name === 'TypeError' || err.name === 'SecurityError') {
-                            alert('Tu dispositivo o navegador no soporta pantalla completa. Intenta rotar la pantalla manualmente.');
+                            alert('Tu dispositivo o navegador no soporta pantalla completa.');
                         }
                     });
                 } else {
@@ -883,31 +857,25 @@
                     }
                     this.resetActivity();
                 }
+
                 this.state.isRunning = true;
                 this.state.isPaused = false;
-                this.state.startTime = Date.now() - this.state.totalElapsed;
+                this.state.startTime = Date.now() - this.state.totalElapsed; // Usar totalElapsed existente si hay
                 this.state.currentLap.startTime = Date.now();
                 this.state.currentLap.distance = 0;
                 this.state.currentLap.path = [];
 
-                if (this.state.isWorkoutActive) {
+                // Activar guía solo si hay workout activo
+                if (this.state.isWorkoutActive && this.state.workoutPlan.length > 0) {
                     this.state.currentStepIndex = 0;
                     this.state.stepStartTime = Date.now();
                     this.state.stepStartDist = 0;
                     this.state.stepWarningFired = false;
+                    this.ui.guidance.style.display = 'flex';
                     this.updateWorkoutUI();
+                } else {
+                    this.ui.guidance.style.display = 'none';
                 }
-
-                // RESETEAR TIEMPOS DE ACTIVIDAD
-                this.state.activityTimes = {
-                    stopped: 0,
-                    walking: 0,
-                    running: 0,
-                    cycling: 0,
-                    driving: 0
-                };
-                this.state.currentActivity = 'stopped';
-                this.state.activityStartTime = Date.now();
 
                 this.ui.btnAction.textContent = "Pausar";
                 this.ui.btnAction.classList.remove('stopped');
@@ -920,7 +888,11 @@
                     this.state.watchId = navigator.geolocation.watchPosition(
                         (pos) => this.onPositionUpdate(pos),
                         (err) => console.error("GPS Error:", err),
-                        { enableHighAccuracy: true, maximumAge: 1000, timeout: 10000 }
+                        { 
+                            enableHighAccuracy: true, 
+                            maximumAge: 1000, 
+                            timeout: 10000 
+                        }
                     );
                 } else {
                     alert("GPS no soportado.");
@@ -934,7 +906,10 @@
                 this.state.isRunning = false;
                 this.state.isPaused = true;
                 clearInterval(this.state.timerInterval);
-                navigator.geolocation.clearWatch(this.state.watchId);
+                if (this.state.watchId) {
+                    navigator.geolocation.clearWatch(this.state.watchId);
+                    this.state.watchId = null;
+                }
                 this.releaseWakeLock();
 
                 this.ui.btnAction.textContent = "Detener";
@@ -948,42 +923,54 @@
                 this.state.isRunning = false;
                 this.state.isPaused = false;
                 clearInterval(this.state.timerInterval);
-                navigator.geolocation.clearWatch(this.state.watchId);
-                this.releaseWakeLock();
-                this.state.movingTime = 0;
-                this.state.distance = 0;
-                this.state.path = [];
-                this.state.laps = [];
+                if (this.state.watchId) {
+                    navigator.geolocation.clearWatch(this.state.watchId);
+                    this.state.watchId = null;
+                }
+                this.releaseWakeLock();                
                 
                 this.ui.btnAction.textContent = "Iniciar";
                 this.ui.btnAction.classList.remove('paused');
                 this.ui.status.classList.remove('paused');
                 this.updateStatusText("Terminado");
+                this.updateUI();
             },
 
-            // --- Lógica GPS y Entrenos ---
+            resetActivity: function() {
+                if (confirm("¿Borrar todos los datos de esta actividad?")) {
+                    this.state.totalElapsed = 0;
+                    this.state.distance = 0;
+                    this.state.currentSpeed = 0;
+                    this.state.avgSpeed = 0;
+                    this.state.path = [];
+                    this.state.laps = [];
+                    this.state.currentLap = { startTime: 0, distance: 0, path: [] };
+                    this.polylineTotal.setLatLngs([]);
+                    this.polylineLap.setLatLngs([]);
+                    this.updateUI();
+                    alert("Datos reiniciados. Listo para nueva actividad.");
+                }
+            },
+
+            // --- Lógica GPS ---
             onPositionUpdate: function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
                 const accuracy = position.coords.accuracy;
                 const speed = position.coords.speed;
     
-                // GUARDAR DATOS GPS
                 this.state.accuracy = Math.round(accuracy);
                 this.state.altitude = position.coords.altitude ? Math.round(position.coords.altitude) : 0; 
                 
-                // Usar velocidad del GPS si está disponible (es más precisa)
                 if (speed !== null && speed >= 0) {
-                    this.state.currentSpeed = speed; // m/s
+                    this.state.currentSpeed = speed;
                 };
 
                 this.detectActivity(this.state.currentSpeed);
-                this.updateStatusText();
     
                 const newPoint = [lat, lng];
                 const now = Date.now();
                 
-                // PRIMERA POSICIÓN
                 if (!this.state.lastPos) {
                     this.state.lastPos = newPoint;
                     this.state.lastPosTime = now;
@@ -992,57 +979,32 @@
                     return;
                 };
     
-                // CALCULAR DISTANCIA DESDE ÚLTIMO PUNTO
                 const dist = this.getDistanceFromLatLonInM(
                     this.state.lastPos[0], this.state.lastPos[1], 
                     lat, lng
                 );
     
-                // TIEMPO DESDE ÚLTIMO PUNTO (segundos)
                 const timeDiff = (now - this.state.lastPosTime) / 1000;
     
-                // FILTRO MEJORADO: ¿Es un punto válido?
-                const isHighAccuracy = accuracy < 20;  // GPS muy preciso (<20m)
-                const isMediumAccuracy = accuracy < 50; // GPS aceptable (<50m)
-    
+                // Filtro mejorado
                 let shouldAddDistance = false;
+                if (accuracy < 50 && dist > 2 && timeDiff > 0.5) {
+                    shouldAddDistance = true;
+                } else if (accuracy < 20 && dist > 0.5) {
+                    shouldAddDistance = true;
+                }
     
-                if (isHighAccuracy) {
-                    // GPS de alta precisión: aceptar más puntos
-                    shouldAddDistance = dist > 0.5;  // Más de 0.5 metros
-                } else if (isMediumAccuracy) {
-                    // GPS medio: filtro más estricto
-                    shouldAddDistance = dist > 2 && timeDiff > 0.5;
-                };
-    
-                // ADICIONAL: Verificar velocidad coherente
-                if (timeDiff > 0) {
-                    const instantSpeed = dist / timeDiff; // m/s
-                    const instantSpeedKmh = instantSpeed * 3.6;
-            
-                    // Velocidad máxima realista para running: 30 km/h
-                    if (instantSpeedKmh > 30) {
-                        shouldAddDistance = false;
-                        console.warn("Velocidad imposible descartada:", instantSpeedKmh, "km/h");
-                    }
-                };
-    
-                // PROCESAR PUNTO VÁLIDO
                 if (shouldAddDistance) {
-                    // 1. SUMAR DISTANCIA
                     this.state.distance += dist;
                     this.state.currentLap.distance += dist;
             
-                    // 2. SUMAR TIEMPO EN MOVIMIENTO
                     if (this.state.lastMovementTime) {
                         const movementTimeDiff = now - this.state.lastMovementTime;
-                        // Limitar a máximo 3 segundos entre puntos
                         this.state.movingTime += Math.min(movementTimeDiff, 3000);
                     }
                     this.state.lastMovementTime = now;
             
-                    // 3. AGREGAR AL PATH (con filtro de puntos cercanos)
-                    const MIN_DISTANCE_BETWEEN_POINTS = 5; // metros
+                    const MIN_DISTANCE_BETWEEN_POINTS = 3;
                     const lastPathPoint = this.state.path[this.state.path.length - 1];
             
                     if (!lastPathPoint || 
@@ -1050,65 +1012,27 @@
                         this.state.path.push(newPoint);
                         this.state.currentLap.path.push(newPoint);
                 
-                        // Actualizar mapas
                         this.polylineTotal.setLatLngs(this.state.path);
                         this.polylineLap.setLatLngs(this.state.currentLap.path);
                     }
             
-                    // 4. CENTRAR MAPA (ocasionalmente)
-                    if (this.state.path.length % 10 === 0) {
+                    if (this.state.path.length % 5 === 0) {
                         this.map.panTo(newPoint);
                     }
             
-                    // 5. VERIFICAR AUTO-LAP
                     if (this.state.settings.autoLap && !this.state.isWorkoutActive) {
                         this.checkAutoLap();
                     }
                 };
     
-                // ACTUALIZAR ÚLTIMA POSICIÓN Y TIEMPO
                 this.state.lastPos = newPoint;
                 this.state.lastPosTime = now;
     
-                // CALCULAR VELOCIDAD INSTANTÁNEA SI EL GPS NO LA PROVEE
                 if ((speed === null || speed < 0) && timeDiff > 0) {
                     this.state.currentSpeed = dist / timeDiff;
                 };
                 
                 this.updateUI();
-            },
-
-            debugState: function() {
-                console.log("=== DEBUG ESTADO COMPLETO ===");
-                console.log("Distancia total:", this.state.distance + "m", "=" + (this.state.distance/1000).toFixed(3) + "km");
-                console.log("Tiempo total:", this.formatTime(this.state.totalElapsed));
-                console.log("Velocidad actual:", (this.state.currentSpeed * 3.6).toFixed(1) + " km/h");
-                console.log("Velocidad promedio:", this.state.avgSpeed.toFixed(1) + " km/h");
-    
-                // Calcular velocidad teórica
-                const km = this.state.distance / 1000;
-                const hours = this.state.totalElapsed / (1000 * 60 * 60);
-                console.log("Velocidad teórica (distancia/tiempo):", (km/hours).toFixed(1) + " km/h");
-    
-                console.log("LAPs registrados:", this.state.laps.length);
-                this.state.laps.forEach((lap, i) => {
-                    console.log(`LAP ${i+1}:`, {
-                        tiempo: this.formatTime(lap.duration),
-                        distancia: lap.distance + "m",
-                        ritmo: this.formatPace(lap.pace) + " min/km"
-                    });
-                });
-    
-                console.log("Actividad:", this.state.activity);
-                console.log("GPS precisión:", this.state.accuracy + "m");
-                console.log("=== FIN DEBUG ===");
-    
-                alert(
-                    "DISTANCIA: " + (this.state.distance/1000).toFixed(3) + " km\n" +
-                    "TIEMPO: " + this.formatTime(this.state.totalElapsed) + "\n" +
-                    "VEL PROMEDIO: " + (km/hours).toFixed(1) + " km/h\n" +
-                    "LAPs: " + this.state.laps.length + " registrados"
-                );
             },
 
             tick: function() {
@@ -1120,39 +1044,27 @@
                     hour: '2-digit', 
                     minute: '2-digit' 
                 });
-    
-                // CALCULAR VELOCIDAD PROMEDIO SIMPLE Y CORRECTA
-                // Opción A: Promedio TOTAL (desde inicio)
+                
+                // Calcular velocidad promedio CORRECTA
                 if (this.state.totalElapsed > 0 && this.state.distance > 0) {
                     // km/h = (metros / milisegundos) × 3600
+                    // const km = this.state.distance / 1000;
+                    // const hours = this.state.totalElapsed / (1000 * 60 * 60);
+                    // this.state.avgSpeed = km / hours;
                     const avgTotal = (this.state.distance / this.state.totalElapsed) * 3600;
-        
-                    // Opción B: Promedio basado en velocidad actual (más precisa para actividad actual)
-                    // Usamos avgTotal como principal
-                    this.state.avgSpeed = avgTotal;
+                    this.state.avgSpeed = avgTotal
                 } else {
                     this.state.avgSpeed = 0;
                 }
     
-                // DETECTAR ACTIVIDAD SOLO para mostrar estado
-                const speedKmh = this.state.currentSpeed * 3.6;
-                if (speedKmh < 0.5) this.state.activity = 'stopped';
-                else if (speedKmh < 6) this.state.activity = 'walking';
-                else if (speedKmh < 14) this.state.activity = 'running';
-                else if (speedKmh < 35) this.state.activity = 'cycling';
-                else this.state.activity = 'driving';
-    
-                this.updateStatusText();
-
-                // CHECK WORKOUT STEPS & WARNING
+                // Workout steps
                 if (this.state.isWorkoutActive && this.state.currentStepIndex < this.state.workoutPlan.length) {
                     const step = this.state.workoutPlan[this.state.currentStepIndex];
-        
-                    // Alerta 15 segs antes
+                    
                     if (step.type === 'time') {
                         const currentStepTime = (Date.now() - this.state.stepStartTime) / 1000;
                         const remaining = step.value - currentStepTime;
-            
+                        
                         if (remaining <= 15 && remaining > 14 && !this.state.stepWarningFired) {
                             if (this.state.settings.audio) this.playWarningSound();
                             this.state.stepWarningFired = true; 
@@ -1175,6 +1087,10 @@
             },
 
             checkWorkoutProgress: function() {
+                if (!this.state.isWorkoutActive || this.state.currentStepIndex >= this.state.workoutPlan.length) {
+                    return;
+                }
+                
                 const step = this.state.workoutPlan[this.state.currentStepIndex];
                 let completed = false;
 
@@ -1191,28 +1107,11 @@
                 }
             },
 
-            debugCalculations: function() {
-                console.log("=== DEBUG CALCULACIONES ===");
-                console.log("Distancia (m):", this.state.distance);
-                console.log("Distancia (km):", this.state.distance / 1000);
-                console.log("totalElapsed (ms):", this.state.totalElapsed);
-                console.log("totalElapsed (s):", this.state.totalElapsed / 1000);
-                console.log("totalElapsed (h):", this.state.totalElapsed / (1000*60*60));
-        
-                const km = this.state.distance / 1000;
-                const hours = this.state.totalElapsed / (1000*60*60);
-        
-                console.log("Velocidad (km/h) = km / h:", km / hours);
-                console.log("Velocidad fórmula actual:", (this.state.distance / this.state.totalElapsed) * 3600);
-                console.log("=== FIN DEBUG ===");
-            },
-
             nextWorkoutStep: function() {
                 const now = Date.now();
                 const lapDuration = now - this.state.currentLap.startTime;
-                let lapData = null;
                 
-                // REGISTRAR LAP del paso completado
+                // Registrar LAP del paso completado
                 if (lapDuration > 1000 || this.state.currentLap.distance > 10) {
                     this.recordLap(false, true); 
                 }
@@ -1223,20 +1122,31 @@
                 this.state.stepWarningFired = false;
 
                 if (this.state.currentStepIndex >= this.state.workoutPlan.length) {
+                    // WORKOUT COMPLETADO
                     this.state.isWorkoutActive = false;
-                    this.updateWorkoutUI();
+                    this.ui.guidance.style.display = 'none';
+                    
                     this.playLoudBeep();
                     setTimeout(() => this.playLoudBeep(), 300);
-                    setTimeout(() => this.playLoudBeep(), 600);
-                    this.showToast({duration: this.state.totalElapsed, pace: 0}, "🏁 Workout Completado");
+                    
+                    // Mostrar toast final
+                    const totalKm = this.state.distance / 1000;
+                    const totalHours = this.state.totalElapsed / (1000 * 60 * 60);
+                    const avgPace = totalHours > 0 ? (this.state.totalElapsed / 1000) / totalKm : 0;
+                    
+                    this.showToast({
+                        duration: this.state.totalElapsed,
+                        pace: avgPace,
+                        distance: this.state.distance
+                    }, "🏁 Workout Completado");
                 } else {
+                    // SIGUIENTE PASO
                     this.updateWorkoutUI();
                     this.playLoudBeep();
                     setTimeout(() => this.playLoudBeep(), 200);
-                    this.showToast({duration:0, pace:0}, "Fase Completada");
                 }
                 
-                // Resetear currentLap para el próximo paso
+                // Resetear currentLap
                 this.state.currentLap.startTime = Date.now();
                 this.state.currentLap.distance = 0;
                 this.state.currentLap.path = this.state.lastPos ? [this.state.lastPos] : [];
@@ -1244,11 +1154,10 @@
             },
 
             checkAutoLap: function() {
-                if(this.state.isWorkoutActive) return;
-                let target = 0;
+                if (this.state.isWorkoutActive) return;
+                
                 if (this.state.settings.lapType === 'distance') {
-                    target = this.state.settings.lapDistValue;
-                    if (this.state.currentLap.distance >= target) {
+                    if (this.state.currentLap.distance >= this.state.settings.lapDistValue) {
                         this.recordLap(false);
                     }
                 }
@@ -1258,29 +1167,15 @@
                 const now = Date.now();
                 const lapDuration = now - this.state.currentLap.startTime;
                 
-                // FILTRO: Evitar registrar Laps fantasma de 00:00
                 if (lapDuration < 1000 && this.state.currentLap.distance < 10) {
-                    console.log("Lap descartado (duración o distancia muy pequeña)");
                     return null;
                 }
 
                 let paceSecPerUnit = 0;
                 if (this.state.currentLap.distance > 0) {
-                    // Calcular segundos por kilómetro CORRECTO
                     const lapSeconds = lapDuration / 1000;
                     const lapKm = this.state.currentLap.distance / 1000;
                     paceSecPerUnit = lapSeconds / lapKm;
-        
-                    // DEBUG
-                    console.log("Nuevo LAP:", {
-                        distancia: this.state.currentLap.distance + "m",
-                        tiempo: this.formatTime(lapDuration),
-                        ritmo: this.formatPace(paceSecPerUnit) + " min/km",
-                        manual: isManual,
-                        workout: isWorkoutStep
-                    });
-                } else {
-                    console.warn("Lap con distancia 0, pace no calculado");
                 }
 
                 const lapData = { 
@@ -1290,12 +1185,9 @@
                     pace: paceSecPerUnit, 
                     isWorkoutStep: isWorkoutStep 
                 };
-    
-                // AÑADIR A LA LISTA
+                
                 this.state.laps.push(lapData);
-                console.log("Total LAPs registrados:", this.state.laps.length);
 
-                // SONIDO
                 if (this.state.settings.audio) {
                     if (isWorkoutStep) {
                         this.playLoudBeep();
@@ -1303,55 +1195,27 @@
                         this.playBeep();
                     }
                 }
-    
-                // MOSTRAR TOAST
+                
                 this.showToast(lapData, isWorkoutStep ? "🎯 Paso Completado" : "✅ Lap Completado");
-    
-                // ACTUALIZAR TABLA INMEDIATAMENTE
+                
                 this.updateLapsTable();
 
-                // RESETEAR LAP
                 this.state.currentLap.startTime = now;
                 this.state.currentLap.distance = 0;
                 this.state.currentLap.path = this.state.lastPos ? [this.state.lastPos] : [];
                 this.polylineLap.setLatLngs([]);
-    
+                
                 return lapData;
             },
 
             detectActivity: function(speedMs) {
                 const speedKmh = speedMs * 3.6;
     
-                // Si hay modo manual, usarlo
-                if (this.state.settings.activityMode !== 'auto') {
-                    this.state.activity = this.state.settings.activityMode;
-                    return;
-                }
-    
-                // Detección automática
                 if (speedKmh < 0.5) this.state.activity = 'stopped';
                 else if (speedKmh < 6) this.state.activity = 'walking';
                 else if (speedKmh < 14) this.state.activity = 'running';
                 else if (speedKmh < 35) this.state.activity = 'cycling';
                 else this.state.activity = 'driving';
-    
-                // Auto-pausa si está habilitado
-                if (this.state.settings.autoPauseEnabled && this.state.activity === 'stopped') {
-                    if (!this.state.autoPauseTimer) {
-                        this.state.autoPauseTimer = setTimeout(() => {
-                            if (this.state.isRunning && this.state.activity === 'stopped') {
-                                this.pauseTracking();
-                            }
-                            this.state.autoPauseTimer = null;
-                        }, this.state.settings.autoPauseThreshold * 1000);
-                    }
-                } else {
-                    // Cancelar auto-pausa si se reanuda movimiento
-                    if (this.state.autoPauseTimer) {
-                        clearTimeout(this.state.autoPauseTimer);
-                        this.state.autoPauseTimer = null;
-                    }
-                }
     
                 this.updateStatusText();
             },
@@ -1363,17 +1227,16 @@
                 }
                 const map = { 
                     'stopped': '📍 Parado', 
-                    'walking': '🚶 Camina', 
-                    'running': '🏃 Corre', 
-                    'cycling': '🚴 Bici', 
+                    'walking': '🚶 Caminando', 
+                    'running': '🏃 Corriendo', 
+                    'cycling': '🚴 Bicicleta', 
                     'driving': '🚗 Auto' 
                 };
                 this.ui.statusText.textContent = map[this.state.activity] || '...';
             },
 
             getDistanceFromLatLonInM: function(lat1, lon1, lat2, lon2) {
-                // Fórmula Haversine mejorada
-                const R = 6371000; // Radio de la Tierra en METROS (no km)
+                const R = 6371000;
                 const φ1 = lat1 * Math.PI / 180;
                 const φ2 = lat2 * Math.PI / 180;
                 const Δφ = (lat2 - lat1) * Math.PI / 180;
@@ -1386,7 +1249,6 @@
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
                 const distance = R * c;
     
-                // Filtro: eliminar distancias imposibles (>200m/s = 720 km/h)
                 return distance > 200 ? 0 : distance;
             },
 
@@ -1401,7 +1263,7 @@
             },
 
             formatPace: function(secPerKm) {
-                if (secPerKm === 0 || !isFinite(secPerKm)) return "--:--";
+                if (secPerKm === 0 || !isFinite(secPerKm) || secPerKm > 3600) return "--:--";
                 let m = Math.floor(secPerKm / 60);
                 let s = Math.floor(secPerKm % 60);
                 return `${m < 10 ? '0'+m : m}:${s < 10 ? '0'+s : s}`;
@@ -1421,29 +1283,15 @@
                 const factorDist = isMetric ? 1 : 0.621371;
                 const factorSpeed = isMetric ? 3.6 : 2.23694;
 
-                // Mostrar altitud
                 document.getElementById('val-alt').textContent = isMetric ? 
                     this.state.altitude : 
                     Math.round(this.state.altitude * 3.28084);
                 document.getElementById('unit-alt').textContent = altUnit;
 
-                // Calcular valores de visualización
                 const displayDist = (this.state.distance / 1000) * factorDist;
                 const displaySpeed = this.state.currentSpeed * factorSpeed;
-    
-                // Calcular velocidad promedio CORRECTA
-                let displayAvgSpeed = 0;
-                if (this.state.totalElapsed > 0 && this.state.distance > 0) {
-                    // Fórmula: km/h = (metros / milisegundos) × 3600
-                    const km = this.state.distance / 1000;
-                    const hours = this.state.totalElapsed / (1000 * 60 * 60);
-                    displayAvgSpeed = km / hours;
-                }
-    
-                // Calcular velocidad promedio en movimiento (simplificado)
-                let displayAvgMoving = displayAvgSpeed; // Por ahora, usamos el mismo
+                const displayAvgSpeed = this.state.avgSpeed * factorSpeed;
 
-                // Actualizar valores principales
                 this.ui.dist.textContent = displayDist.toFixed(2);
                 this.ui.distUnit.textContent = unitDist;
                 this.ui.speed.textContent = displaySpeed.toFixed(1);
@@ -1451,29 +1299,21 @@
                 this.ui.avgSpeed.textContent = displayAvgSpeed.toFixed(1);
                 this.ui.avgSpeedSub.textContent = displayAvgSpeed.toFixed(1);
 
-                // Mostrar promedios en UI
-                document.getElementById('val-avg-moving').textContent = displayAvgMoving.toFixed(1);
-                document.getElementById('val-avg-total').textContent = displayAvgSpeed.toFixed(1);
-
-                // Mostrar precisión GPS
                 if(this.state.accuracy > 5000 || this.state.accuracy === 0) {
                     document.getElementById('val-gps-acc').textContent = "--";
                 } else {
                     document.getElementById('val-gps-acc').textContent = this.state.accuracy;
                 }
 
-                // Calcular ritmo (pace) - CORREGIDO
                 let globalPace = 0;
                 if (this.state.distance > 0 && this.state.totalElapsed > 0) {
-                    // segundos por unidad de distancia
                     const totalSeconds = this.state.totalElapsed / 1000;
-                    const distanceUnit = (this.state.distance / 1000) * factorDist; // en km o mi
+                    const distanceUnit = (this.state.distance / 1000) * factorDist;
                     if (distanceUnit > 0) {
                         globalPace = totalSeconds / distanceUnit;
                     }
                 }
-    
-                // Mostrar ritmo
+                
                 if (displaySpeed < 0.5 || globalPace === 0) {
                     this.ui.pace.textContent = "--:--";
                 } else {
@@ -1481,7 +1321,6 @@
                 }
                 this.ui.pace.nextElementSibling.textContent = `min/${unitDist}`;
 
-                // Mostrar último lap
                 const lastLap = this.state.laps[this.state.laps.length - 1];
                 if (lastLap) {
                     const lapPace = lastLap.pace * (isMetric ? 1 : (1/0.621371));
@@ -1489,15 +1328,6 @@
                 } else {
                     this.ui.lastLap.textContent = "--:--";
                 }
-    
-                // DEBUG: Mostrar cálculos en consola (temporal)
-                console.log("UI Update:", {
-                    distance: displayDist.toFixed(2) + unitDist,
-                    speed: displaySpeed.toFixed(1) + unitSpeed,
-                    avgSpeed: displayAvgSpeed.toFixed(1) + unitSpeed,
-                    pace: this.formatPace(globalPace) + " min/" + unitDist,
-                    totalElapsed: this.formatTime(this.state.totalElapsed)
-                });
             },
 
             toggleUnits: function() {
@@ -1506,38 +1336,23 @@
                 this.updateLapsTable();
             },
 
-            toggleMapSize: function() {
-                this.ui.mapContainer.classList.toggle('expanded');
-                setTimeout(() => {
-                    this.map.invalidateSize();
-                    if (this.state.path.length > 0) {
-                        this.map.fitBounds(this.polylineTotal.getBounds(), { padding: [50, 50] });
-                    }
-                }, 300);
-            },
+            // Se eliminó toggleMapSize()
 
             showToast: function(lapData, overrideTitle) {
-                // Validar que lapData existe
-                if (!lapData) {
-                    console.warn("showToast llamado sin datos");
-                    return;
-                }
+                if (!lapData) return;
+                
                 this.ui.toast.style.display = 'block';
-    
-                // Establecer título
                 this.ui.toastTitle.textContent = overrideTitle || "✅ Lap Completado";
-    
-                // MOSTRAR TIEMPO - siempre que haya duración
+                
+                // Siempre mostrar tiempo si hay datos
                 if (lapData.duration && lapData.duration > 0) {
                     this.ui.toastTime.textContent = this.formatTime(lapData.duration);
-                    document.querySelector('.lap-toast-label:nth-of-type(1)').style.display = 'block';
                 } else {
                     this.ui.toastTime.textContent = "";
-                    document.querySelector('.lap-toast-label:nth-of-type(1)').style.display = 'none';
                 }
-    
-                // MOSTRAR SIEMPRE el ritmo (si está disponible)
-                if (lapData.pace > 0 && isFinite(lapData.pace)) {
+                
+                // Siempre mostrar ritmo si es válido
+                if (lapData.pace && lapData.pace > 0 && isFinite(lapData.pace)) {
                     const isMetric = this.state.units === 'metric';
                     const factor = isMetric ? 1 : (1/0.621371);
                     const paceVal = lapData.pace * factor;
@@ -1553,49 +1368,61 @@
             },
 
             playBeep: function() {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(880, ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
-                gain.gain.setValueAtTime(0.5, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.3);
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, ctx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.3);
+                } catch(e) {
+                    console.log("Audio no disponible:", e);
+                }
             },
 
             playWarningSound: function() {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const now = ctx.currentTime;
-                [0, 0.15, 0.3].forEach(delay => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(600, now + delay);
-                    gain.gain.setValueAtTime(0.5, now + delay);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.1);
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.start(now + delay);
-                    osc.stop(now + delay + 0.1);
-                });
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const now = ctx.currentTime;
+                    [0, 0.15, 0.3].forEach(delay => {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc.type = 'square';
+                        osc.frequency.setValueAtTime(600, now + delay);
+                        gain.gain.setValueAtTime(0.5, now + delay);
+                        gain.gain.exponentialRampToValueAtTime(0.01, now + delay + 0.1);
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        osc.start(now + delay);
+                        osc.stop(now + delay + 0.1);
+                    });
+                } catch(e) {
+                    console.log("Audio no disponible:", e);
+                }
             },
 
             playLoudBeep: function() {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                osc.type = 'triangle';
-                osc.frequency.setValueAtTime(1200, ctx.currentTime);
-                gain.gain.setValueAtTime(1.0, ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-                osc.start();
-                osc.stop(ctx.currentTime + 0.4);
+                try {
+                    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+                    gain.gain.setValueAtTime(1.0, ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start();
+                    osc.stop(ctx.currentTime + 0.4);
+                } catch(e) {
+                    console.log("Audio no disponible:", e);
+                }
             },
 
             openLaps: function() {
@@ -1612,6 +1439,13 @@
                 document.getElementById('set-audio').checked = this.state.settings.audio;
                 document.getElementById('set-font').value = this.state.font;
                 this.toggleLapInputs();
+                
+                // Cargar ritmos si existen
+                if (this.state.paces.easy) document.getElementById('pace-easy').value = this.state.paces.easy / 60;
+                if (this.state.paces.marathon) document.getElementById('pace-marathon').value = this.state.paces.marathon / 60;
+                if (this.state.paces.half) document.getElementById('pace-half').value = this.state.paces.half / 60;
+                if (this.state.paces.tenk) document.getElementById('pace-10k').value = this.state.paces.tenk / 60;
+                if (this.state.paces.fivek) document.getElementById('pace-5k').value = this.state.paces.fivek / 60;
             },
 
             closeModals: function() {
@@ -1631,9 +1465,27 @@
                 this.state.settings.lapDistValue = parseFloat(document.getElementById('set-lap-dist').value) * 1000;
                 this.state.settings.lapTimeValue = parseFloat(document.getElementById('set-lap-time').value) * 60;
                 this.state.settings.audio = document.getElementById('set-audio').checked;
+                
+                // Guardar ritmos
+                this.state.paces.easy = parseFloat(document.getElementById('pace-easy').value) * 60 || 0;
+                this.state.paces.marathon = parseFloat(document.getElementById('pace-marathon').value) * 60 || 0;
+                this.state.paces.half = parseFloat(document.getElementById('pace-half').value) * 60 || 0;
+                this.state.paces.tenk = parseFloat(document.getElementById('pace-10k').value) * 60 || 0;
+                this.state.paces.fivek = parseFloat(document.getElementById('pace-5k').value) * 60 || 0;
             },
 
-            loadSettings: function() {},
+            loadSettings: function() {
+                // Cargar configuraciones desde localStorage si existen
+                try {
+                    const saved = localStorage.getItem('cronometroSettings');
+                    if (saved) {
+                        const settings = JSON.parse(saved);
+                        Object.assign(this.state.settings, settings);
+                    }
+                } catch(e) {
+                    console.log("Error cargando settings:", e);
+                }
+            },
 
             updateLapsTable: function() {
                 const tbody = this.ui.lapsTable; 
@@ -1667,6 +1519,7 @@
             openWorkoutModal: function() {
                 this.openSettings();
                 this.switchTab('workout');
+                this.renderWorkoutList();
             },
 
             addWorkoutStep: function() {
@@ -1687,8 +1540,7 @@
                 const step = { 
                     type: (type === 'time' ? 'time' : 'dist'), 
                     value: realValue, 
-                    target: target, 
-                    desc: `${valInput} ${unit} ${target !== 'none' ? '(' + this.getPaceName(target) + ')' : ''}` 
+                    target: target
                 };
 
                 this.state.workoutPlan.push(step);
@@ -1703,6 +1555,8 @@
             clearWorkout: function() {
                 if(confirm("¿Borrar todo el plan?")) {
                     this.state.workoutPlan = [];
+                    this.state.isWorkoutActive = false;
+                    this.ui.guidance.style.display = 'none';
                     this.renderWorkoutList();
                 }
             },
@@ -1713,9 +1567,8 @@
                     return;
                 }
                 this.state.isWorkoutActive = true;
-                this.ui.guidance.classList.add('active');
                 this.closeModals();
-                this.showToast({duration:0, pace:0}, "Plan Activado");
+                this.showToast({duration:0, pace:0, distance:0}, "Plan Activado");
             },
 
             renderWorkoutList: function() {
@@ -1732,24 +1585,19 @@
                     div.className = 'workout-step-item';
                     let typeStr = step.type === 'time' ? 'Tiempo' : 'Distancia';
                     let targetStr = step.target === 'none' ? 'Libre' : this.getPaceName(step.target);
+                    let valueStr = step.type === 'time' ? 
+                        (step.value / 60).toFixed(0) + " min" : 
+                        (step.value < 1000 ? step.value + " m" : (step.value/1000).toFixed(1) + " km");
                     
                     div.innerHTML = `
                         <div class="step-info">
                             <h4>Paso ${idx+1}: ${typeStr}</h4>
-                            <p>${this.formatStepValue(step)} - Objetivo: <strong>${targetStr}</strong></p>
+                            <p>${valueStr} - Objetivo: <strong>${targetStr}</strong></p>
                         </div>
                         <button class="step-delete" onclick="window.app.removeWorkoutStep(${idx})">&times;</button>
                     `;
                     list.appendChild(div);
                 });
-            },
-
-            formatStepValue: function(step) {
-                if (step.type === 'time') {
-                    return (step.value / 60).toFixed(0) + " min";
-                } else {
-                    return (step.value < 1000 ? step.value + " m" : (step.value/1000).toFixed(1) + " km");
-                }
             },
 
             getPaceName: function(key) {
@@ -1770,19 +1618,21 @@
             },
 
             updateWorkoutUI: function() {
-                // Seguridad: Si terminó o índice fuera de límites, ocultar forzosamente
                 if (!this.state.isWorkoutActive || this.state.currentStepIndex >= this.state.workoutPlan.length) {
-                    this.ui.guidance.classList.remove('active');
+                    this.ui.guidance.style.display = 'none';
                     return;
                 }
 
                 const step = this.state.workoutPlan[this.state.currentStepIndex];
                 
-                // Título y descripción
                 this.ui.guideTitle.textContent = `Paso ${this.state.currentStepIndex + 1} de ${this.state.workoutPlan.length}`;
-                this.ui.guideDesc.textContent = `${this.formatStepValue(step)} - ${this.getPaceName(step.target)}`;
                 
-                // Cálculo de cuenta regresiva
+                let stepDesc = step.type === 'time' ? 
+                    (step.value / 60).toFixed(0) + " min" : 
+                    (step.value < 1000 ? step.value + " m" : (step.value/1000).toFixed(1) + " km");
+                stepDesc += " - " + this.getPaceName(step.target);
+                this.ui.guideDesc.textContent = stepDesc;
+                
                 let remaining = 0;
                 let displayRemaining = "";
                 
@@ -1790,7 +1640,6 @@
                     const elapsed = (Date.now() - this.state.stepStartTime) / 1000;
                     remaining = Math.max(0, step.value - elapsed);
                     
-                    // Formato MM:SS
                     const mins = Math.floor(remaining / 60);
                     const secs = Math.floor(remaining % 60);
                     displayRemaining = `${mins}:${secs < 10 ? '0'+secs : secs}`;
@@ -1806,6 +1655,7 @@
                 }
 
                 this.ui.guideTarget.innerHTML = `Faltan: <span style="color:white; font-weight:bold; font-size:1.3rem;">${displayRemaining}</span>`;
+                this.ui.guidance.style.display = 'flex';
             },
 
             savePaces: function() {
