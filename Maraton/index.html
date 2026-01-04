@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Cronómetro Maratón con GPS Real</title>
+    <title>Paso Maratón GPS</title>
     <style>
         * {
             margin: 0;
@@ -13,217 +13,160 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: #0f172a;
             min-height: 100vh;
             color: #ffffff;
             overflow-x: hidden;
-            padding: 10px;
+            padding: 5px;
         }
 
         .container {
             max-width: 100%;
             margin: 0 auto;
-            padding: 10px;
+            padding: 5px;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
+            padding-top: 10px;
         }
 
         .header h1 {
-            font-size: 1.8rem;
-            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
-            background-size: 300% 300%;
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            animation: gradientShift 3s ease infinite;
-            text-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
-        }
-
-        @keyframes gradientShift {
-            0%, 100% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
+            font-size: 1.5rem;
+            color: #3b82f6;
+            font-weight: 700;
+            letter-spacing: 1px;
         }
 
         .main-timer {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
-            border-radius: 20px;
-            padding: 20px 15px;
-            margin-bottom: 15px;
-            border: 2px solid rgba(255, 107, 107, 0.5);
-            box-shadow: 0 10px 40px rgba(255, 107, 107, 0.2),
-                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 15px 10px;
+            margin-bottom: 10px;
+            border: 1px solid #334155;
         }
 
         .timer-display {
-            font-size: 4rem;
+            font-size: 3.5rem;
             font-weight: 700;
             text-align: center;
             font-family: 'Courier New', monospace;
-            color: #ff6b6b;
-            text-shadow: 0 0 20px rgba(255, 107, 107, 0.8),
-                         0 0 40px rgba(255, 107, 107, 0.4);
+            color: #22c55e;
             letter-spacing: 2px;
-            animation: pulse 2s ease-in-out infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.02); }
-        }
-
-        .timer-label {
-            text-align: center;
-            font-size: 0.9rem;
-            color: #a0a0a0;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            margin-top: 5px;
+            line-height: 1;
+            margin-bottom: 5px;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .stat-card {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-            border-radius: 15px;
-            padding: 15px 10px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            padding: 12px 8px;
             text-align: center;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .stat-card.distance {
-            border-color: rgba(72, 219, 251, 0.5);
-            box-shadow: 0 5px 20px rgba(72, 219, 251, 0.15);
-        }
-
-        .stat-card.remaining {
-            border-color: rgba(255, 159, 243, 0.5);
-            box-shadow: 0 5px 20px rgba(255, 159, 243, 0.15);
-        }
-
-        .stat-card.current-pace {
-            border-color: rgba(254, 202, 87, 0.5);
-            box-shadow: 0 5px 20px rgba(254, 202, 87, 0.15);
-        }
-
-        .stat-card.speed {
-            border-color: rgba(29, 209, 161, 0.5);
-            box-shadow: 0 5px 20px rgba(29, 209, 161, 0.15);
+            border: 1px solid #334155;
         }
 
         .stat-value {
-            font-size: 2rem;
+            font-size: 2.2rem;
             font-weight: 700;
             font-family: 'Courier New', monospace;
-            margin-bottom: 5px;
+            margin-bottom: 2px;
+            line-height: 1;
         }
 
-        .stat-card.distance .stat-value { color: #48dbfb; }
-        .stat-card.remaining .stat-value { color: #ff9ff3; }
-        .stat-card.current-pace .stat-value { color: #feca57; }
-        .stat-card.speed .stat-value { color: #1dd1a1; }
+        .stat-card.km .stat-value { color: #3b82f6; }
+        .stat-card.falta .stat-value { color: #8b5cf6; }
+        .stat-card.actual .stat-value { color: #f59e0b; }
+        .stat-card.kmh .stat-value { color: #10b981; }
+        .stat-card.promedio .stat-value { color: #ec4899; }
+        .stat-card.proyeccion .stat-value { color: #22c55e; }
 
         .stat-label {
-            font-size: 0.7rem;
-            color: #a0a0a0;
+            font-size: 0.65rem;
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            margin-bottom: 2px;
         }
 
         .stat-unit {
-            font-size: 0.8rem;
-            color: #808080;
-            margin-top: 3px;
+            font-size: 0.7rem;
+            color: #64748b;
         }
 
         .projection-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .projection-card {
-            background: linear-gradient(145deg, rgba(255, 159, 243, 0.2), rgba(255, 159, 243, 0.05));
-            border-radius: 15px;
-            padding: 15px;
-            border: 2px solid rgba(255, 159, 243, 0.5);
-            text-align: center;
-        }
-
-        .marathon-projection-card {
-            background: linear-gradient(145deg, rgba(29, 209, 161, 0.2), rgba(29, 209, 161, 0.05));
-            border-radius: 15px;
-            padding: 15px;
-            border: 2px solid rgba(29, 209, 161, 0.5);
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #334155;
             text-align: center;
         }
 
         .projection-title {
-            font-size: 0.8rem;
-            color: #ff9ff3;
+            font-size: 0.7rem;
+            color: #ec4899;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
         }
 
         .marathon-title {
-            font-size: 0.8rem;
-            color: #1dd1a1;
+            font-size: 0.7rem;
+            color: #22c55e;
             text-transform: uppercase;
-            letter-spacing: 2px;
-            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
         }
 
         .projection-value {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            color: #ff9ff3;
+            color: #ec4899;
             font-family: 'Courier New', monospace;
-            text-shadow: 0 0 15px rgba(255, 159, 243, 0.6);
+            line-height: 1;
         }
 
         .marathon-value {
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            color: #1dd1a1;
+            color: #22c55e;
             font-family: 'Courier New', monospace;
-            text-shadow: 0 0 15px rgba(29, 209, 161, 0.6);
+            line-height: 1;
         }
 
         .progress-section {
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .progress-bar-container {
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 15px;
-            height: 25px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            height: 20px;
             overflow: hidden;
             position: relative;
+            border: 1px solid #334155;
         }
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #1dd1a1);
-            background-size: 200% 100%;
-            animation: progressGradient 2s linear infinite;
-            border-radius: 15px;
+            background: linear-gradient(90deg, #3b82f6, #22c55e);
+            border-radius: 12px;
             transition: width 0.5s ease;
             position: relative;
-        }
-
-        @keyframes progressGradient {
-            0% { background-position: 0% 50%; }
-            100% { background-position: 200% 50%; }
         }
 
         .progress-text {
@@ -231,206 +174,198 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 0.8rem;
+            font-size: 0.7rem;
             font-weight: 700;
             color: #ffffff;
-            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
         }
 
         .progress-markers {
             display: flex;
             justify-content: space-between;
-            margin-top: 5px;
-            font-size: 0.6rem;
-            color: #808080;
+            margin-top: 3px;
+            font-size: 0.55rem;
+            color: #64748b;
         }
 
         .controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 15px;
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
         .btn {
-            padding: 15px 20px;
+            padding: 14px 10px;
             border: none;
-            border-radius: 12px;
-            font-size: 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
         }
 
         .btn-start {
-            background: linear-gradient(145deg, #1dd1a1, #10ac84);
+            background: #10b981;
             color: #ffffff;
-            box-shadow: 0 5px 20px rgba(29, 209, 161, 0.4);
         }
 
         .btn-start:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(29, 209, 161, 0.6);
+            background: #0da271;
         }
 
         .btn-stop {
-            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            background: #ef4444;
             color: #ffffff;
-            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
         }
 
         .btn-stop:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+            background: #dc2626;
         }
 
         .btn-reset {
-            background: linear-gradient(145deg, #576574, #454f5b);
+            background: #64748b;
             color: #ffffff;
-            box-shadow: 0 5px 20px rgba(87, 101, 116, 0.4);
         }
 
         .btn-reset:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(87, 101, 116, 0.6);
+            background: #475569;
         }
 
         .distance-target-section {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #334155;
             text-align: center;
         }
 
         .distance-target-title {
-            font-size: 0.8rem;
-            color: #a0a0a0;
+            font-size: 0.7rem;
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
         }
 
         .distance-target-controls {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 8px;
+            margin-bottom: 8px;
         }
 
         .distance-target-btn {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             border: none;
             border-radius: 50%;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .distance-target-btn.minus {
-            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            background: #ef4444;
             color: #ffffff;
         }
 
         .distance-target-btn.plus {
-            background: linear-gradient(145deg, #1dd1a1, #10ac84);
+            background: #10b981;
             color: #ffffff;
         }
 
         .distance-target-display {
-            font-size: 1.8rem;
+            font-size: 1.5rem;
             font-weight: 700;
-            color: #48dbfb;
+            color: #3b82f6;
             font-family: 'Courier New', monospace;
-            min-width: 120px;
+            min-width: 100px;
             text-align: center;
         }
 
         .quick-distance {
             display: flex;
             justify-content: center;
-            gap: 8px;
-            margin-top: 10px;
+            gap: 6px;
             flex-wrap: wrap;
         }
 
         .quick-btn {
-            padding: 8px 12px;
-            border: 1px solid rgba(72, 219, 251, 0.5);
-            border-radius: 20px;
+            padding: 6px 10px;
+            border: 1px solid #3b82f6;
+            border-radius: 15px;
             background: transparent;
-            color: #48dbfb;
-            font-size: 0.7rem;
+            color: #3b82f6;
+            font-size: 0.65rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
         .quick-btn:hover, .quick-btn.active {
-            background: rgba(72, 219, 251, 0.2);
-            border-color: #48dbfb;
+            background: rgba(59, 130, 246, 0.2);
         }
 
         .gps-status-section {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 1px solid #334155;
             text-align: center;
         }
 
         .gps-status-title {
-            font-size: 0.8rem;
-            color: #a0a0a0;
+            font-size: 0.7rem;
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            margin-bottom: 5px;
         }
 
         .gps-status-info {
-            font-size: 0.9rem;
-            color: #48dbfb;
-            margin-bottom: 10px;
+            font-size: 0.8rem;
+            color: #3b82f6;
             font-family: 'Courier New', monospace;
+            margin-bottom: 3px;
         }
 
         .gps-accuracy {
-            font-size: 0.7rem;
-            color: #feca57;
-            margin-top: 5px;
+            font-size: 0.65rem;
+            color: #f59e0b;
         }
 
         .laps-section {
-            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
-            border-radius: 15px;
-            padding: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            max-height: 200px;
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid #334155;
+            max-height: 180px;
             overflow-y: auto;
         }
 
         .laps-title {
-            font-size: 0.8rem;
-            color: #a0a0a0;
+            font-size: 0.7rem;
+            color: #94a3b8;
             text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
             text-align: center;
         }
 
         .lap-item {
             display: flex;
             justify-content: space-between;
-            padding: 8px 10px;
-            border-radius: 8px;
-            margin-bottom: 5px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            margin-bottom: 4px;
             background: rgba(255, 255, 255, 0.05);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
         }
 
         .lap-item:nth-child(odd) {
@@ -438,25 +373,29 @@
         }
 
         .lap-number {
-            color: #feca57;
+            color: #f59e0b;
             font-weight: 700;
+            font-size: 0.75rem;
         }
 
         .lap-time {
-            color: #48dbfb;
+            color: #3b82f6;
             font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
         }
 
         .lap-pace {
-            color: #ff9ff3;
+            color: #ec4899;
             font-family: 'Courier New', monospace;
+            font-size: 0.75rem;
         }
 
         .no-laps {
             text-align: center;
-            color: #606060;
+            color: #64748b;
             font-style: italic;
-            padding: 20px;
+            padding: 15px;
+            font-size: 0.8rem;
         }
 
         @media (max-width: 380px) {
@@ -464,7 +403,7 @@
                 font-size: 3rem;
             }
             .stat-value {
-                font-size: 1.6rem;
+                font-size: 1.8rem;
             }
             .projection-value, .marathon-value {
                 font-size: 1.5rem;
@@ -473,13 +412,16 @@
 
         @media (min-width: 500px) {
             .container {
-                max-width: 480px;
+                max-width: 450px;
             }
             .timer-display {
-                font-size: 5rem;
+                font-size: 4rem;
             }
             .stat-value {
                 font-size: 2.5rem;
+            }
+            .projection-value, .marathon-value {
+                font-size: 2rem;
             }
         }
 
@@ -487,8 +429,8 @@
             display: none;
             align-items: center;
             justify-content: center;
-            gap: 5px;
-            margin-top: 10px;
+            gap: 4px;
+            margin-top: 5px;
         }
 
         .running-indicator.active {
@@ -496,9 +438,9 @@
         }
 
         .running-dot {
-            width: 8px;
-            height: 8px;
-            background: #1dd1a1;
+            width: 6px;
+            height: 6px;
+            background: #22c55e;
             border-radius: 50%;
             animation: runningPulse 1s ease-in-out infinite;
         }
@@ -512,37 +454,36 @@
         }
 
         .running-text {
-            color: #1dd1a1;
-            font-size: 0.8rem;
+            color: #22c55e;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
         }
 
         .warning {
-            background: linear-gradient(145deg, rgba(255, 107, 107, 0.2), rgba(255, 107, 107, 0.05));
-            border: 1px solid rgba(255, 107, 107, 0.5);
-            border-radius: 10px;
-            padding: 10px;
-            margin-bottom: 15px;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            border-radius: 8px;
+            padding: 8px;
+            margin-bottom: 10px;
             text-align: center;
-            font-size: 0.8rem;
-            color: #ff6b6b;
+            font-size: 0.75rem;
+            color: #ef4444;
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏃 MARATÓN CON GPS REAL</h1>
+            <h1>PASO MARATÓN GPS</h1>
         </div>
 
         <div class="warning" id="gpsWarning">
-            ⚠️ Para usar esta app, necesitas permitir el acceso a la ubicación (GPS) en tu navegador.
+            Permite acceso a ubicación (GPS) en tu navegador
         </div>
 
         <div class="main-timer">
             <div class="timer-display" id="timerDisplay">00:00:00</div>
-            <div class="timer-label">Tiempo Transcurrido</div>
             <div class="running-indicator" id="runningIndicator">
                 <div class="running-dot"></div>
                 <div class="running-dot"></div>
@@ -552,35 +493,32 @@
         </div>
 
         <div class="stats-grid">
-            <div class="stat-card distance">
+            <div class="stat-card km">
                 <div class="stat-value" id="distanceDisplay">0.00</div>
-                <div class="stat-label">Distancia Recorrida</div>
-                <div class="stat-unit">Km</div>
+                <div class="stat-label">KM</div>
             </div>
-            <div class="stat-card remaining">
-                <div class="stat-value" id="remainingDisplay">5.00</div>
-                <div class="stat-label">Distancia Restante</div>
-                <div class="stat-unit">Km</div>
+            <div class="stat-card falta">
+                <div class="stat-value" id="remainingDisplay">10.00</div>
+                <div class="stat-label">FALTA</div>
             </div>
-            <div class="stat-card current-pace">
+            <div class="stat-card actual">
                 <div class="stat-value" id="currentPaceDisplay">--:--</div>
-                <div class="stat-label">Ritmo Actual</div>
+                <div class="stat-label">ACTUAL</div>
                 <div class="stat-unit">min/km</div>
             </div>
-            <div class="stat-card speed">
+            <div class="stat-card kmh">
                 <div class="stat-value" id="speedDisplay">0.0</div>
-                <div class="stat-label">Velocidad</div>
-                <div class="stat-unit">km/h</div>
+                <div class="stat-label">KM/H</div>
             </div>
         </div>
 
         <div class="projection-section">
             <div class="projection-card">
-                <div class="projection-title">Ritmo Promedio</div>
+                <div class="projection-title">PROMEDIO</div>
                 <div class="projection-value" id="avgPaceDisplay">--:--</div>
             </div>
-            <div class="marathon-projection-card">
-                <div class="marathon-title">Proyección 42.195 Km</div>
+            <div class="projection-card">
+                <div class="marathon-title">PROY. MARATÓN</div>
                 <div class="marathon-value" id="marathonProjectionDisplay">--:--:--</div>
             </div>
         </div>
@@ -588,7 +526,7 @@
         <div class="progress-section">
             <div class="progress-bar-container">
                 <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
-                <div class="progress-text" id="progressText">0.0%</div>
+                <div class="progress-text" id="progressText">0%</div>
             </div>
             <div class="progress-markers">
                 <span>0%</span>
@@ -600,37 +538,37 @@
         </div>
 
         <div class="gps-status-section">
-            <div class="gps-status-title">📡 Estado del GPS</div>
-            <div class="gps-status-info" id="gpsStatus">Esperando activación...</div>
-            <div class="gps-accuracy" id="gpsAccuracy">Precisión: -- metros</div>
+            <div class="gps-status-title">ESTADO GPS</div>
+            <div class="gps-status-info" id="gpsStatus">Esperando...</div>
+            <div class="gps-accuracy" id="gpsAccuracy">Precisión: -- m</div>
         </div>
 
         <div class="controls">
-            <button class="btn btn-start" id="btnStart">▶ Iniciar Entrenamiento</button>
-            <button class="btn btn-stop" id="btnStop" style="display: none;">⏸ Pausar</button>
-            <button class="btn btn-reset" id="btnReset">🔄 Reiniciar Todo</button>
+            <button class="btn btn-start" id="btnStart">▶ INICIAR</button>
+            <button class="btn btn-stop" id="btnStop" style="display: none;">⏸ PAUSAR</button>
+            <button class="btn btn-reset" id="btnReset">↻ REINICIAR</button>
         </div>
 
         <div class="distance-target-section">
-            <div class="distance-target-title">🎯 Objetivo de Distancia</div>
+            <div class="distance-target-title">OBJETIVO</div>
             <div class="distance-target-controls">
                 <button class="distance-target-btn minus" id="btnTargetMinus">−</button>
-                <div class="distance-target-display" id="targetDistanceDisplay">5.00 Km</div>
+                <div class="distance-target-display" id="targetDistanceDisplay">10.00 KM</div>
                 <button class="distance-target-btn plus" id="btnTargetPlus">+</button>
             </div>
             <div class="quick-distance">
                 <button class="quick-btn" data-distance="1">1K</button>
                 <button class="quick-btn" data-distance="5">5K</button>
                 <button class="quick-btn active" data-distance="10">10K</button>
-                <button class="quick-btn" data-distance="21.0975">Media</button>
-                <button class="quick-btn" data-distance="42.195">Maratón</button>
+                <button class="quick-btn" data-distance="21.0975">MEDIA</button>
+                <button class="quick-btn" data-distance="42.195">FULL</button>
             </div>
         </div>
 
         <div class="laps-section">
-            <div class="laps-title">📊 Historial por Kilómetro</div>
+            <div class="laps-title">HISTORIAL POR KM</div>
             <div id="lapsList">
-                <div class="no-laps">El entrenamiento comenzará cuando actives el GPS</div>
+                <div class="no-laps">Inicia el entrenamiento para ver tu progreso</div>
             </div>
         </div>
     </div>
@@ -644,13 +582,15 @@
             let startTime = 0;
             let elapsedTime = 0;
             let timerInterval = null;
-            let totalDistance = 0; // Distancia recorrida en km
-            let targetDistance = 10.00; // Objetivo por defecto: 10K
+            let totalDistance = 0;
+            let targetDistance = 10.00;
             let lastPosition = null;
             let lastUpdateTime = 0;
             let watchId = null;
             let laps = [];
             let lastLapDistance = 0;
+            let lastPaceUpdate = 0;
+            let currentPace = 0;
             
             // Elementos del DOM
             const timerDisplay = document.getElementById('timerDisplay');
@@ -698,11 +638,20 @@
                 return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }
             
-            // Formatear ritmo (min/km)
+            // Formatear ritmo CORREGIDO (min/km) - evita 03:60
             function formatPace(minPerKm) {
-                if (!minPerKm || minPerKm === Infinity || minPerKm <= 0) return '--:--';
-                const minutes = Math.floor(minPerKm);
-                const seconds = Math.round((minPerKm - minutes) * 60);
+                if (!minPerKm || minPerKm === Infinity || minPerKm <= 0 || minPerKm > 60) return '--:--';
+                
+                // Convertir a minutos y segundos enteros
+                const totalSeconds = Math.round(minPerKm * 60);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                
+                // Si segundos son 60, ajustar a siguiente minuto
+                if (seconds === 60) {
+                    return `${(minutes + 1).toString().padStart(2, '0')}:00`;
+                }
+                
                 return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }
             
@@ -721,28 +670,32 @@
                 // Progreso
                 const progressPercent = Math.min((totalDistance / targetDistance) * 100, 100);
                 progressBar.style.width = progressPercent + '%';
-                progressText.textContent = progressPercent.toFixed(1) + '%';
+                progressText.textContent = Math.round(progressPercent) + '%';
                 
                 // Actualizar tiempo objetivo
-                targetDistanceDisplay.textContent = targetDistance.toFixed(2) + ' Km';
+                targetDistanceDisplay.textContent = targetDistance.toFixed(2) + ' KM';
                 
                 // Calcular ritmos y proyecciones solo si hay distancia y tiempo
-                if (totalDistance > 0 && currentTime > 0) {
+                if (totalDistance > 0.01 && currentTime > 1000) {
                     // Ritmo promedio (min/km)
-                    const avgPace = (currentTime / 1000 / 60) / totalDistance; // min por km
+                    const avgPace = (currentTime / 1000 / 60) / totalDistance;
                     avgPaceDisplay.textContent = formatPace(avgPace);
                     
                     // Proyección de maratón
-                    const marathonTime = avgPace * MARATHON_DISTANCE * 60 * 1000; // a milisegundos
+                    const marathonTime = avgPace * MARATHON_DISTANCE * 60 * 1000;
                     marathonProjectionDisplay.textContent = formatTime(marathonTime);
                     
                     // Velocidad (km/h)
                     const speed = totalDistance / (currentTime / 1000 / 3600);
                     speedDisplay.textContent = speed.toFixed(1);
+                    
+                    // Mostrar ritmo actual (calculado en tiempo real)
+                    currentPaceDisplay.textContent = formatPace(currentPace);
                 } else {
                     avgPaceDisplay.textContent = '--:--';
                     marathonProjectionDisplay.textContent = '--:--:--';
                     speedDisplay.textContent = '0.0';
+                    currentPaceDisplay.textContent = '--:--';
                 }
             }
             
@@ -753,7 +706,7 @@
                 
                 // Actualizar estado GPS
                 gpsStatus.textContent = 'GPS activo';
-                gpsAccuracy.textContent = `Precisión: ${Math.round(accuracy)} metros`;
+                gpsAccuracy.textContent = `Precisión: ${Math.round(accuracy)} m`;
                 gpsWarning.style.display = 'none';
                 
                 // Si no tenemos posición anterior, solo guardar
@@ -771,31 +724,31 @@
                     position.coords.longitude
                 );
                 
-                // Solo contar si la precisión es buena (< 50 metros)
-                if (accuracy < 50 && distance > 0) {
+                // Solo contar si la precisión es buena (< 30 metros) y distancia razonable
+                if (accuracy < 30 && distance > 0 && distance < 0.1) {
                     totalDistance += distance;
                     
                     // Calcular ritmo actual (basado en el último segmento)
                     const timeDiff = (now - lastUpdateTime) / 1000; // segundos
                     if (timeDiff > 0) {
                         const currentSpeed = (distance / timeDiff) * 3600; // km/h
-                        const currentPace = 60 / currentSpeed; // min/km
                         
-                        // Solo mostrar si es razonable (entre 2:30 y 15:00 min/km)
-                        if (currentPace >= 2.5 && currentPace <= 15) {
-                            currentPaceDisplay.textContent = formatPace(currentPace);
+                        // Solo calcular ritmo si velocidad es razonable (entre 3 y 25 km/h)
+                        if (currentSpeed >= 3 && currentSpeed <= 25) {
+                            currentPace = 60 / currentSpeed; // min/km
+                            lastPaceUpdate = now;
                         }
                         
                         // Registrar kilómetros completados
                         if (Math.floor(totalDistance) > Math.floor(lastLapDistance)) {
                             const lapDistance = Math.floor(totalDistance);
                             const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
-                            const lapTime = currentTime;
+                            const avgPace = (currentTime / 1000 / 60) / totalDistance;
                             
                             laps.push({
                                 km: lapDistance,
-                                time: lapTime,
-                                pace: currentPace || ((currentTime / 1000 / 60) / totalDistance)
+                                time: currentTime,
+                                pace: avgPace
                             });
                             
                             lastLapDistance = totalDistance;
@@ -812,23 +765,23 @@
             
             // Manejar error de GPS
             function handlePositionError(error) {
-                let message = 'Error de GPS: ';
+                let message = 'Error GPS: ';
                 switch(error.code) {
                     case error.PERMISSION_DENIED:
-                        message += 'Permiso denegado. Activa la ubicación en tu navegador.';
+                        message = 'Permiso denegado. Activa GPS en ajustes';
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        message += 'Ubicación no disponible.';
+                        message = 'Ubicación no disponible';
                         break;
                     case error.TIMEOUT:
-                        message += 'Tiempo de espera agotado.';
+                        message = 'Tiempo de espera agotado';
                         break;
                     default:
-                        message += 'Error desconocido.';
+                        message = 'Error GPS';
                         break;
                 }
                 gpsStatus.textContent = message;
-                gpsWarning.textContent = '⚠️ ' + message;
+                gpsWarning.textContent = message;
                 gpsWarning.style.display = 'block';
             }
             
@@ -841,13 +794,13 @@
                         handlePositionError,
                         {
                             enableHighAccuracy: true,
-                            maximumAge: 1000,
-                            timeout: 5000
+                            maximumAge: 2000,
+                            timeout: 10000
                         }
                     );
                 } else {
-                    gpsStatus.textContent = 'GPS no soportado en este navegador';
-                    gpsWarning.textContent = '⚠️ Tu navegador no soporta GPS. Usa Chrome, Firefox o Safari en un celular.';
+                    gpsStatus.textContent = 'GPS no soportado';
+                    gpsWarning.textContent = 'Usa Chrome, Firefox o Safari en celular';
                     gpsWarning.style.display = 'block';
                 }
             }
@@ -866,7 +819,7 @@
                 if (!isRunning) {
                     isRunning = true;
                     startTime = Date.now();
-                    timerInterval = setInterval(updateDisplay, 100);
+                    timerInterval = setInterval(updateDisplay, 500);
                     btnStart.style.display = 'none';
                     btnStop.style.display = 'block';
                     runningIndicator.classList.add('active');
@@ -880,6 +833,7 @@
                         lastPosition = null;
                         laps = [];
                         lastLapDistance = 0;
+                        currentPace = 0;
                         renderLaps();
                     }
                 }
@@ -895,7 +849,7 @@
                     btnStart.style.display = 'block';
                     btnStop.style.display = 'none';
                     runningIndicator.classList.remove('active');
-                    gpsStatus.textContent = 'Entrenamiento pausado';
+                    gpsStatus.textContent = 'Pausado';
                 }
             }
             
@@ -910,15 +864,16 @@
                 lastPosition = null;
                 laps = [];
                 lastLapDistance = 0;
+                currentPace = 0;
                 targetDistance = 10.00;
                 
                 btnStart.style.display = 'block';
                 btnStop.style.display = 'none';
-                btnStart.textContent = '▶ Iniciar Entrenamiento';
+                btnStart.textContent = '▶ INICIAR';
                 runningIndicator.classList.remove('active');
-                gpsStatus.textContent = 'Esperando activación...';
+                gpsStatus.textContent = 'Esperando...';
+                gpsWarning.textContent = 'Permite acceso a ubicación (GPS) en tu navegador';
                 gpsWarning.style.display = 'block';
-                gpsWarning.textContent = '⚠️ Para usar esta app, necesitas permitir el acceso a la ubicación (GPS) en tu navegador.';
                 
                 // Resetear botones rápidos
                 quickBtns.forEach(btn => {
@@ -935,7 +890,7 @@
             // Renderizar vueltas
             function renderLaps() {
                 if (laps.length === 0) {
-                    lapsList.innerHTML = '<div class="no-laps">El entrenamiento comenzará cuando actives el GPS</div>';
+                    lapsList.innerHTML = '<div class="no-laps">Inicia el entrenamiento para ver tu progreso</div>';
                     return;
                 }
                 
@@ -945,7 +900,7 @@
                         <div class="lap-item">
                             <span class="lap-number">Km ${lap.km}</span>
                             <span class="lap-time">${formatTime(lap.time)}</span>
-                            <span class="lap-pace">${formatPace(lap.pace)}/km</span>
+                            <span class="lap-pace">${formatPace(lap.pace)}</span>
                         </div>
                     `;
                 });
@@ -1008,8 +963,19 @@
             
             // Ocultar advertencia si el navegador soporta GPS
             if (!navigator.geolocation) {
-                gpsWarning.textContent = '⚠️ Tu navegador no soporta GPS. Usa Chrome, Firefox o Safari en un celular.';
+                gpsWarning.textContent = 'Tu navegador no soporta GPS. Usa Chrome, Firefox o Safari en celular';
             }
+            
+            // Timer para limpiar ritmo actual si no hay movimiento
+            setInterval(() => {
+                if (isRunning && currentPace > 0) {
+                    const now = Date.now();
+                    if (now - lastPaceUpdate > 10000) { // 10 segundos sin movimiento
+                        currentPace = 0;
+                        currentPaceDisplay.textContent = '--:--';
+                    }
+                }
+            }, 5000);
             
         })();
     </script>
