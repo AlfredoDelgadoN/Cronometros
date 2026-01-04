@@ -92,7 +92,7 @@
             min-height: 0;
         }
 
-        /* CRONÓMETRO CON TAMAÑOS */
+        /* CRONÓMETRO TAMAÑOS AUMENTADOS */
         .timer-display { 
             text-align: center; 
             padding: 15px 0;
@@ -100,7 +100,7 @@
         }
         
         .timer-value { 
-            font-size: 3.5rem; /* Default Medium */
+            font-size: 4rem; /* Default Medium aumentado */
             font-family: var(--font-numbers); 
             color: var(--primary-color); 
             line-height: 0.9;
@@ -108,12 +108,12 @@
             transition: font-size 0.2s;
         }
 
-        /* Tamaños configurables */
-        .timer-size-small .timer-value { font-size: 2.5rem; }
-        .timer-size-medium .timer-value { font-size: 3.5rem; }
-        .timer-size-large .timer-value { font-size: 5rem; }
+        /* Tamaños configurables aumentados */
+        .timer-size-small .timer-value { font-size: 3rem; }
+        .timer-size-medium .timer-value { font-size: 4rem; }
+        .timer-size-large .timer-value { font-size: 6.5rem; }
 
-        /* Indicador de zona de ritmo - MEJORADO */
+        /* Indicador de zona de ritmo */
         .pace-zone-display {
             display: flex;
             justify-content: space-between;
@@ -139,22 +139,31 @@
             position: relative;
         }
 
-        /* ESTILO ACTIVO INVERTIDO Y RESALTADO */
+        /* Zonas pequeñas */
+        .zone-small {
+            flex: 0.6; /* Menos espacio */
+            min-width: 30px;
+            font-size: 0.6rem;
+        }
+
+        /* ESTILO ACTIVO: BORDE BLANCO Y GLOW, NO FONDO */
         .zone-item.active {
             opacity: 1;
-            transform: scale(1.15);
+            transform: scale(1.1);
             font-weight: 800;
             z-index: 2;
-            box-shadow: 0 0 15px currentColor;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-            border-color: transparent;
-            background-color: currentColor; /* Fondo toma el color de la zona */
-            color: #000; /* Texto negro para contraste en colores vivos */
-            font-size: 0.8rem; /* Texto más grande */
-            padding: 4px 4px;
+            /* Borde blanco brillante */
+            border: 2px solid white; 
+            /* Resplandor del color de la zona */
+            box-shadow: 0 0 12px currentColor, inset 0 0 5px rgba(0,0,0,0.5);
+            text-shadow: 0 0 5px currentColor;
+            background-color: rgba(255,255,255,0.1); /* Fondo sutil blanco */
+            color: #fff !important; /* Siempre texto blanco */
         }
         
         .zone-item { border-color: rgba(255,255,255,0.1); }
+        
+        /* Colores de zona (para el texto y glow) */
         .zone-recovery { color: var(--recovery-color); border-color: var(--recovery-color); }
         .zone-1k { color: #4caf50; border-color: #4caf50; }
         .zone-5k { color: #2196f3; border-color: #2196f3; }
@@ -181,12 +190,13 @@
             flex-direction: column;
             justify-content: center;
             border: 1px solid #333;
-            transition: border-color 0.3s;
+            transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        .stat-card.highlight {
-            border-color: var(--primary-color);
-            box-shadow: 0 0 10px rgba(4, 255, 134, 0.2);
+        /* Clase dinámica para resaltar el Ritmo Actual */
+        .stat-card.zone-highlight {
+            border-color: currentColor; /* Toma el color de la variable */
+            box-shadow: 0 0 15px currentColor;
         }
 
         .stat-label { 
@@ -250,8 +260,8 @@
 
         /* Último Lap Resaltado */
         #val-last-lap {
-            font-size: 1.5rem; /* Más grande */
-            color: var(--primary-color); /* Verde neón */
+            font-size: 1.5rem;
+            color: var(--primary-color);
             font-weight: bold;
             text-shadow: 0 0 5px rgba(4,255,134,0.5);
         }
@@ -735,7 +745,7 @@
         }
 
         .btn-share {
-            background: #25D366; /* Color WhatsAppish */
+            background: #25D366;
             color: white;
             border: none;
             padding: 10px 20px;
@@ -761,6 +771,9 @@
             <span id="pace-zone-name" style="margin-left: auto; font-size: 0.7rem; color: #aaa;"></span>
         </div>
         <div class="top-controls">
+            <button onclick="app.toggleFullScreen()" title="Pantalla Completa">
+                ⛶
+            </button>
             <button onclick="app.openSettings()" title="Configuración">
                 ⚙️ Config
             </button>
@@ -779,13 +792,13 @@
 
         <!-- Zonas de ritmo -->
         <div class="pace-zone-display">
-            <div class="zone-item zone-recovery" data-zone="recovery">Recup</div>
+            <div class="zone-item zone-small zone-recovery" data-zone="recovery">Recup</div>
             <div class="zone-item zone-42k" data-zone="42k">42K</div>
             <div class="zone-item zone-21k" data-zone="21k">21K</div>
             <div class="zone-item zone-10k" data-zone="10k">10K</div>
             <div class="zone-item zone-5k" data-zone="5k">5K</div>
             <div class="zone-item zone-1k" data-zone="1k">1K</div>
-            <div class="zone-item zone-fast" data-zone="fast">Rápido</div>
+            <div class="zone-item zone-small zone-fast" data-zone="fast">Rápido</div>
         </div>
 
         <!-- Estadísticas principales -->
@@ -800,12 +813,13 @@
                 <div><span class="stat-value" id="val-speed">0.0</span> <span class="stat-unit">km/h</span></div>
                 <div class="stat-sub">Zona: <span id="val-pace-zone">--</span></div>
             </div>
+            <!-- TARJETA RITMO ACTUAL: AQUÍ SE COLOREA EL BORDE -->
             <div class="stat-card" id="pace-card">
                 <div class="stat-label">Ritmo Actual</div>
                 <div><span class="stat-value" id="val-pace">--:--</span> <span class="stat-unit">min/km</span></div>
                 <div class="stat-sub">Objetivo: <span id="val-target-pace">--:--</span></div>
             </div>
-            <!-- TARJETA PROMEDIO MODIFICADA: Prioridad min/km -->
+            <!-- TARJETA PROMEDIO -->
             <div class="stat-card" id="avg-card">
                 <div class="stat-label">Promedio</div>
                 <div><span class="stat-value" id="val-avg-pace">--:--</span> <span class="stat-unit">min/km</span></div>
@@ -921,7 +935,7 @@
                 <!-- Tab General -->
                 <div id="tab-general" class="tab-content active">
                     
-                    <!-- NUEVO: Tamaño Cronómetro -->
+                    <!-- Tamaño Cronómetro -->
                     <div class="form-group">
                         <label class="form-label">Tamaño Cronómetro</label>
                         <select id="set-timer-size" class="form-control">
@@ -1103,7 +1117,7 @@
                     lapDistValue: 1000, 
                     audio: true,
                     units: 'metric',
-                    timerSize: 'medium' // Nuevo setting
+                    timerSize: 'medium' 
                 },
                 
                 // Ritmos (segundos por km)
@@ -1147,7 +1161,7 @@
                 this.loadSettings(); 
                 this.detectDayAndLoadWorkout(); 
                 this.updateClock();
-                this.applyTimerSize(); // Aplicar tamaño inicial
+                this.applyTimerSize(); 
                 this.updateUI();
                 
                 setInterval(() => this.updateClock(), 1000);
@@ -1159,6 +1173,24 @@
                     this.applyTimerSize();
                     this.saveGlobalSettings();
                 });
+
+                // Listener para pantalla completa
+                document.addEventListener('fullscreenchange', () => {
+                   // Puedes añadir lógica aquí si necesitas cambiar icono
+                   console.log("Full screen changed");
+                });
+            },
+
+            toggleFullScreen: function() {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        alert(`Error al activar pantalla completa: ${err.message}`);
+                    });
+                } else {
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen();
+                    }
+                }
             },
 
             applyTimerSize: function() {
@@ -1596,6 +1628,7 @@
                     zoneName.textContent = this.getZoneDisplayName(zone);
                     zoneDisplay.textContent = this.getZoneDisplayName(zone);
                     
+                    // 1. Resaltar botón activo (Borde blanco + Glow)
                     document.querySelectorAll('.zone-item').forEach(z => {
                         z.classList.remove('active');
                     });
@@ -1603,8 +1636,22 @@
                     if (activeZone) {
                         activeZone.classList.add('active');
                     }
+
+                    // 2. NUEVO: Resaltar la tarjeta de Ritmo Actual con el color de la zona
+                    const paceCard = document.getElementById('pace-card');
                     
-                    this.updateCardHighlights(zone);
+                    // Limpiar estilos anteriores
+                    paceCard.style.removeProperty('border-color');
+                    paceCard.style.removeProperty('box-shadow');
+                    paceCard.classList.remove('zone-highlight');
+                    
+                    if (zone !== 'none') {
+                        const color = this.state.zoneColors[zone];
+                        paceCard.style.setProperty('--border-color', color); 
+                        paceCard.style.borderColor = color;
+                        paceCard.style.boxShadow = `0 0 15px ${color}`;
+                        paceCard.classList.add('zone-highlight');
+                    }
                 }
             },
             
@@ -1623,15 +1670,7 @@
             },
             
             updateCardHighlights: function(zone) {
-                const cards = ['dist-card', 'speed-card', 'pace-card', 'avg-card'];
-                cards.forEach(cardId => {
-                    const card = document.getElementById(cardId);
-                    card.classList.remove('highlight');
-                });
-                
-                if (zone !== 'none') {
-                    document.getElementById('pace-card').classList.add('highlight');
-                }
+                // Función obsoleta, ahora manejamos esto en updatePaceZoneDisplay directamente
             },
             
             // --- Lógica de Workout ---
@@ -1706,7 +1745,6 @@
                 const totalTime = this.formatTime(this.state.totalElapsed);
                 const totalDist = (this.state.distance / 1000).toFixed(2);
                 
-                // Calcular promedio total
                 let avgPaceText = "--:--";
                 if (this.state.avgSpeed > 0) {
                     avgPaceText = this.formatPace(3600 / this.state.avgSpeed);
@@ -1725,20 +1763,17 @@
                     text += `${lap.index}. ${this.formatTime(lap.duration)} | ${dist}km | ${pace} (${type})\n`;
                 });
 
-                // Copiar al portapapeles como fallback
                 navigator.clipboard.writeText(text).then(() => {
                     console.log("Copiado");
                 }).catch(err => {
                     console.error("Error copiando", err);
                 });
 
-                // Intentar compartir nativo (Android/iOS)
                 if (navigator.share) {
                     navigator.share({
                         title: 'Resumen de Entrenamiento',
                         text: text
                     }).catch(err => {
-                        // Si cancelan o falla, ya está en portapapeles
                         alert("Texto copiado al portapapeles");
                     });
                 } else {
@@ -1829,7 +1864,6 @@
                 
                 document.getElementById('tab-' + tabName).classList.add('active');
                 
-                // Guardar settings al salir de la pestaña general
                 if (tabName !== 'general') {
                     this.saveGlobalSettings();
                 }
@@ -1841,7 +1875,6 @@
 
             closeModal: function(id) {
                 document.getElementById(id).classList.remove('active');
-                // Al cerrar settings, guardamos cualquier cambio pendiente
                 if (id === 'modal-settings') {
                     this.saveGlobalSettings();
                 }
@@ -1885,7 +1918,6 @@
                 const speed = this.state.currentSpeed * 3.6;
                 document.getElementById('val-speed').textContent = speed.toFixed(1);
                 
-                // Promedio Modificado: Primero Pace, luego Speed
                 document.getElementById('val-avg-speed').textContent = this.state.avgSpeed.toFixed(1);
                 if (this.state.avgSpeed > 0) {
                      const avgPaceSec = 3600 / this.state.avgSpeed;
