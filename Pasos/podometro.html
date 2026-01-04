@@ -610,7 +610,7 @@
             if (mode === 'jump') { ui.calibPanel.classList.add('hidden'); } 
             else {
                 ui.calibPanel.classList.remove('hidden');
-                if (mode === 'walk') { state.strideLength = 0.75; ui.strideSlider.value = 0.75; }
+                if (mode === 'walk') { state.strideLength = 0.45; ui.strideSlider.value = 0.45; }
                 else { state.strideLength = 1.50; ui.strideSlider.value = 1.50; }
                 ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
                 if(state.count > 0) { state.distance = state.count * state.strideLength; updateStats(); }
