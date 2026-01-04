@@ -1,10 +1,11 @@
-htmlDownloadCopy code<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Cronómetro Maratón 42.195 Km</title>
+    <title>Cronómetro Maratón 42.195 Km - Con GPS Simulado</title>
     <style>
+        /* Tus estilos CSS originales se mantienen igual */
         * {
             margin: 0;
             padding: 0;
@@ -410,6 +411,57 @@ htmlDownloadCopy code<!DOCTYPE html>
             padding: 20px;
         }
 
+        .gps-simulation {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            text-align: center;
+        }
+
+        .gps-title {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .pace-input {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .pace-input label {
+            font-size: 0.8rem;
+            color: #feca57;
+        }
+
+        .pace-input input {
+            width: 80px;
+            padding: 8px;
+            border: 1px solid rgba(254, 202, 87, 0.5);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.3);
+            color: #feca57;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .gps-status {
+            font-size: 0.7rem;
+            color: #1dd1a1;
+            padding: 5px;
+            border-radius: 10px;
+            background: rgba(29, 209, 161, 0.1);
+            margin-top: 10px;
+        }
+
         @media (max-width: 380px) {
             .timer-display {
                 font-size: 3rem;
@@ -473,7 +525,7 @@ htmlDownloadCopy code<!DOCTYPE html>
 <body>
     <div class="container">
         <div class="header">
-            <h1>🏃 MARATÓN 42.195 Km</h1>
+            <h1>🏃 MARATÓN 42.195 Km - CON GPS</h1>
         </div>
 
         <div class="main-timer">
@@ -529,15 +581,25 @@ htmlDownloadCopy code<!DOCTYPE html>
             </div>
         </div>
 
+        <div class="gps-simulation">
+            <div class="gps-title">⚙️ Simulación de GPS</div>
+            <div class="pace-input">
+                <label for="targetPace">Ritmo Objetivo:</label>
+                <input type="text" id="targetPace" value="5:30" placeholder="min/km">
+                <div class="stat-unit">min/km</div>
+            </div>
+            <div class="gps-status" id="gpsStatus">GPS: Esperando inicio...</div>
+        </div>
+
         <div class="controls">
-            <button class="btn btn-start" id="btnStart">▶ Iniciar</button>
+            <button class="btn btn-start" id="btnStart">▶ Iniciar Entrenamiento</button>
             <button class="btn btn-stop" id="btnStop" style="display: none;">⏸ Pausar</button>
-            <button class="btn btn-lap" id="btnLap">📍 Km +1</button>
-            <button class="btn btn-reset" id="btnReset">🔄 Reset</button>
+            <button class="btn btn-lap" id="btnLap">📍 Registrar Km</button>
+            <button class="btn btn-reset" id="btnReset">🔄 Reset Total</button>
         </div>
 
         <div class="distance-input-section">
-            <div class="distance-input-title">Ajustar Distancia Manual</div>
+            <div class="distance-input-title">Ajuste Manual de Distancia</div>
             <div class="distance-controls">
                 <button class="distance-btn minus" id="btnMinus">−</button>
                 <div class="distance-display" id="manualDistance">0.00 Km</div>
@@ -553,9 +615,9 @@ htmlDownloadCopy code<!DOCTYPE html>
         </div>
 
         <div class="laps-section">
-            <div class="laps-title">📊 Registro de Kilómetros</div>
+            <div class="laps-title">📊 Historial de Kilómetros</div>
             <div id="lapsList">
-                <div class="no-laps">Presiona "Km +1" para registrar cada kilómetro</div>
+                <div class="no-laps">Inicia el entrenamiento para ver tu progreso por kilómetro</div>
             </div>
         </div>
     </div>
@@ -571,6 +633,9 @@ htmlDownloadCopy code<!DOCTYPE html>
             let currentDistance = 0;
             let laps = [];
             let lastLapTime = 0;
+            let lastLapDistance = 0;
+            let gpsInterval = null;
+            let targetPace = 5.5; // min/km por defecto (5:30)
 
             const timerDisplay = document.getElementById('timerDisplay');
             const distanceDisplay = document.getElementById('distanceDisplay');
@@ -583,6 +648,8 @@ htmlDownloadCopy code<!DOCTYPE html>
             const lapsList = document.getElementById('lapsList');
             const manualDistance = document.getElementById('manualDistance');
             const runningIndicator = document.getElementById('runningIndicator');
+            const gpsStatus = document.getElementById('gpsStatus');
+            const targetPaceInput = document.getElementById('targetPace');
             
             const btnStart = document.getElementById('btnStart');
             const btnStop = document.getElementById('btnStop');
@@ -591,6 +658,24 @@ htmlDownloadCopy code<!DOCTYPE html>
             const btnMinus = document.getElementById('btnMinus');
             const btnPlus = document.getElementById('btnPlus');
             const quickBtns = document.querySelectorAll('.quick-btn');
+
+            // Convertir tiempo en formato mm:ss a minutos decimales
+            function paceToDecimal(paceStr) {
+                if (!paceStr || paceStr === '--:--') return 0;
+                const parts = paceStr.split(':');
+                if (parts.length !== 2) return 0;
+                const minutes = parseInt(parts[0]) || 0;
+                const seconds = parseInt(parts[1]) || 0;
+                return minutes + (seconds / 60);
+            }
+
+            // Convertir minutos decimales a formato mm:ss
+            function decimalToPace(decimalMinutes) {
+                if (!decimalMinutes || decimalMinutes === 0) return '--:--';
+                const minutes = Math.floor(decimalMinutes);
+                const seconds = Math.round((decimalMinutes - minutes) * 60);
+                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
 
             function formatTime(ms) {
                 const totalSeconds = Math.floor(ms / 1000);
@@ -601,7 +686,7 @@ htmlDownloadCopy code<!DOCTYPE html>
             }
 
             function formatPace(msPerKm) {
-                if (!msPerKm || msPerKm === Infinity || isNaN(msPerKm)) return '--:--';
+                if (!msPerKm || msPerKm === Infinity || isNaN(msPerKm) || msPerKm <= 0) return '--:--';
                 const totalSeconds = Math.floor(msPerKm / 1000);
                 const minutes = Math.floor(totalSeconds / 60);
                 const seconds = totalSeconds % 60;
@@ -621,27 +706,62 @@ htmlDownloadCopy code<!DOCTYPE html>
                 progressText.textContent = progressPercent.toFixed(1) + '%';
 
                 if (currentDistance > 0 && currentTime > 0) {
+                    // Paso promedio (min/km)
                     const avgPaceMs = currentTime / currentDistance;
                     avgPaceDisplay.textContent = formatPace(avgPaceMs);
 
+                    // Velocidad (km/h)
                     const speedKmH = (currentDistance / (currentTime / 1000 / 3600));
                     speedDisplay.textContent = speedKmH.toFixed(1);
 
-                    const projectedTime = avgPaceMs * MARATHON_DISTANCE;
-                    projectionDisplay.textContent = formatTime(projectedTime);
-
+                    // Paso actual (último kilómetro o segmento)
+                    let currentPaceMs = avgPaceMs;
                     if (laps.length > 0) {
                         const lastLap = laps[laps.length - 1];
-                        currentPaceDisplay.textContent = formatPace(lastLap.lapPace);
-                    } else {
-                        currentPaceDisplay.textContent = formatPace(avgPaceMs);
+                        currentPaceMs = lastLap.lapTime / lastLap.distance;
                     }
+                    currentPaceDisplay.textContent = formatPace(currentPaceMs);
+
+                    // Proyección de maratón basada en ritmo promedio
+                    const projectedTime = avgPaceMs * MARATHON_DISTANCE;
+                    projectionDisplay.textContent = formatTime(projectedTime);
                 } else {
                     avgPaceDisplay.textContent = '--:--';
                     currentPaceDisplay.textContent = '--:--';
                     speedDisplay.textContent = '0.0';
                     projectionDisplay.textContent = '--:--:--';
                 }
+            }
+
+            function startGPSSimulation() {
+                if (gpsInterval) clearInterval(gpsInterval);
+                
+                gpsInterval = setInterval(() => {
+                    if (!isRunning) return;
+                    
+                    // Convertir ritmo objetivo a km/h
+                    const paceMinPerKm = targetPace;
+                    const speedKmH = 60 / paceMinPerKm;
+                    
+                    // Calcular distancia adicional basada en el tiempo transcurrido
+                    const now = Date.now();
+                    const timeElapsed = (now - startTime) / 1000; // segundos
+                    const expectedDistance = (speedKmH * timeElapsed) / 3600;
+                    
+                    // Solo actualizar si hay un cambio significativo
+                    if (expectedDistance > currentDistance) {
+                        const delta = expectedDistance - currentDistance;
+                        currentDistance = Math.min(expectedDistance, MARATHON_DISTANCE);
+                        
+                        // Si se completa un kilómetro, registrar automáticamente
+                        if (Math.floor(currentDistance) > Math.floor(currentDistance - delta)) {
+                            addLap(true);
+                        }
+                        
+                        gpsStatus.textContent = `GPS: Activado - Ritmo ${decimalToPace(targetPace)}/km`;
+                        updateDisplay();
+                    }
+                }, 1000);
             }
 
             function startTimer() {
@@ -652,6 +772,10 @@ htmlDownloadCopy code<!DOCTYPE html>
                     btnStart.style.display = 'none';
                     btnStop.style.display = 'block';
                     runningIndicator.classList.add('active');
+                    
+                    // Iniciar simulación GPS
+                    startGPSSimulation();
+                    gpsStatus.textContent = `GPS: Activado - Ritmo ${decimalToPace(targetPace)}/km`;
                 }
             }
 
@@ -660,107 +784,81 @@ htmlDownloadCopy code<!DOCTYPE html>
                     isRunning = false;
                     elapsedTime += Date.now() - startTime;
                     clearInterval(timerInterval);
+                    clearInterval(gpsInterval);
                     btnStart.style.display = 'block';
                     btnStop.style.display = 'none';
                     btnStart.textContent = '▶ Reanudar';
                     runningIndicator.classList.remove('active');
+                    gpsStatus.textContent = 'GPS: Pausado';
                 }
             }
 
             function resetTimer() {
                 isRunning = false;
                 clearInterval(timerInterval);
+                clearInterval(gpsInterval);
                 startTime = 0;
                 elapsedTime = 0;
                 currentDistance = 0;
                 laps = [];
                 lastLapTime = 0;
+                lastLapDistance = 0;
                 
                 btnStart.style.display = 'block';
                 btnStop.style.display = 'none';
-                btnStart.textContent = '▶ Iniciar';
+                btnStart.textContent = '▶ Iniciar Entrenamiento';
                 runningIndicator.classList.remove('active');
+                gpsStatus.textContent = 'GPS: Esperando inicio...';
                 
-                lapsList.innerHTML = '<div class="no-laps">Presiona "Km +1" para registrar cada kilómetro</div>';
+                lapsList.innerHTML = '<div class="no-laps">Inicia el entrenamiento para ver tu progreso por kilómetro</div>';
                 
                 quickBtns.forEach(btn => btn.classList.remove('active'));
                 
                 updateDisplay();
             }
 
-            function addLap() {
+            function addLap(auto = false) {
                 const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
-                currentDistance += 1;
                 
-                if (currentDistance > MARATHON_DISTANCE) {
-                    currentDistance = MARATHON_DISTANCE;
-                }
-
+                // Calcular distancia del último segmento
+                const lapDistance = currentDistance - lastLapDistance;
+                
+                if (lapDistance <= 0 && !auto) return;
+                
                 const lapTime = currentTime - lastLapTime;
-                const lapPace = lapTime;
                 
                 laps.push({
-                    km: currentDistance,
+                    km: currentDistance.toFixed(2),
                     totalTime: currentTime,
                     lapTime: lapTime,
-                    lapPace: lapPace
+                    distance: lapDistance,
+                    pace: lapTime / lapDistance
                 });
 
                 lastLapTime = currentTime;
+                lastLapDistance = currentDistance;
                 renderLaps();
                 updateDisplay();
             }
 
             function adjustDistance(delta) {
-                const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
                 currentDistance = Math.max(0, Math.min(currentDistance + delta, MARATHON_DISTANCE));
-                
-                if (delta > 0 && currentTime > 0) {
-                    const lapTime = laps.length > 0 ? currentTime - lastLapTime : currentTime;
-                    laps.push({
-                        km: currentDistance,
-                        totalTime: currentTime,
-                        lapTime: lapTime,
-                        lapPace: lapTime / Math.abs(delta)
-                    });
-                    lastLapTime = currentTime;
-                    renderLaps();
-                }
-                
                 updateDisplay();
             }
 
             function setDistance(distance) {
-                const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
                 currentDistance = Math.min(distance, MARATHON_DISTANCE);
                 
                 quickBtns.forEach(btn => {
                     btn.classList.toggle('active', parseFloat(btn.dataset.distance) === distance);
                 });
                 
-                laps = [];
-                lastLapTime = 0;
-                
-                if (currentTime > 0 && currentDistance > 0) {
-                    for (let km = 1; km <= Math.floor(currentDistance); km++) {
-                        const timePerKm = currentTime / currentDistance;
-                        laps.push({
-                            km: km,
-                            totalTime: timePerKm * km,
-                            lapTime: timePerKm,
-                            lapPace: timePerKm
-                        });
-                    }
-                    lastLapTime = currentTime;
-                }
-                
-                renderLaps();
                 updateDisplay();
             }
 
             function renderLaps() {
                 if (laps.length === 0) {
-                    lapsList.innerHTML = '<div class="no-laps">Presiona "Km +1" para registrar cada kilómetro</div>';
+                    lapsList.innerHTML = '<div class="no-laps">Inicia el entrenamiento para ver tu progreso por kilómetro</div>';
                     return;
                 }
 
@@ -768,19 +866,20 @@ htmlDownloadCopy code<!DOCTYPE html>
                 laps.slice().reverse().forEach((lap, index) => {
                     html += `
                         <div class="lap-item">
-                            <span class="lap-number">Km ${lap.km.toFixed(0)}</span>
+                            <span class="lap-number">Km ${lap.km}</span>
                             <span class="lap-time">${formatTime(lap.totalTime)}</span>
-                            <span class="lap-pace">${formatPace(lap.lapPace)}/km</span>
+                            <span class="lap-pace">${formatPace(lap.pace)}/km</span>
                         </div>
                     `;
                 });
                 lapsList.innerHTML = html;
             }
 
+            // Event Listeners
             btnStart.addEventListener('click', startTimer);
             btnStop.addEventListener('click', stopTimer);
             btnReset.addEventListener('click', resetTimer);
-            btnLap.addEventListener('click', addLap);
+            btnLap.addEventListener('click', () => addLap(false));
             btnMinus.addEventListener('click', () => adjustDistance(-0.1));
             btnPlus.addEventListener('click', () => adjustDistance(0.1));
 
@@ -790,6 +889,20 @@ htmlDownloadCopy code<!DOCTYPE html>
                 });
             });
 
+            // Actualizar ritmo objetivo
+            targetPaceInput.addEventListener('change', function() {
+                const paceValue = paceToDecimal(this.value);
+                if (paceValue > 0 && paceValue < 20) {
+                    targetPace = paceValue;
+                    if (isRunning) {
+                        startGPSSimulation();
+                    }
+                } else {
+                    this.value = decimalToPace(targetPace);
+                }
+            });
+
+            // Mantener botones +/- presionados
             let minusInterval, plusInterval;
             
             btnMinus.addEventListener('mousedown', () => {
@@ -814,6 +927,7 @@ htmlDownloadCopy code<!DOCTYPE html>
             });
             btnPlus.addEventListener('touchend', () => clearInterval(plusInterval));
 
+            // Inicializar
             updateDisplay();
         })();
     </script>
