@@ -92,54 +92,68 @@
             min-height: 0;
         }
 
+        /* CRONÓMETRO CON TAMAÑOS */
         .timer-display { 
             text-align: center; 
-            padding: 10px 0;
+            padding: 15px 0;
             background: linear-gradient(to bottom, #1a1a1a, #121212);
         }
         
         .timer-value { 
-            font-size: 3.5rem; 
+            font-size: 3.5rem; /* Default Medium */
             font-family: var(--font-numbers); 
             color: var(--primary-color); 
             line-height: 0.9;
             letter-spacing: -1px;
+            transition: font-size 0.2s;
         }
 
-        /* Indicador de zona de ritmo - AJUSTADO PARA MÓVILES PEQUEÑOS */
+        /* Tamaños configurables */
+        .timer-size-small .timer-value { font-size: 2.5rem; }
+        .timer-size-medium .timer-value { font-size: 3.5rem; }
+        .timer-size-large .timer-value { font-size: 5rem; }
+
+        /* Indicador de zona de ritmo - MEJORADO */
         .pace-zone-display {
             display: flex;
-            justify-content: space-between; /* Distribuir espacio equitativamente */
-            gap: 3px; /* Reducido de 15px a 3px */
-            padding: 5px 5px; /* Reducido padding */
+            justify-content: space-between;
+            gap: 3px;
+            padding: 5px 5px;
             background: #1a1a1a;
             border-bottom: 1px solid #333;
-            overflow-x: auto; /* Permitir scroll si aun así no caben */
+            overflow-x: auto;
         }
 
         .zone-item {
             text-align: center;
-            padding: 2px 2px; /* Reducido padding */
-            border-radius: 4px;
-            font-size: 0.65rem; /* Reducido tamaño de fuente */
+            padding: 4px 2px;
+            border-radius: 6px;
+            font-size: 0.65rem;
             opacity: 0.5;
             transition: all 0.3s;
             cursor: pointer;
-            min-width: 35px; /* Min-width reducido */
-            flex: 1; /* Ocupar espacio disponible */
-            white-space: nowrap; /* Evitar saltos de línea */
-            border: 1px solid transparent; /* Borde transparente por defecto para evitar saltos */
+            min-width: 35px;
+            flex: 1;
+            white-space: nowrap;
+            border: 1px solid transparent;
+            position: relative;
         }
 
+        /* ESTILO ACTIVO INVERTIDO Y RESALTADO */
         .zone-item.active {
             opacity: 1;
-            transform: scale(1.05); /* Ligero escalado */
-            font-weight: bold;
-            box-shadow: 0 0 8px currentColor;
-            z-index: 2; /* Traer al frente */
+            transform: scale(1.15);
+            font-weight: 800;
+            z-index: 2;
+            box-shadow: 0 0 15px currentColor;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+            border-color: transparent;
+            background-color: currentColor; /* Fondo toma el color de la zona */
+            color: #000; /* Texto negro para contraste en colores vivos */
+            font-size: 0.8rem; /* Texto más grande */
+            padding: 4px 4px;
         }
         
-        /* Estilos de zona específicos para bordes visibles */
         .zone-item { border-color: rgba(255,255,255,0.1); }
         .zone-recovery { color: var(--recovery-color); border-color: var(--recovery-color); }
         .zone-1k { color: #4caf50; border-color: #4caf50; }
@@ -206,7 +220,7 @@
         .stats-row-secondary {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            padding: 8px 10px;
+            padding: 10px 10px;
             background-color: #181818;
             border-top: 1px solid #333;
             border-bottom: 1px solid #333;
@@ -232,6 +246,14 @@
             font-family: var(--font-numbers); 
             color: white; 
             line-height: 0.9;
+        }
+
+        /* Último Lap Resaltado */
+        #val-last-lap {
+            font-size: 1.5rem; /* Más grande */
+            color: var(--primary-color); /* Verde neón */
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(4,255,134,0.5);
         }
 
         /* Progreso de workout */
@@ -429,6 +451,13 @@
             max-height: 60vh;
         }
 
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 1px solid #333;
+            display: flex;
+            justify-content: flex-end;
+        }
+
         .close-btn {
             background: none;
             border: none;
@@ -462,7 +491,7 @@
             color: #888;
             cursor: pointer;
             font-weight: bold;
-            font-size: 0.85rem; /* Ligeramente más pequeño */
+            font-size: 0.85rem;
             border-bottom: 3px solid transparent;
         }
 
@@ -704,6 +733,22 @@
         .lap-highlight {
             background: rgba(4, 255, 134, 0.1);
         }
+
+        .btn-share {
+            background: #25D366; /* Color WhatsAppish */
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-share:hover {
+            opacity: 0.9;
+        }
     </style>
 </head>
 <body>
@@ -728,7 +773,7 @@
     <!-- Contenido principal -->
     <main>
         <!-- Cronómetro -->
-        <div class="timer-display">
+        <div class="timer-display" id="timer-display-container">
             <div class="timer-value" id="main-timer">00:00:00</div>
         </div>
 
@@ -760,10 +805,11 @@
                 <div><span class="stat-value" id="val-pace">--:--</span> <span class="stat-unit">min/km</span></div>
                 <div class="stat-sub">Objetivo: <span id="val-target-pace">--:--</span></div>
             </div>
+            <!-- TARJETA PROMEDIO MODIFICADA: Prioridad min/km -->
             <div class="stat-card" id="avg-card">
                 <div class="stat-label">Promedio</div>
-                <div><span class="stat-value" id="val-avg-speed">0.0</span> <span class="stat-unit">km/h</span></div>
-                <div class="stat-sub"><span id="val-avg-pace">--:--</span> min/km</div>
+                <div><span class="stat-value" id="val-avg-pace">--:--</span> <span class="stat-unit">min/km</span></div>
+                <div class="stat-sub"><span id="val-avg-speed">0.0</span> km/h</div>
             </div>
         </div>
 
@@ -777,6 +823,7 @@
                 <div class="mini-label">Hora</div>
                 <div class="mini-val" id="val-clock">--:--</div>
             </div>
+            <!-- ÚLTIMO LAP RESALTADO -->
             <div class="mini-stat">
                 <div class="mini-label">Último Lap</div>
                 <div class="mini-val" id="val-last-lap">--:--</div>
@@ -848,6 +895,11 @@
                     </tbody>
                 </table>
             </div>
+            <div class="modal-footer">
+                <button class="btn-share" onclick="app.shareLaps()">
+                    📤 Compartir
+                </button>
+            </div>
         </div>
     </div>
 
@@ -868,6 +920,17 @@
             <div class="modal-body">
                 <!-- Tab General -->
                 <div id="tab-general" class="tab-content active">
+                    
+                    <!-- NUEVO: Tamaño Cronómetro -->
+                    <div class="form-group">
+                        <label class="form-label">Tamaño Cronómetro</label>
+                        <select id="set-timer-size" class="form-control">
+                            <option value="small">Pequeño</option>
+                            <option value="medium" selected>Mediano</option>
+                            <option value="large">Grande</option>
+                        </select>
+                    </div>
+
                     <div class="toggle-row">
                         <span>Auto Laps</span>
                         <label class="switch">
@@ -1039,7 +1102,8 @@
                     autoLap: true,
                     lapDistValue: 1000, 
                     audio: true,
-                    units: 'metric'
+                    units: 'metric',
+                    timerSize: 'medium' // Nuevo setting
                 },
                 
                 // Ritmos (segundos por km)
@@ -1053,7 +1117,7 @@
                 },
                 
                 // Workout
-                workoutPlan: [], // Plan activo actualmente
+                workoutPlan: [], 
                 isWorkoutActive: false,
                 currentStepIndex: -1,
                 stepStartTime: 0,
@@ -1080,42 +1144,44 @@
             
             init: function() {
                 this.initMap();
-                this.loadSettings(); // Carga ritmos y settings del localStorage
-                this.detectDayAndLoadWorkout(); // Auto-carga el workout del día actual
+                this.loadSettings(); 
+                this.detectDayAndLoadWorkout(); 
                 this.updateClock();
+                this.applyTimerSize(); // Aplicar tamaño inicial
                 this.updateUI();
                 
                 setInterval(() => this.updateClock(), 1000);
                 this.setupPaceZones();
+
+                // Listener para cambio de tamaño en tiempo real
+                document.getElementById('set-timer-size').addEventListener('change', (e) => {
+                    this.state.settings.timerSize = e.target.value;
+                    this.applyTimerSize();
+                    this.saveGlobalSettings();
+                });
+            },
+
+            applyTimerSize: function() {
+                const container = document.getElementById('timer-display-container');
+                container.classList.remove('timer-size-small', 'timer-size-medium', 'timer-size-large');
+                if (this.state.settings.timerSize) {
+                    container.classList.add('timer-size-' + this.state.settings.timerSize);
+                }
             },
 
             // --- Lógica de Día de la Semana y Persistencia de Workouts ---
 
             detectDayAndLoadWorkout: function() {
-                // JS: 0=Dom, 1=Lun, ..., 6=Sab
                 const todayIndex = new Date().getDay();
-                
-                // Actualizar el selector visualmente
                 document.getElementById('day-selector').value = todayIndex;
-                
-                // Cargar el plan de hoy en memoria (state.workoutPlan)
-                // No lo activamos automáticamente (isWorkoutActive = false), solo lo preparamos
                 this.loadWorkoutForDayIndex(todayIndex);
-                
-                // Cargar los pasos en el editor visualmente para el día de hoy
                 this.state.editingWorkoutSteps = JSON.parse(JSON.stringify(this.state.workoutPlan));
                 this.renderWorkoutStepsList();
             },
 
             loadWorkoutForSelectedDay: function() {
                 const dayIndex = parseInt(document.getElementById('day-selector').value);
-                
-                // 1. Guardamos lo que esté actualmente en el editor si el usuario lo quería?
-                // Por simplicidad, al cambiar de día, descartamos cambios no guardados y cargamos lo guardado.
-                
                 this.loadWorkoutForDayIndex(dayIndex);
-                
-                // Copiar al editor temporal para visualización/edición
                 this.state.editingWorkoutSteps = JSON.parse(JSON.stringify(this.state.workoutPlan));
                 this.renderWorkoutStepsList();
             },
@@ -1134,28 +1200,18 @@
                 const dayIndex = parseInt(document.getElementById('day-selector').value);
                 const weeklyPlanJSON = localStorage.getItem('weeklyWorkoutPlan');
                 let weeklyPlan = weeklyPlanJSON ? JSON.parse(weeklyPlanJSON) : {};
-                
-                // Guardar los pasos del editor actual
                 weeklyPlan[dayIndex] = this.state.editingWorkoutSteps;
-                
                 localStorage.setItem('weeklyWorkoutPlan', JSON.stringify(weeklyPlan));
                 
-                // Actualizar el plan activo si estamos en el día seleccionado
                 if (new Date().getDay() === dayIndex) {
                     this.state.workoutPlan = JSON.parse(JSON.stringify(this.state.editingWorkoutSteps));
                 }
-
                 this.showToast({duration: 0, pace: 0}, `✅ Plan guardado para ${this.getDayName(dayIndex)}`);
             },
 
             activateWorkout: function() {
-                // Lo que haya en el editor temporal se convierte en el plan activo para la sesión
                 this.state.workoutPlan = JSON.parse(JSON.stringify(this.state.editingWorkoutSteps));
                 this.state.isWorkoutActive = this.state.workoutPlan.length > 0;
-                
-                // Si estamos editando un día diferente al de hoy, al activar, también sobrescribimos el plan "activo"
-                // Pero para persistencia, el usuario debería usar "Guardar Plan [Día]".
-                
                 this.closeModal('modal-settings');
                 this.showToast({duration: 0, pace: 0}, "🏋️ Plan Activado");
             },
@@ -1327,7 +1383,6 @@
                         lat, lng
                     );
                     
-                    // Filtro de precisión
                     if (accuracy < 50 && dist > 1) {
                         this.state.distance += dist;
                         this.state.currentLap.distance += dist;
@@ -1422,7 +1477,6 @@
                     document.getElementById('toast-pace').textContent = this.formatPace(lapData.pace);
                     document.getElementById('toast-dist').textContent = (lapData.distance / 1000).toFixed(2);
                 } else {
-                    // Caso de mensajes del sistema (no lap)
                     document.getElementById('toast-time').textContent = "";
                     document.getElementById('toast-pace').textContent = "";
                     document.getElementById('toast-dist').textContent = "";
@@ -1442,16 +1496,6 @@
             // --- Sistema de Ritmos y Zonas ---
 
             savePaces: function() {
-                // Leer valores y convertir a segundos
-                const toSec = (val) => {
-                    const parts = val.toString().split('.');
-                    const mins = parseInt(parts[0]) || 0;
-                    const secs = (parts[1] ? parseInt(parts[1].padEnd(2, '0')) : 0); // 5.5 -> 5min 50seg (aprox) o 5.30 -> 5min 30seg
-                    // Mejor: parsear como decimal directamente si se ingresa 5.5 min = 5 min 30 seg
-                    return mins * 60 + (parts[1] ? parseInt(parts[1]) * 6 : 0); // Simple decimal parsing
-                };
-                
-                // Ajuste para parsear 5.30 como 5:30, no 5.5 decimal
                 const parseMinSec = (str) => {
                     const v = parseFloat(str);
                     if(!v) return 0;
@@ -1470,25 +1514,21 @@
                 };
 
                 this.state.paces = newPaces;
-                
-                // Guardar en LocalStorage
                 localStorage.setItem('userPaces', JSON.stringify(newPaces));
-                
                 this.showToast({duration:0, pace:0}, "✅ Ritmos Guardados");
             },
 
             loadSettings: function() {
-                // Cargar Ritmos
+                // Ritmos
                 const savedPaces = localStorage.getItem('userPaces');
                 if (savedPaces) {
                     try {
                         const p = JSON.parse(savedPaces);
                         this.state.paces = { ...this.state.paces, ...p };
-                        // Actualizar inputs visuales
                         const formatInput = (sec) => {
                             const m = Math.floor(sec / 60);
                             const s = Math.round(sec % 60);
-                            return (m + s/100).toFixed(2); // 5:30 -> 5.30
+                            return (m + s/100).toFixed(2);
                         };
                         document.getElementById('pace-recovery').value = formatInput(this.state.paces.recovery);
                         document.getElementById('pace-42k').value = formatInput(this.state.paces['42k']);
@@ -1496,10 +1536,32 @@
                         document.getElementById('pace-10k').value = formatInput(this.state.paces['10k']);
                         document.getElementById('pace-5k').value = formatInput(this.state.paces['5k']);
                         document.getElementById('pace-1k').value = formatInput(this.state.paces['1k']);
-                    } catch(e) { console.error("Error cargando ritmos", e); }
+                    } catch(e) { console.error("Error ritmos", e); }
                 }
 
-                // Cargar otros settings si los hubiera guardados...
+                // Settings Generales
+                const savedSettings = localStorage.getItem('globalSettings');
+                if (savedSettings) {
+                    try {
+                        const s = JSON.parse(savedSettings);
+                        this.state.settings = { ...this.state.settings, ...s };
+                        document.getElementById('set-autolap').checked = this.state.settings.autoLap;
+                        document.getElementById('set-lap-dist').value = (this.state.settings.lapDistValue / 1000).toFixed(1);
+                        document.getElementById('set-units').value = this.state.settings.units;
+                        document.getElementById('set-audio').checked = this.state.settings.audio;
+                        document.getElementById('set-timer-size').value = this.state.settings.timerSize || 'medium';
+                    } catch(e) { }
+                }
+            },
+
+            saveGlobalSettings: function() {
+                this.state.settings.autoLap = document.getElementById('set-autolap').checked;
+                this.state.settings.lapDistValue = parseFloat(document.getElementById('set-lap-dist').value) * 1000;
+                this.state.settings.units = document.getElementById('set-units').value;
+                this.state.settings.audio = document.getElementById('set-audio').checked;
+                this.state.settings.timerSize = document.getElementById('set-timer-size').value;
+                
+                localStorage.setItem('globalSettings', JSON.stringify(this.state.settings));
             },
             
             calculatePaceZone: function() {
@@ -1633,6 +1695,57 @@
                 document.getElementById('workout-progress-fill').style.width = pct + '%';
             },
 
+            // --- Compartir Laps ---
+
+            shareLaps: function() {
+                if (this.state.laps.length === 0) {
+                    alert("No hay laps para compartir");
+                    return;
+                }
+
+                const totalTime = this.formatTime(this.state.totalElapsed);
+                const totalDist = (this.state.distance / 1000).toFixed(2);
+                
+                // Calcular promedio total
+                let avgPaceText = "--:--";
+                if (this.state.avgSpeed > 0) {
+                    avgPaceText = this.formatPace(3600 / this.state.avgSpeed);
+                }
+
+                let text = `🏃 Entrenamiento GPS\n`;
+                text += `Tiempo: ${totalTime}\n`;
+                text += `Distancia: ${totalDist} km\n`;
+                text += `Ritmo Medio: ${avgPaceText} min/km\n`;
+                text += `Laps (${this.state.laps.length}):\n`;
+
+                this.state.laps.forEach(lap => {
+                    const pace = lap.pace > 0 ? this.formatPace(lap.pace) : "--:--";
+                    const dist = (lap.distance / 1000).toFixed(2);
+                    const type = lap.type === 'auto' ? 'Auto' : (lap.type === 'workout' ? 'Workout' : 'Manual');
+                    text += `${lap.index}. ${this.formatTime(lap.duration)} | ${dist}km | ${pace} (${type})\n`;
+                });
+
+                // Copiar al portapapeles como fallback
+                navigator.clipboard.writeText(text).then(() => {
+                    console.log("Copiado");
+                }).catch(err => {
+                    console.error("Error copiando", err);
+                });
+
+                // Intentar compartir nativo (Android/iOS)
+                if (navigator.share) {
+                    navigator.share({
+                        title: 'Resumen de Entrenamiento',
+                        text: text
+                    }).catch(err => {
+                        // Si cancelan o falla, ya está en portapapeles
+                        alert("Texto copiado al portapapeles");
+                    });
+                } else {
+                    alert("Texto copiado al portapapeles:\n\n" + text);
+                }
+            },
+
             // --- UI Utils ---
 
             addWorkoutStep: function() {
@@ -1663,7 +1776,6 @@
                     desc: desc
                 };
                 
-                // Añadir al editor temporal
                 this.state.editingWorkoutSteps.push(step);
                 this.renderWorkoutStepsList();
             },
@@ -1710,13 +1822,17 @@
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 
-                // Encontrar botón por onclick es sucio, mejor por orden o id, pero aquí simple:
                 const btns = document.querySelectorAll('.tab-btn');
                 if(tabName === 'general') btns[0].classList.add('active');
                 if(tabName === 'paces') btns[1].classList.add('active');
                 if(tabName === 'workout') btns[2].classList.add('active');
                 
                 document.getElementById('tab-' + tabName).classList.add('active');
+                
+                // Guardar settings al salir de la pestaña general
+                if (tabName !== 'general') {
+                    this.saveGlobalSettings();
+                }
             },
 
             openModal: function(id) {
@@ -1725,6 +1841,10 @@
 
             closeModal: function(id) {
                 document.getElementById(id).classList.remove('active');
+                // Al cerrar settings, guardamos cualquier cambio pendiente
+                if (id === 'modal-settings') {
+                    this.saveGlobalSettings();
+                }
             },
 
             openSettings: function() {
@@ -1765,15 +1885,15 @@
                 const speed = this.state.currentSpeed * 3.6;
                 document.getElementById('val-speed').textContent = speed.toFixed(1);
                 
+                // Promedio Modificado: Primero Pace, luego Speed
                 document.getElementById('val-avg-speed').textContent = this.state.avgSpeed.toFixed(1);
-                
-                const pace = this.getCurrentPaceInSec();
-                document.getElementById('val-pace').textContent = pace > 0 ? this.formatPace(pace) : '--:--';
-                
                 if (this.state.avgSpeed > 0) {
                      const avgPaceSec = 3600 / this.state.avgSpeed;
                      document.getElementById('val-avg-pace').textContent = this.formatPace(avgPaceSec);
                 }
+                
+                const pace = this.getCurrentPaceInSec();
+                document.getElementById('val-pace').textContent = pace > 0 ? this.formatPace(pace) : '--:--';
 
                 document.getElementById('val-gps-acc').textContent = this.state.accuracy > 0 ? this.state.accuracy + ' m' : '--';
                 
@@ -1843,7 +1963,6 @@
             }
         };
 
-        // Iniciar App
         document.addEventListener('DOMContentLoaded', () => {
             app.init();
         });
