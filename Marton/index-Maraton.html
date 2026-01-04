@@ -1,0 +1,821 @@
+htmlDownloadCopy code<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Cronómetro Maratón 42.195 Km</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 100%;
+            margin: 0 auto;
+            padding: 10px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .header h1 {
+            font-size: 1.8rem;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
+            background-size: 300% 300%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 3s ease infinite;
+            text-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .main-timer {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            border-radius: 20px;
+            padding: 20px 15px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(255, 107, 107, 0.5);
+            box-shadow: 0 10px 40px rgba(255, 107, 107, 0.2),
+                        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .timer-display {
+            font-size: 4rem;
+            font-weight: 700;
+            text-align: center;
+            font-family: 'Courier New', monospace;
+            color: #ff6b6b;
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.8),
+                         0 0 40px rgba(255, 107, 107, 0.4);
+            letter-spacing: 2px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+
+        .timer-label {
+            text-align: center;
+            font-size: 0.9rem;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-top: 5px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border-radius: 15px;
+            padding: 15px 10px;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card.distance {
+            border-color: rgba(72, 219, 251, 0.5);
+            box-shadow: 0 5px 20px rgba(72, 219, 251, 0.15);
+        }
+
+        .stat-card.current-pace {
+            border-color: rgba(254, 202, 87, 0.5);
+            box-shadow: 0 5px 20px rgba(254, 202, 87, 0.15);
+        }
+
+        .stat-card.avg-pace {
+            border-color: rgba(255, 159, 243, 0.5);
+            box-shadow: 0 5px 20px rgba(255, 159, 243, 0.15);
+        }
+
+        .stat-card.projection {
+            border-color: rgba(29, 209, 161, 0.5);
+            box-shadow: 0 5px 20px rgba(29, 209, 161, 0.15);
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 5px;
+        }
+
+        .stat-card.distance .stat-value { color: #48dbfb; }
+        .stat-card.current-pace .stat-value { color: #feca57; }
+        .stat-card.avg-pace .stat-value { color: #ff9ff3; }
+        .stat-card.projection .stat-value { color: #1dd1a1; }
+
+        .stat-label {
+            font-size: 0.7rem;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-unit {
+            font-size: 0.8rem;
+            color: #808080;
+            margin-top: 3px;
+        }
+
+        .projection-card {
+            background: linear-gradient(145deg, rgba(29, 209, 161, 0.2), rgba(29, 209, 161, 0.05));
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid rgba(29, 209, 161, 0.5);
+            text-align: center;
+        }
+
+        .projection-title {
+            font-size: 0.8rem;
+            color: #1dd1a1;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+        }
+
+        .projection-time {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1dd1a1;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 15px rgba(29, 209, 161, 0.6);
+        }
+
+        .progress-section {
+            margin-bottom: 15px;
+        }
+
+        .progress-bar-container {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            height: 25px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #1dd1a1);
+            background-size: 200% 100%;
+            animation: progressGradient 2s linear infinite;
+            border-radius: 15px;
+            transition: width 0.5s ease;
+            position: relative;
+        }
+
+        @keyframes progressGradient {
+            0% { background-position: 0% 50%; }
+            100% { background-position: 200% 50%; }
+        }
+
+        .progress-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+        }
+
+        .progress-markers {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 5px;
+            font-size: 0.6rem;
+            color: #808080;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn-start {
+            background: linear-gradient(145deg, #1dd1a1, #10ac84);
+            color: #ffffff;
+            box-shadow: 0 5px 20px rgba(29, 209, 161, 0.4);
+        }
+
+        .btn-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(29, 209, 161, 0.6);
+        }
+
+        .btn-stop {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            color: #ffffff;
+            box-shadow: 0 5px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .btn-stop:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(255, 107, 107, 0.6);
+        }
+
+        .btn-lap {
+            background: linear-gradient(145deg, #48dbfb, #0abde3);
+            color: #ffffff;
+            box-shadow: 0 5px 20px rgba(72, 219, 251, 0.4);
+        }
+
+        .btn-lap:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(72, 219, 251, 0.6);
+        }
+
+        .btn-reset {
+            background: linear-gradient(145deg, #576574, #454f5b);
+            color: #ffffff;
+            box-shadow: 0 5px 20px rgba(87, 101, 116, 0.4);
+        }
+
+        .btn-reset:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(87, 101, 116, 0.6);
+        }
+
+        .distance-input-section {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .distance-input-title {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .distance-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .distance-btn {
+            width: 50px;
+            height: 50px;
+            border: none;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .distance-btn.minus {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a5a);
+            color: #ffffff;
+        }
+
+        .distance-btn.plus {
+            background: linear-gradient(145deg, #1dd1a1, #10ac84);
+            color: #ffffff;
+        }
+
+        .distance-display {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #48dbfb;
+            font-family: 'Courier New', monospace;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .quick-distance {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .quick-btn {
+            padding: 8px 12px;
+            border: 1px solid rgba(72, 219, 251, 0.5);
+            border-radius: 20px;
+            background: transparent;
+            color: #48dbfb;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-btn:hover, .quick-btn.active {
+            background: rgba(72, 219, 251, 0.2);
+            border-color: #48dbfb;
+        }
+
+        .laps-section {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02));
+            border-radius: 15px;
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .laps-title {
+            font-size: 0.8rem;
+            color: #a0a0a0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 10px;
+            border-radius: 8px;
+            margin-bottom: 5px;
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 0.85rem;
+        }
+
+        .lap-item:nth-child(odd) {
+            background: rgba(255, 255, 255, 0.08);
+        }
+
+        .lap-number {
+            color: #feca57;
+            font-weight: 700;
+        }
+
+        .lap-time {
+            color: #48dbfb;
+            font-family: 'Courier New', monospace;
+        }
+
+        .lap-pace {
+            color: #ff9ff3;
+            font-family: 'Courier New', monospace;
+        }
+
+        .no-laps {
+            text-align: center;
+            color: #606060;
+            font-style: italic;
+            padding: 20px;
+        }
+
+        @media (max-width: 380px) {
+            .timer-display {
+                font-size: 3rem;
+            }
+            .stat-value {
+                font-size: 1.6rem;
+            }
+            .projection-time {
+                font-size: 2rem;
+            }
+        }
+
+        @media (min-width: 500px) {
+            .container {
+                max-width: 480px;
+            }
+            .timer-display {
+                font-size: 5rem;
+            }
+            .stat-value {
+                font-size: 2.5rem;
+            }
+        }
+
+        .running-indicator {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .running-indicator.active {
+            display: flex;
+        }
+
+        .running-dot {
+            width: 8px;
+            height: 8px;
+            background: #1dd1a1;
+            border-radius: 50%;
+            animation: runningPulse 1s ease-in-out infinite;
+        }
+
+        .running-dot:nth-child(2) { animation-delay: 0.2s; }
+        .running-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes runningPulse {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .running-text {
+            color: #1dd1a1;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏃 MARATÓN 42.195 Km</h1>
+        </div>
+
+        <div class="main-timer">
+            <div class="timer-display" id="timerDisplay">00:00:00</div>
+            <div class="timer-label">Tiempo Transcurrido</div>
+            <div class="running-indicator" id="runningIndicator">
+                <div class="running-dot"></div>
+                <div class="running-dot"></div>
+                <div class="running-dot"></div>
+                <span class="running-text">Corriendo</span>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card distance">
+                <div class="stat-value" id="distanceDisplay">0.00</div>
+                <div class="stat-label">Distancia</div>
+                <div class="stat-unit">Km</div>
+            </div>
+            <div class="stat-card current-pace">
+                <div class="stat-value" id="currentPaceDisplay">--:--</div>
+                <div class="stat-label">Paso Actual</div>
+                <div class="stat-unit">min/km</div>
+            </div>
+            <div class="stat-card avg-pace">
+                <div class="stat-value" id="avgPaceDisplay">--:--</div>
+                <div class="stat-label">Paso Promedio</div>
+                <div class="stat-unit">min/km</div>
+            </div>
+            <div class="stat-card projection">
+                <div class="stat-value" id="speedDisplay">0.0</div>
+                <div class="stat-label">Velocidad</div>
+                <div class="stat-unit">km/h</div>
+            </div>
+        </div>
+
+        <div class="projection-card">
+            <div class="projection-title">⏱️ Proyección Maratón 42.195 Km</div>
+            <div class="projection-time" id="projectionDisplay">--:--:--</div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-bar-container">
+                <div class="progress-bar" id="progressBar" style="width: 0%;"></div>
+                <div class="progress-text" id="progressText">0.0%</div>
+            </div>
+            <div class="progress-markers">
+                <span>0 Km</span>
+                <span>10 Km</span>
+                <span>21.1 Km</span>
+                <span>30 Km</span>
+                <span>42.195 Km</span>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-start" id="btnStart">▶ Iniciar</button>
+            <button class="btn btn-stop" id="btnStop" style="display: none;">⏸ Pausar</button>
+            <button class="btn btn-lap" id="btnLap">📍 Km +1</button>
+            <button class="btn btn-reset" id="btnReset">🔄 Reset</button>
+        </div>
+
+        <div class="distance-input-section">
+            <div class="distance-input-title">Ajustar Distancia Manual</div>
+            <div class="distance-controls">
+                <button class="distance-btn minus" id="btnMinus">−</button>
+                <div class="distance-display" id="manualDistance">0.00 Km</div>
+                <button class="distance-btn plus" id="btnPlus">+</button>
+            </div>
+            <div class="quick-distance">
+                <button class="quick-btn" data-distance="5">5K</button>
+                <button class="quick-btn" data-distance="10">10K</button>
+                <button class="quick-btn" data-distance="21.0975">Media</button>
+                <button class="quick-btn" data-distance="30">30K</button>
+                <button class="quick-btn" data-distance="42.195">Full</button>
+            </div>
+        </div>
+
+        <div class="laps-section">
+            <div class="laps-title">📊 Registro de Kilómetros</div>
+            <div id="lapsList">
+                <div class="no-laps">Presiona "Km +1" para registrar cada kilómetro</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            const MARATHON_DISTANCE = 42.195;
+            
+            let isRunning = false;
+            let startTime = 0;
+            let elapsedTime = 0;
+            let timerInterval = null;
+            let currentDistance = 0;
+            let laps = [];
+            let lastLapTime = 0;
+
+            const timerDisplay = document.getElementById('timerDisplay');
+            const distanceDisplay = document.getElementById('distanceDisplay');
+            const currentPaceDisplay = document.getElementById('currentPaceDisplay');
+            const avgPaceDisplay = document.getElementById('avgPaceDisplay');
+            const speedDisplay = document.getElementById('speedDisplay');
+            const projectionDisplay = document.getElementById('projectionDisplay');
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const lapsList = document.getElementById('lapsList');
+            const manualDistance = document.getElementById('manualDistance');
+            const runningIndicator = document.getElementById('runningIndicator');
+            
+            const btnStart = document.getElementById('btnStart');
+            const btnStop = document.getElementById('btnStop');
+            const btnLap = document.getElementById('btnLap');
+            const btnReset = document.getElementById('btnReset');
+            const btnMinus = document.getElementById('btnMinus');
+            const btnPlus = document.getElementById('btnPlus');
+            const quickBtns = document.querySelectorAll('.quick-btn');
+
+            function formatTime(ms) {
+                const totalSeconds = Math.floor(ms / 1000);
+                const hours = Math.floor(totalSeconds / 3600);
+                const minutes = Math.floor((totalSeconds % 3600) / 60);
+                const seconds = totalSeconds % 60;
+                return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            function formatPace(msPerKm) {
+                if (!msPerKm || msPerKm === Infinity || isNaN(msPerKm)) return '--:--';
+                const totalSeconds = Math.floor(msPerKm / 1000);
+                const minutes = Math.floor(totalSeconds / 60);
+                const seconds = totalSeconds % 60;
+                if (minutes > 99) return '--:--';
+                return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            function updateDisplay() {
+                const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
+                timerDisplay.textContent = formatTime(currentTime);
+
+                distanceDisplay.textContent = currentDistance.toFixed(2);
+                manualDistance.textContent = currentDistance.toFixed(2) + ' Km';
+
+                const progressPercent = Math.min((currentDistance / MARATHON_DISTANCE) * 100, 100);
+                progressBar.style.width = progressPercent + '%';
+                progressText.textContent = progressPercent.toFixed(1) + '%';
+
+                if (currentDistance > 0 && currentTime > 0) {
+                    const avgPaceMs = currentTime / currentDistance;
+                    avgPaceDisplay.textContent = formatPace(avgPaceMs);
+
+                    const speedKmH = (currentDistance / (currentTime / 1000 / 3600));
+                    speedDisplay.textContent = speedKmH.toFixed(1);
+
+                    const projectedTime = avgPaceMs * MARATHON_DISTANCE;
+                    projectionDisplay.textContent = formatTime(projectedTime);
+
+                    if (laps.length > 0) {
+                        const lastLap = laps[laps.length - 1];
+                        currentPaceDisplay.textContent = formatPace(lastLap.lapPace);
+                    } else {
+                        currentPaceDisplay.textContent = formatPace(avgPaceMs);
+                    }
+                } else {
+                    avgPaceDisplay.textContent = '--:--';
+                    currentPaceDisplay.textContent = '--:--';
+                    speedDisplay.textContent = '0.0';
+                    projectionDisplay.textContent = '--:--:--';
+                }
+            }
+
+            function startTimer() {
+                if (!isRunning) {
+                    isRunning = true;
+                    startTime = Date.now();
+                    timerInterval = setInterval(updateDisplay, 100);
+                    btnStart.style.display = 'none';
+                    btnStop.style.display = 'block';
+                    runningIndicator.classList.add('active');
+                }
+            }
+
+            function stopTimer() {
+                if (isRunning) {
+                    isRunning = false;
+                    elapsedTime += Date.now() - startTime;
+                    clearInterval(timerInterval);
+                    btnStart.style.display = 'block';
+                    btnStop.style.display = 'none';
+                    btnStart.textContent = '▶ Reanudar';
+                    runningIndicator.classList.remove('active');
+                }
+            }
+
+            function resetTimer() {
+                isRunning = false;
+                clearInterval(timerInterval);
+                startTime = 0;
+                elapsedTime = 0;
+                currentDistance = 0;
+                laps = [];
+                lastLapTime = 0;
+                
+                btnStart.style.display = 'block';
+                btnStop.style.display = 'none';
+                btnStart.textContent = '▶ Iniciar';
+                runningIndicator.classList.remove('active');
+                
+                lapsList.innerHTML = '<div class="no-laps">Presiona "Km +1" para registrar cada kilómetro</div>';
+                
+                quickBtns.forEach(btn => btn.classList.remove('active'));
+                
+                updateDisplay();
+            }
+
+            function addLap() {
+                const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
+                currentDistance += 1;
+                
+                if (currentDistance > MARATHON_DISTANCE) {
+                    currentDistance = MARATHON_DISTANCE;
+                }
+
+                const lapTime = currentTime - lastLapTime;
+                const lapPace = lapTime;
+                
+                laps.push({
+                    km: currentDistance,
+                    totalTime: currentTime,
+                    lapTime: lapTime,
+                    lapPace: lapPace
+                });
+
+                lastLapTime = currentTime;
+                renderLaps();
+                updateDisplay();
+            }
+
+            function adjustDistance(delta) {
+                const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
+                currentDistance = Math.max(0, Math.min(currentDistance + delta, MARATHON_DISTANCE));
+                
+                if (delta > 0 && currentTime > 0) {
+                    const lapTime = laps.length > 0 ? currentTime - lastLapTime : currentTime;
+                    laps.push({
+                        km: currentDistance,
+                        totalTime: currentTime,
+                        lapTime: lapTime,
+                        lapPace: lapTime / Math.abs(delta)
+                    });
+                    lastLapTime = currentTime;
+                    renderLaps();
+                }
+                
+                updateDisplay();
+            }
+
+            function setDistance(distance) {
+                const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
+                currentDistance = Math.min(distance, MARATHON_DISTANCE);
+                
+                quickBtns.forEach(btn => {
+                    btn.classList.toggle('active', parseFloat(btn.dataset.distance) === distance);
+                });
+                
+                laps = [];
+                lastLapTime = 0;
+                
+                if (currentTime > 0 && currentDistance > 0) {
+                    for (let km = 1; km <= Math.floor(currentDistance); km++) {
+                        const timePerKm = currentTime / currentDistance;
+                        laps.push({
+                            km: km,
+                            totalTime: timePerKm * km,
+                            lapTime: timePerKm,
+                            lapPace: timePerKm
+                        });
+                    }
+                    lastLapTime = currentTime;
+                }
+                
+                renderLaps();
+                updateDisplay();
+            }
+
+            function renderLaps() {
+                if (laps.length === 0) {
+                    lapsList.innerHTML = '<div class="no-laps">Presiona "Km +1" para registrar cada kilómetro</div>';
+                    return;
+                }
+
+                let html = '';
+                laps.slice().reverse().forEach((lap, index) => {
+                    html += `
+                        <div class="lap-item">
+                            <span class="lap-number">Km ${lap.km.toFixed(0)}</span>
+                            <span class="lap-time">${formatTime(lap.totalTime)}</span>
+                            <span class="lap-pace">${formatPace(lap.lapPace)}/km</span>
+                        </div>
+                    `;
+                });
+                lapsList.innerHTML = html;
+            }
+
+            btnStart.addEventListener('click', startTimer);
+            btnStop.addEventListener('click', stopTimer);
+            btnReset.addEventListener('click', resetTimer);
+            btnLap.addEventListener('click', addLap);
+            btnMinus.addEventListener('click', () => adjustDistance(-0.1));
+            btnPlus.addEventListener('click', () => adjustDistance(0.1));
+
+            quickBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    setDistance(parseFloat(btn.dataset.distance));
+                });
+            });
+
+            let minusInterval, plusInterval;
+            
+            btnMinus.addEventListener('mousedown', () => {
+                minusInterval = setInterval(() => adjustDistance(-0.1), 150);
+            });
+            btnMinus.addEventListener('mouseup', () => clearInterval(minusInterval));
+            btnMinus.addEventListener('mouseleave', () => clearInterval(minusInterval));
+            btnMinus.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                minusInterval = setInterval(() => adjustDistance(-0.1), 150);
+            });
+            btnMinus.addEventListener('touchend', () => clearInterval(minusInterval));
+
+            btnPlus.addEventListener('mousedown', () => {
+                plusInterval = setInterval(() => adjustDistance(0.1), 150);
+            });
+            btnPlus.addEventListener('mouseup', () => clearInterval(plusInterval));
+            btnPlus.addEventListener('mouseleave', () => clearInterval(plusInterval));
+            btnPlus.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                plusInterval = setInterval(() => adjustDistance(0.1), 150);
+            });
+            btnPlus.addEventListener('touchend', () => clearInterval(plusInterval));
+
+            updateDisplay();
+        })();
+    </script>
+</body>
+</html>
