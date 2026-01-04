@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Entrenador Pro v6</title>
+    <title>Entrenador Pro v6.2</title>
     <style>
         :root {
             --primary: #00e676;
@@ -57,24 +57,23 @@
 
         .timer-container { text-align: center; margin-bottom: 10px; width: 100%; }
         
-        /* CORRECCIÓN: EL TIMER YA NO SE OSCURECE */
         .main-time {
             font-family: var(--font-digital);
             font-size: 3.2rem;
             font-weight: 700;
             color: var(--text);
             transition: color 0.3s, border 0.3s;
-            border: 0px solid transparent; /* Borde por defecto invisible */
+            border: 0px solid transparent; 
             border-radius: 10px;
             padding: 5px;
         }
 
-        /* Estado Pausado: Opacidad 1 (completa), Color Gris Claro para diferenciar, Borde Naranja */
+        /* Estado Pausado: Visible, Gris Claro */
         .main-time.paused {
             opacity: 1; 
-            color: #d4d4d4; /* Gris muy claro, casi blanco, totalmente legible */
-            border: 2px solid var(--warn); /* Borde naranja para indicar pausa */
-            text-shadow: 0 0 10px rgba(255, 171, 0, 0.2); /* Brillo sutil */
+            color: #d4d4d4; 
+            border: 2px solid var(--warn); 
+            text-shadow: 0 0 10px rgba(255, 171, 0, 0.2);
         }
 
         .lap-time { font-family: var(--font-digital); font-size: 1rem; color: var(--warn); min-height: 1.5rem; }
@@ -126,7 +125,6 @@
         .sensor-viz { width: 100%; height: 30px; background: #000; border-radius: 4px; margin-bottom: 10px; position: relative; overflow: hidden; display: flex; align-items: center; }
         .sensor-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.05s linear; }
         
-        /* Mejorar visibilidad del mensaje de estado */
         .status-msg { 
             font-size: 0.8rem; 
             color: var(--warn); 
@@ -270,13 +268,13 @@
 
         <button class="btn-save" onclick="saveSettings()">💾 Guardar y Salir</button>
         <div style="text-align:center; margin-top:15px; font-size:0.8rem; color:#666;">
-            Los cambios se guardan automáticamente en el dispositivo.
+            La calibración de zancada se guarda automáticamente por modo.
         </div>
     </div>
 
     <!-- INTERFAZ PRINCIPAL -->
     <header>
-        <h1>Entrenador Pro v6</h1>
+        <h1>Entrenador Pro v6.2</h1>
         <div>
             <button class="btn-icon" onclick="openSettings()">⚙️</button>
             <button class="btn-icon" onclick="toggleFullScreen()">⛶</button>
@@ -299,9 +297,9 @@
         <div class="calibration-panel" id="calib-panel">
             <div class="calib-row">
                 <span class="calib-label">Zancada (Metros)</span>
-                <span class="calib-val" id="stride-val">1.50 m</span>
+                <span class="calib-val" id="stride-val">0.75 m</span>
             </div>
-            <input type="range" id="stride-slider" min="0.40" max="2.50" step="0.01" value="1.50">
+            <input type="range" id="stride-slider" min="0.40" max="2.50" step="0.01" value="0.75">
         </div>
 
         <div class="stats-grid">
@@ -341,9 +339,21 @@
     <script>
         // --- CONFIGURACIÓN POR DEFECTO ---
         const defaultConfig = {
-            walk: { label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676', threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12 },
-            run: { label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff', threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14 },
-            jump: { label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100', freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15 },
+            walk: { 
+                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676', 
+                threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12,
+                strideLength: 0.75 // VALOR POR DEFECTO CAMINAR
+            },
+            run: { 
+                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff', 
+                threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14,
+                strideLength: 1.50 // VALOR POR DEFECTO CORRER
+            },
+            jump: { 
+                label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100', 
+                freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15,
+                strideLength: 0 // Saltar no usa zancada, pero por estructura está
+            },
             general: { inactivityDelay: 5000 }
         };
         const config = JSON.parse(JSON.stringify(defaultConfig));
@@ -358,7 +368,7 @@
                     if(parsed.walk) config.walk = {...config.walk, ...parsed.walk};
                     if(parsed.run) config.run = {...config.run, ...parsed.run};
                     if(parsed.jump) config.jump = {...config.jump, ...parsed.jump};
-                    console.log("Configuración cargada");
+                    console.log("Configuración cargada (incluyendo zancadas)");
                 } catch(e) { console.error("Error cargando config", e); }
             }
         }
@@ -370,7 +380,7 @@
             mode: 'walk',
             timerRunning: false, timerStartedAt: 0, elapsed: 0, lapStart: 0,
             autoPauseId: null,
-            count: 0, distance: 0, calories: 0, strideLength: 1.50,
+            count: 0, distance: 0, calories: 0, strideLength: config.walk.strideLength, // Cargar zancada inicial
             lastStepTime: 0,
             jumpState: 'GROUND', jumpAirStartTime: 0, jumpMaxPower: 0, jumpTotalPower: 0,
             lastStepsTimestamps: []
@@ -429,6 +439,7 @@
             config.run.cooldown = newCooldown; config.walk.cooldown = newCooldown + 50;
             config.jump.freeFallThreshold = parseFloat(document.getElementById('set-jump-air').value);
             config.jump.impactThreshold = parseFloat(document.getElementById('set-jump-land').value);
+            
             localStorage.setItem('entrenadorProSettings', JSON.stringify(config));
             closeSettings(); showToast("Configuración guardada");
         }
@@ -466,7 +477,6 @@
         }
         function pauseSystemAuto() {
             state.status = 'AUTO_PAUSED'; pauseTimerLogic();
-            // ESTE ES EL CAMBIO VISUAL: No baja opacidad, sino que cambia clase
             ui.timerMain.classList.add('paused');
             ui.btnMain.textContent = "▶ Reanudar"; ui.btnMain.className = "btn-timer btn-main";
             ui.btnLap.disabled = true; ui.debug.textContent = "⏸ PAUSADO (Párate a descansar)";
@@ -607,27 +617,44 @@
             ui.mainLabel.textContent = conf.label; ui.label1.textContent = conf.s1Label;
             ui.label2.textContent = conf.s2Label; ui.counterBox.style.borderColor = conf.color;
             ui.vizBar.style.backgroundColor = conf.color;
-            if (mode === 'jump') { ui.calibPanel.classList.add('hidden'); } 
-            else {
+            
+            if (mode === 'jump') { 
+                ui.calibPanel.classList.add('hidden'); 
+            } else {
                 ui.calibPanel.classList.remove('hidden');
-                if (mode === 'walk') { state.strideLength = 0.45; ui.strideSlider.value = 0.45; }
-                else { state.strideLength = 1.50; ui.strideSlider.value = 1.50; }
-                ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
-                if(state.count > 0) { state.distance = state.count * state.strideLength; updateStats(); }
+                
+                // CAMBIO CLAVE: Recuperar zancada guardada en config en lugar de hardcoded
+                state.strideLength = config[mode].strideLength;
+                
+                ui.strideSlider.value = state.strideLength;
+                ui.strideVal.textContent = state.strideLength.toFixed(2) + ' m';
+                
+                if(state.count > 0) { 
+                    state.distance = state.count * state.strideLength; 
+                    updateStats(); 
+                }
             }
         }
         function toggleFullScreen() {
             if (!document.fullscreenElement) document.documentElement.requestFullscreen();
             else if (document.exitFullscreen) document.exitFullscreen();
         }
+        
+        // ACTUALIZAR SLIDER Y CONFIG EN TIEMPO REAL
         ui.strideSlider.addEventListener('input', (e) => {
-            state.strideLength = parseFloat(e.target.value);
-            ui.strideVal.textContent = state.strideLength.toFixed(2) + " m";
+            const val = parseFloat(e.target.value);
+            state.strideLength = val;
+            // GUARDAR EN LA CONFIGURACIÓN ACTIVA DEL MODO
+            config[state.mode].strideLength = val;
+            
+            ui.strideVal.textContent = val.toFixed(2) + " m";
             if(state.count > 0 && state.mode !== 'jump') {
-                state.distance = state.count * state.strideLength; updateStats();
+                state.distance = state.count * state.strideLength;
+                updateStats();
             }
         });
-        setMode('walk');
+        
+        setMode('walk'); 
     </script>
 </body>
 </html>
