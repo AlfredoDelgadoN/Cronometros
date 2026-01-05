@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Paso Maratón GPS</title>
+    <meta name="theme-color" content="#000000">
     <style>
         * {
             margin: 0;
@@ -12,159 +13,186 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #0f172a;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #000000;
             min-height: 100vh;
             color: #ffffff;
             overflow-x: hidden;
-            padding: 5px;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .container {
             max-width: 100%;
             margin: 0 auto;
-            padding: 5px;
+            padding: 10px;
+            background: #000000;
         }
 
         .header {
             text-align: center;
-            margin-bottom: 10px;
-            padding-top: 10px;
+            margin-bottom: 15px;
+            padding-top: 5px;
         }
 
         .header h1 {
-            font-size: 1.5rem;
-            color: #3b82f6;
-            font-weight: 700;
-            letter-spacing: 1px;
+            font-size: 1.8rem;
+            color: #00ff00;
+            font-weight: 900;
+            letter-spacing: 1.5px;
+            text-shadow: 0 0 10px #00ff00;
         }
 
         .main-timer {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 16px;
-            padding: 15px 10px;
-            margin-bottom: 10px;
-            border: 1px solid #334155;
+            background: rgba(0, 0, 0, 0.9);
+            border-radius: 20px;
+            padding: 20px 15px;
+            margin-bottom: 15px;
+            border: 2px solid #00ff00;
+            box-shadow: 0 0 20px rgba(0, 255, 0, 0.3);
         }
 
         .timer-display {
-            font-size: 3.5rem;
-            font-weight: 700;
+            font-size: 4.5rem;
+            font-weight: 900;
             text-align: center;
             font-family: 'Courier New', monospace;
-            color: #22c55e;
-            letter-spacing: 2px;
+            color: #00ff00;
+            letter-spacing: 3px;
             line-height: 1;
             margin-bottom: 5px;
+            text-shadow: 0 0 15px #00ff00;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         .stat-card {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 12px;
-            padding: 12px 8px;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 15px;
+            padding: 15px 10px;
             text-align: center;
-            border: 1px solid #334155;
+            border: 2px solid;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
         .stat-value {
-            font-size: 2.2rem;
-            font-weight: 700;
+            font-size: 2.8rem;
+            font-weight: 900;
             font-family: 'Courier New', monospace;
-            margin-bottom: 2px;
+            margin-bottom: 5px;
             line-height: 1;
+            text-shadow: 0 0 8px;
         }
 
-        .stat-card.km .stat-value { color: #3b82f6; }
-        .stat-card.falta .stat-value { color: #8b5cf6; }
-        .stat-card.actual .stat-value { color: #f59e0b; }
-        .stat-card.kmh .stat-value { color: #10b981; }
-        .stat-card.promedio .stat-value { color: #ec4899; }
-        .stat-card.proyeccion .stat-value { color: #22c55e; }
+        .stat-card.km .stat-value { color: #00ffff; border-color: #00ffff; }
+        .stat-card.falta .stat-value { color: #ff00ff; border-color: #ff00ff; }
+        .stat-card.actual .stat-value { color: #ffff00; border-color: #ffff00; }
+        .stat-card.kmh .stat-value { color: #00ff00; border-color: #00ff00; }
+        .stat-card.promedio .stat-value { color: #ff8000; border-color: #ff8000; }
+        .stat-card.proyeccion .stat-value { color: #ff0000; border-color: #ff0000; }
 
         .stat-label {
-            font-size: 0.65rem;
-            color: #94a3b8;
+            font-size: 0.9rem;
+            color: #ffffff;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 2px;
+            letter-spacing: 1px;
+            margin-bottom: 3px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 2px 5px;
+            border-radius: 5px;
+            display: inline-block;
         }
 
         .stat-unit {
-            font-size: 0.7rem;
-            color: #64748b;
+            font-size: 0.8rem;
+            color: #cccccc;
+            font-weight: 600;
         }
 
         .projection-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         .projection-card {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 12px;
-            padding: 12px;
-            border: 1px solid #334155;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid;
             text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
         .projection-title {
-            font-size: 0.7rem;
-            color: #ec4899;
+            font-size: 0.9rem;
+            color: #ff8000;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+            display: inline-block;
         }
 
         .marathon-title {
-            font-size: 0.7rem;
-            color: #22c55e;
+            font-size: 0.9rem;
+            color: #ff0000;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+            display: inline-block;
         }
 
         .projection-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #ec4899;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #ff8000;
             font-family: 'Courier New', monospace;
             line-height: 1;
+            text-shadow: 0 0 10px #ff8000;
         }
 
         .marathon-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            color: #22c55e;
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: #ff0000;
             font-family: 'Courier New', monospace;
             line-height: 1;
+            text-shadow: 0 0 10px #ff0000;
         }
 
         .progress-section {
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
         .progress-bar-container {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 12px;
-            height: 20px;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 15px;
+            height: 25px;
             overflow: hidden;
             position: relative;
-            border: 1px solid #334155;
+            border: 2px solid #00ffff;
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
         }
 
         .progress-bar {
             height: 100%;
-            background: linear-gradient(90deg, #3b82f6, #22c55e);
-            border-radius: 12px;
+            background: linear-gradient(90deg, #00ff00, #00ffff);
+            border-radius: 15px;
             transition: width 0.5s ease;
             position: relative;
         }
@@ -174,198 +202,234 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            font-size: 0.7rem;
-            font-weight: 700;
-            color: #ffffff;
-            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+            font-size: 0.9rem;
+            font-weight: 900;
+            color: #000000;
+            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+            letter-spacing: 1px;
         }
 
         .progress-markers {
             display: flex;
             justify-content: space-between;
-            margin-top: 3px;
-            font-size: 0.55rem;
-            color: #64748b;
+            margin-top: 5px;
+            font-size: 0.7rem;
+            color: #cccccc;
+            font-weight: 600;
         }
 
         .controls {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            margin-bottom: 10px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         .btn {
-            padding: 14px 10px;
+            padding: 18px 10px;
             border: none;
-            border-radius: 10px;
-            font-size: 0.9rem;
-            font-weight: 700;
+            border-radius: 15px;
+            font-size: 1rem;
+            font-weight: 900;
             cursor: pointer;
             transition: all 0.2s ease;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
         .btn-start {
-            background: #10b981;
-            color: #ffffff;
+            background: linear-gradient(145deg, #00ff00, #00cc00);
+            color: #000000;
         }
 
-        .btn-start:hover {
-            background: #0da271;
+        .btn-start:active {
+            transform: scale(0.98);
+            background: #00cc00;
         }
 
         .btn-stop {
-            background: #ef4444;
-            color: #ffffff;
+            background: linear-gradient(145deg, #ff0000, #cc0000);
+            color: #000000;
         }
 
-        .btn-stop:hover {
-            background: #dc2626;
+        .btn-stop:active {
+            transform: scale(0.98);
+            background: #cc0000;
         }
 
         .btn-reset {
-            background: #64748b;
-            color: #ffffff;
+            background: linear-gradient(145deg, #ffff00, #cccc00);
+            color: #000000;
         }
 
-        .btn-reset:hover {
-            background: #475569;
+        .btn-reset:active {
+            transform: scale(0.98);
+            background: #cccc00;
         }
 
         .distance-target-section {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 10px;
-            border: 1px solid #334155;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #00ffff;
             text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
         .distance-target-title {
-            font-size: 0.7rem;
-            color: #94a3b8;
+            font-size: 0.9rem;
+            color: #00ffff;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+            display: inline-block;
         }
 
         .distance-target-controls {
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
-            margin-bottom: 8px;
+            gap: 15px;
+            margin-bottom: 10px;
         }
 
         .distance-target-btn {
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border: none;
             border-radius: 50%;
-            font-size: 1.2rem;
-            font-weight: 700;
+            font-size: 1.8rem;
+            font-weight: 900;
             cursor: pointer;
             transition: all 0.2s ease;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
         }
 
         .distance-target-btn.minus {
-            background: #ef4444;
-            color: #ffffff;
+            background: linear-gradient(145deg, #ff0000, #cc0000);
+            color: #000000;
         }
 
         .distance-target-btn.plus {
-            background: #10b981;
-            color: #ffffff;
+            background: linear-gradient(145deg, #00ff00, #00cc00);
+            color: #000000;
+        }
+
+        .distance-target-btn:active {
+            transform: scale(0.95);
         }
 
         .distance-target-display {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #3b82f6;
+            font-size: 2rem;
+            font-weight: 900;
+            color: #00ffff;
             font-family: 'Courier New', monospace;
-            min-width: 100px;
+            min-width: 120px;
             text-align: center;
+            text-shadow: 0 0 10px #00ffff;
         }
 
         .quick-distance {
             display: flex;
             justify-content: center;
-            gap: 6px;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
         .quick-btn {
-            padding: 6px 10px;
-            border: 1px solid #3b82f6;
-            border-radius: 15px;
-            background: transparent;
-            color: #3b82f6;
-            font-size: 0.65rem;
+            padding: 8px 15px;
+            border: 2px solid;
+            border-radius: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #00ffff;
+            font-size: 0.8rem;
+            font-weight: 700;
             cursor: pointer;
             transition: all 0.2s ease;
         }
 
-        .quick-btn:hover, .quick-btn.active {
-            background: rgba(59, 130, 246, 0.2);
+        .quick-btn:active, .quick-btn.active {
+            background: #00ffff;
+            color: #000000;
+            transform: scale(0.95);
         }
 
         .gps-status-section {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 12px;
-            padding: 12px;
-            margin-bottom: 10px;
-            border: 1px solid #334155;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #ffff00;
             text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
         .gps-status-title {
-            font-size: 0.7rem;
-            color: #94a3b8;
+            font-size: 0.9rem;
+            color: #ffff00;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 5px;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+            display: inline-block;
         }
 
         .gps-status-info {
-            font-size: 0.8rem;
-            color: #3b82f6;
+            font-size: 0.9rem;
+            color: #ffff00;
             font-family: 'Courier New', monospace;
-            margin-bottom: 3px;
+            margin-bottom: 5px;
+            font-weight: 700;
         }
 
         .gps-accuracy {
-            font-size: 0.65rem;
-            color: #f59e0b;
+            font-size: 0.8rem;
+            color: #ff8000;
+            font-weight: 600;
         }
 
         .laps-section {
-            background: rgba(30, 41, 59, 0.8);
-            border-radius: 12px;
-            padding: 12px;
-            border: 1px solid #334155;
-            max-height: 180px;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            border: 2px solid #ff00ff;
+            max-height: 200px;
             overflow-y: auto;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
         .laps-title {
-            font-size: 0.7rem;
-            color: #94a3b8;
+            font-size: 0.9rem;
+            color: #ff00ff;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
             text-align: center;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+            display: inline-block;
         }
 
         .lap-item {
             display: flex;
             justify-content: space-between;
-            padding: 6px 8px;
-            border-radius: 6px;
-            margin-bottom: 4px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            margin-bottom: 6px;
             background: rgba(255, 255, 255, 0.05);
-            font-size: 0.8rem;
+            font-size: 0.9rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .lap-item:nth-child(odd) {
@@ -373,49 +437,36 @@
         }
 
         .lap-number {
-            color: #f59e0b;
-            font-weight: 700;
-            font-size: 0.75rem;
+            color: #ffff00;
+            font-weight: 900;
+            font-size: 0.9rem;
         }
 
         .lap-time {
-            color: #3b82f6;
+            color: #00ffff;
             font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
+            font-weight: 700;
+            font-size: 0.9rem;
         }
 
         .lap-pace {
-            color: #ec4899;
+            color: #ff00ff;
             font-family: 'Courier New', monospace;
-            font-size: 0.75rem;
+            font-weight: 700;
+            font-size: 0.9rem;
         }
 
         .no-laps {
             text-align: center;
-            color: #64748b;
+            color: #888888;
             font-style: italic;
-            padding: 15px;
-            font-size: 0.8rem;
+            padding: 20px;
+            font-size: 0.9rem;
         }
 
         @media (max-width: 380px) {
             .timer-display {
-                font-size: 3rem;
-            }
-            .stat-value {
-                font-size: 1.8rem;
-            }
-            .projection-value, .marathon-value {
-                font-size: 1.5rem;
-            }
-        }
-
-        @media (min-width: 500px) {
-            .container {
-                max-width: 450px;
-            }
-            .timer-display {
-                font-size: 4rem;
+                font-size: 3.8rem;
             }
             .stat-value {
                 font-size: 2.5rem;
@@ -423,14 +474,35 @@
             .projection-value, .marathon-value {
                 font-size: 2rem;
             }
+            .distance-target-display {
+                font-size: 1.8rem;
+            }
+        }
+
+        @media (min-width: 500px) {
+            .container {
+                max-width: 480px;
+            }
+            .timer-display {
+                font-size: 5rem;
+            }
+            .stat-value {
+                font-size: 3.2rem;
+            }
+            .projection-value, .marathon-value {
+                font-size: 2.5rem;
+            }
+            .distance-target-display {
+                font-size: 2.2rem;
+            }
         }
 
         .running-indicator {
             display: none;
             align-items: center;
             justify-content: center;
-            gap: 4px;
-            margin-top: 5px;
+            gap: 6px;
+            margin-top: 8px;
         }
 
         .running-indicator.active {
@@ -438,9 +510,9 @@
         }
 
         .running-dot {
-            width: 6px;
-            height: 6px;
-            background: #22c55e;
+            width: 8px;
+            height: 8px;
+            background: #00ff00;
             border-radius: 50%;
             animation: runningPulse 1s ease-in-out infinite;
         }
@@ -454,32 +526,51 @@
         }
 
         .running-text {
-            color: #22c55e;
-            font-size: 0.7rem;
+            color: #00ff00;
+            font-size: 0.8rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
         .warning {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.5);
-            border-radius: 8px;
-            padding: 8px;
-            margin-bottom: 10px;
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            padding: 10px;
+            margin-bottom: 15px;
             text-align: center;
-            font-size: 0.75rem;
-            color: #ef4444;
+            font-size: 0.85rem;
+            color: #ff0000;
+            font-weight: 700;
+        }
+
+        .save-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 255, 0, 0.9);
+            color: #000;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 900;
+            z-index: 1000;
+            display: none;
+            box-shadow: 0 2px 10px rgba(0, 255, 0, 0.5);
         }
     </style>
 </head>
 <body>
+    <div class="save-status" id="saveStatus">✓ GUARDADO</div>
+    
     <div class="container">
         <div class="header">
             <h1>PASO MARATÓN GPS</h1>
         </div>
 
         <div class="warning" id="gpsWarning">
-            Permite acceso a ubicación (GPS) en tu navegador
+            PERMITE ACCESO A GPS EN TU NAVEGADOR
         </div>
 
         <div class="main-timer">
@@ -488,7 +579,7 @@
                 <div class="running-dot"></div>
                 <div class="running-dot"></div>
                 <div class="running-dot"></div>
-                <span class="running-text">En movimiento</span>
+                <span class="running-text">EN MOVIMIENTO</span>
             </div>
         </div>
 
@@ -539,8 +630,8 @@
 
         <div class="gps-status-section">
             <div class="gps-status-title">ESTADO GPS</div>
-            <div class="gps-status-info" id="gpsStatus">Esperando...</div>
-            <div class="gps-accuracy" id="gpsAccuracy">Precisión: -- m</div>
+            <div class="gps-status-info" id="gpsStatus">ESPERANDO...</div>
+            <div class="gps-accuracy" id="gpsAccuracy">PRECISIÓN: -- M</div>
         </div>
 
         <div class="controls">
@@ -568,7 +659,7 @@
         <div class="laps-section">
             <div class="laps-title">HISTORIAL POR KM</div>
             <div id="lapsList">
-                <div class="no-laps">Inicia el entrenamiento para ver tu progreso</div>
+                <div class="no-laps">INICIA EL ENTRENAMIENTO PARA VER TU PROGRESO</div>
             </div>
         </div>
     </div>
@@ -589,7 +680,6 @@
             let watchId = null;
             let laps = [];
             let lastLapDistance = 0;
-            let lastPaceUpdate = 0;
             let currentPace = 0;
             
             // Elementos del DOM
@@ -608,6 +698,7 @@
             const gpsStatus = document.getElementById('gpsStatus');
             const gpsAccuracy = document.getElementById('gpsAccuracy');
             const gpsWarning = document.getElementById('gpsWarning');
+            const saveStatus = document.getElementById('saveStatus');
             
             const btnStart = document.getElementById('btnStart');
             const btnStop = document.getElementById('btnStop');
@@ -616,7 +707,73 @@
             const btnTargetPlus = document.getElementById('btnTargetPlus');
             const quickBtns = document.querySelectorAll('.quick-btn');
             
-            // Función para calcular distancia entre dos coordenadas (Haversine)
+            // ==================== PERSISTENCIA (localStorage) ====================
+            
+            function saveToStorage() {
+                try {
+                    const state = {
+                        isRunning: isRunning,
+                        startTime: startTime,
+                        elapsedTime: isRunning ? Date.now() - startTime + elapsedTime : elapsedTime,
+                        totalDistance: totalDistance,
+                        targetDistance: targetDistance,
+                        laps: laps,
+                        lastLapDistance: lastLapDistance,
+                        currentPace: currentPace
+                    };
+                    localStorage.setItem('marathonTimerData', JSON.stringify(state));
+                    
+                    // Mostrar mensaje de guardado
+                    saveStatus.style.display = 'block';
+                    setTimeout(() => {
+                        saveStatus.style.display = 'none';
+                    }, 1000);
+                } catch (e) {
+                    console.error('Error al guardar:', e);
+                }
+            }
+            
+            function loadFromStorage() {
+                try {
+                    const saved = localStorage.getItem('marathonTimerData');
+                    if (saved) {
+                        const state = JSON.parse(saved);
+                        
+                        // Restaurar estado
+                        isRunning = false; // Siempre comenzamos pausado
+                        elapsedTime = state.elapsedTime || 0;
+                        totalDistance = state.totalDistance || 0;
+                        targetDistance = state.targetDistance || 10.00;
+                        laps = state.laps || [];
+                        lastLapDistance = state.lastLapDistance || 0;
+                        currentPace = state.currentPace || 0;
+                        
+                        // Actualizar display
+                        updateDisplay();
+                        renderLaps();
+                        
+                        // Restaurar botón activo
+                        quickBtns.forEach(btn => {
+                            const distance = parseFloat(btn.dataset.distance);
+                            btn.classList.toggle('active', Math.abs(distance - targetDistance) < 0.01);
+                        });
+                        
+                        console.log('Datos cargados desde almacenamiento');
+                    }
+                } catch (e) {
+                    console.error('Error al cargar:', e);
+                }
+            }
+            
+            // Guardar automáticamente cada 5 segundos
+            setInterval(() => {
+                if (isRunning || totalDistance > 0) {
+                    saveToStorage();
+                }
+            }, 5000);
+            
+            // ==================== FUNCIONES GPS Y CÁLCULOS ====================
+            
             function calculateDistance(lat1, lon1, lat2, lon2) {
                 const R = 6371; // Radio de la Tierra en km
                 const dLat = (lat2 - lat1) * Math.PI / 180;
@@ -629,7 +786,6 @@
                 return R * c; // Distancia en km
             }
             
-            // Formatear tiempo
             function formatTime(ms) {
                 const totalSeconds = Math.floor(ms / 1000);
                 const hours = Math.floor(totalSeconds / 3600);
@@ -638,7 +794,6 @@
                 return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }
             
-            // Formatear ritmo CORREGIDO (min/km) - evita 03:60
             function formatPace(minPerKm) {
                 if (!minPerKm || minPerKm === Infinity || minPerKm <= 0 || minPerKm > 60) return '--:--';
                 
@@ -655,7 +810,6 @@
                 return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }
             
-            // Actualizar pantalla
             function updateDisplay() {
                 const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
                 timerDisplay.textContent = formatTime(currentTime);
@@ -689,7 +843,7 @@
                     const speed = totalDistance / (currentTime / 1000 / 3600);
                     speedDisplay.textContent = speed.toFixed(1);
                     
-                    // Mostrar ritmo actual (calculado en tiempo real)
+                    // Mostrar ritmo actual
                     currentPaceDisplay.textContent = formatPace(currentPace);
                 } else {
                     avgPaceDisplay.textContent = '--:--';
@@ -699,14 +853,13 @@
                 }
             }
             
-            // Manejar actualización de GPS
             function handlePosition(position) {
                 const now = Date.now();
                 const accuracy = position.coords.accuracy;
                 
                 // Actualizar estado GPS
-                gpsStatus.textContent = 'GPS activo';
-                gpsAccuracy.textContent = `Precisión: ${Math.round(accuracy)} m`;
+                gpsStatus.textContent = 'GPS ACTIVO';
+                gpsAccuracy.textContent = `PRECISIÓN: ${Math.round(accuracy)} M`;
                 gpsWarning.style.display = 'none';
                 
                 // Si no tenemos posición anterior, solo guardar
@@ -736,7 +889,6 @@
                         // Solo calcular ritmo si velocidad es razonable (entre 3 y 25 km/h)
                         if (currentSpeed >= 3 && currentSpeed <= 25) {
                             currentPace = 60 / currentSpeed; // min/km
-                            lastPaceUpdate = now;
                         }
                         
                         // Registrar kilómetros completados
@@ -753,31 +905,36 @@
                             
                             lastLapDistance = totalDistance;
                             renderLaps();
+                            
+                            // Guardar cuando se completa un kilómetro
+                            saveToStorage();
                         }
                     }
                     
                     lastUpdateTime = now;
                     updateDisplay();
+                    
+                    // Guardar periódicamente durante movimiento
+                    saveToStorage();
                 }
                 
                 lastPosition = position;
             }
             
-            // Manejar error de GPS
             function handlePositionError(error) {
-                let message = 'Error GPS: ';
+                let message = 'ERROR GPS: ';
                 switch(error.code) {
                     case error.PERMISSION_DENIED:
-                        message = 'Permiso denegado. Activa GPS en ajustes';
+                        message = 'PERMISO DENEGADO. ACTIVA GPS EN AJUSTES';
                         break;
                     case error.POSITION_UNAVAILABLE:
-                        message = 'Ubicación no disponible';
+                        message = 'UBICACIÓN NO DISPONIBLE';
                         break;
                     case error.TIMEOUT:
-                        message = 'Tiempo de espera agotado';
+                        message = 'TIEMPO DE ESPERA AGOTADO';
                         break;
                     default:
-                        message = 'Error GPS';
+                        message = 'ERROR GPS';
                         break;
                 }
                 gpsStatus.textContent = message;
@@ -785,10 +942,9 @@
                 gpsWarning.style.display = 'block';
             }
             
-            // Iniciar GPS
             function startGPS() {
                 if (navigator.geolocation) {
-                    gpsStatus.textContent = 'Iniciando GPS...';
+                    gpsStatus.textContent = 'INICIANDO GPS...';
                     watchId = navigator.geolocation.watchPosition(
                         handlePosition,
                         handlePositionError,
@@ -799,22 +955,22 @@
                         }
                     );
                 } else {
-                    gpsStatus.textContent = 'GPS no soportado';
-                    gpsWarning.textContent = 'Usa Chrome, Firefox o Safari en celular';
+                    gpsStatus.textContent = 'GPS NO SOPORTADO';
+                    gpsWarning.textContent = 'USA CHROME, FIREFOX O SAFARI EN CELULAR';
                     gpsWarning.style.display = 'block';
                 }
             }
             
-            // Detener GPS
             function stopGPS() {
                 if (watchId !== null) {
                     navigator.geolocation.clearWatch(watchId);
                     watchId = null;
                 }
-                gpsStatus.textContent = 'GPS detenido';
+                gpsStatus.textContent = 'GPS DETENIDO';
             }
             
-            // Iniciar entrenamiento
+            // ==================== CONTROL DE ENTRENAMIENTO ====================
+            
             function startTraining() {
                 if (!isRunning) {
                     isRunning = true;
@@ -836,10 +992,11 @@
                         currentPace = 0;
                         renderLaps();
                     }
+                    
+                    saveToStorage();
                 }
             }
             
-            // Pausar entrenamiento
             function pauseTraining() {
                 if (isRunning) {
                     isRunning = false;
@@ -849,48 +1006,53 @@
                     btnStart.style.display = 'block';
                     btnStop.style.display = 'none';
                     runningIndicator.classList.remove('active');
-                    gpsStatus.textContent = 'Pausado';
+                    gpsStatus.textContent = 'PAUSADO';
+                    
+                    saveToStorage();
                 }
             }
             
-            // Reiniciar todo
             function resetTraining() {
-                isRunning = false;
-                clearInterval(timerInterval);
-                stopGPS();
-                startTime = 0;
-                elapsedTime = 0;
-                totalDistance = 0;
-                lastPosition = null;
-                laps = [];
-                lastLapDistance = 0;
-                currentPace = 0;
-                targetDistance = 10.00;
-                
-                btnStart.style.display = 'block';
-                btnStop.style.display = 'none';
-                btnStart.textContent = '▶ INICIAR';
-                runningIndicator.classList.remove('active');
-                gpsStatus.textContent = 'Esperando...';
-                gpsWarning.textContent = 'Permite acceso a ubicación (GPS) en tu navegador';
-                gpsWarning.style.display = 'block';
-                
-                // Resetear botones rápidos
-                quickBtns.forEach(btn => {
-                    btn.classList.remove('active');
-                    if (parseFloat(btn.dataset.distance) === 10) {
-                        btn.classList.add('active');
-                    }
-                });
-                
-                renderLaps();
-                updateDisplay();
+                if (confirm('¿REINICIAR TODOS LOS DATOS? SE PERDERÁ EL ENTRENAMIENTO ACTUAL.')) {
+                    isRunning = false;
+                    clearInterval(timerInterval);
+                    stopGPS();
+                    startTime = 0;
+                    elapsedTime = 0;
+                    totalDistance = 0;
+                    lastPosition = null;
+                    laps = [];
+                    lastLapDistance = 0;
+                    currentPace = 0;
+                    targetDistance = 10.00;
+                    
+                    btnStart.style.display = 'block';
+                    btnStop.style.display = 'none';
+                    btnStart.textContent = '▶ INICIAR';
+                    runningIndicator.classList.remove('active');
+                    gpsStatus.textContent = 'ESPERANDO...';
+                    gpsWarning.textContent = 'PERMITE ACCESO A GPS EN TU NAVEGADOR';
+                    gpsWarning.style.display = 'block';
+                    
+                    // Resetear botones rápidos
+                    quickBtns.forEach(btn => {
+                        btn.classList.remove('active');
+                        if (parseFloat(btn.dataset.distance) === 10) {
+                            btn.classList.add('active');
+                        }
+                    });
+                    
+                    // Limpiar almacenamiento
+                    localStorage.removeItem('marathonTimerData');
+                    
+                    renderLaps();
+                    updateDisplay();
+                }
             }
             
-            // Renderizar vueltas
             function renderLaps() {
                 if (laps.length === 0) {
-                    lapsList.innerHTML = '<div class="no-laps">Inicia el entrenamiento para ver tu progreso</div>';
+                    lapsList.innerHTML = '<div class="no-laps">INICIA EL ENTRENAMIENTO PARA VER TU PROGRESO</div>';
                     return;
                 }
                 
@@ -907,7 +1069,6 @@
                 lapsList.innerHTML = html;
             }
             
-            // Ajustar distancia objetivo
             function adjustTargetDistance(delta) {
                 targetDistance = Math.max(0.1, Math.min(targetDistance + delta, 100));
                 updateDisplay();
@@ -916,9 +1077,10 @@
                 quickBtns.forEach(btn => {
                     btn.classList.remove('active');
                 });
+                
+                saveToStorage();
             }
             
-            // Establecer distancia objetivo
             function setTargetDistance(distance) {
                 targetDistance = distance;
                 updateDisplay();
@@ -927,9 +1089,12 @@
                 quickBtns.forEach(btn => {
                     btn.classList.toggle('active', parseFloat(btn.dataset.distance) === distance);
                 });
+                
+                saveToStorage();
             }
             
-            // Event listeners
+            // ==================== EVENT LISTENERS ====================
+            
             btnStart.addEventListener('click', startTraining);
             btnStop.addEventListener('click', pauseTraining);
             btnReset.addEventListener('click', resetTraining);
@@ -958,24 +1123,51 @@
             btnTargetPlus.addEventListener('mouseup', () => clearInterval(plusInterval));
             btnTargetPlus.addEventListener('mouseleave', () => clearInterval(plusInterval));
             
-            // Inicializar
-            updateDisplay();
+            // ==================== INICIALIZACIÓN ====================
             
-            // Ocultar advertencia si el navegador soporta GPS
-            if (!navigator.geolocation) {
-                gpsWarning.textContent = 'Tu navegador no soporta GPS. Usa Chrome, Firefox o Safari en celular';
-            }
+            // Cargar datos guardados al inicio
+            loadFromStorage();
+            updateDisplay();
             
             // Timer para limpiar ritmo actual si no hay movimiento
             setInterval(() => {
                 if (isRunning && currentPace > 0) {
                     const now = Date.now();
-                    if (now - lastPaceUpdate > 10000) { // 10 segundos sin movimiento
+                    if (now - lastUpdateTime > 10000) { // 10 segundos sin movimiento
                         currentPace = 0;
                         currentPaceDisplay.textContent = '--:--';
                     }
                 }
             }, 5000);
+            
+            // Guardar antes de que la página se cierre/recargue
+            window.addEventListener('beforeunload', function(e) {
+                if (isRunning || totalDistance > 0) {
+                    saveToStorage();
+                }
+            });
+            
+            // Intentar evitar que el celular entre en modo de suspensión
+            // (Esto funciona en algunos navegadores)
+            if ('wakeLock' in navigator) {
+                let wakeLock = null;
+                async function requestWakeLock() {
+                    try {
+                        wakeLock = await navigator.wakeLock.request('screen');
+                        console.log('Wake Lock activado para evitar suspensión');
+                    } catch (err) {
+                        console.error('Error al activar Wake Lock:', err);
+                    }
+                }
+                
+                // Activar wake lock cuando comience el entrenamiento
+                btnStart.addEventListener('click', requestWakeLock);
+            }
+            
+            // Ocultar advertencia si el navegador soporta GPS
+            if (!navigator.geolocation) {
+                gpsWarning.textContent = 'TU NAVEGADOR NO SOPORTA GPS. USA CHROME, FIREFOX O SAFARI EN CELULAR';
+            }
             
         })();
     </script>
