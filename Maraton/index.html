@@ -120,6 +120,46 @@
             background: #666666;
         }
 
+        .btn-projection {
+            background: rgba(20, 20, 20, 0.95);
+            border: 2px solid #ffffff;
+            color: #ffffff;
+            border-radius: 15px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            text-align: center;
+        }
+
+        .btn-projection:active {
+            transform: scale(0.98);
+            background: rgba(40, 40, 40, 0.95);
+        }
+
+        .projection-title {
+            font-size: 0.8rem;
+            color: #ffffff;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+            display: inline-block;
+        }
+
+        .projection-value {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #ffffff;
+            font-family: 'Courier New', monospace;
+            line-height: 1;
+            text-shadow: 0 0 10px #ffffff;
+            letter-spacing: -0.5px;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -182,12 +222,12 @@
             background: rgba(20, 20, 20, 0.95);
             border-radius: 15px;
             padding: 15px;
-            border: 2px solid;
+            border: 2px solid #ff8000;
             text-align: center;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
-        .projection-title {
+        .avg-title {
             font-size: 0.8rem;
             color: #ff8000;
             font-weight: 700;
@@ -200,36 +240,13 @@
             display: inline-block;
         }
 
-        .marathon-title {
-            font-size: 0.8rem;
-            color: #ffffff;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 3px 8px;
-            border-radius: 5px;
-            display: inline-block;
-        }
-
-        .projection-value {
+        .avg-value {
             font-size: 2rem;
             font-weight: 900;
             color: #ff8000;
             font-family: 'Courier New', monospace;
             line-height: 1;
             text-shadow: 0 0 10px #ff8000;
-            letter-spacing: -0.5px;
-        }
-
-        .marathon-value {
-            font-size: 2rem;
-            font-weight: 900;
-            color: #ffffff;
-            font-family: 'Courier New', monospace;
-            line-height: 1;
-            text-shadow: 0 0 10px #ffffff;
             letter-spacing: -0.5px;
         }
 
@@ -545,7 +562,7 @@
             .stat-value {
                 font-size: 2.2rem;
             }
-            .projection-value, .marathon-value {
+            .projection-value, .avg-value {
                 font-size: 1.8rem;
             }
             .distance-target-display {
@@ -563,7 +580,7 @@
             .stat-value {
                 font-size: 2.8rem;
             }
-            .projection-value, .marathon-value {
+            .projection-value, .avg-value {
                 font-size: 2.2rem;
             }
             .distance-target-display {
@@ -624,13 +641,13 @@
 
         <div class="projection-section">
             <div class="projection-card">
-                <div class="projection-title">PROMEDIO</div>
-                <div class="projection-value" id="avgPaceDisplay">--:--</div>
+                <div class="avg-title">PROMEDIO</div>
+                <div class="avg-value" id="avgPaceDisplay">--:--</div>
             </div>
-            <div class="projection-card">
-                <div class="marathon-title">PROY. MARATÓN</div>
-                <div class="marathon-value" id="marathonProjectionDisplay">--:--:--</div>
-            </div>
+            <button class="btn-projection" id="btnProjection">
+                <div class="projection-title" id="projectionTitle">PROY. MARATÓN</div>
+                <div class="projection-value" id="projectionDisplay">--:--:--</div>
+            </button>
         </div>
 
         <div class="progress-section">
@@ -681,7 +698,13 @@
 
     <script>
         (function() {
-            const MARATHON_DISTANCE = 42.195;
+            // Distancias para proyección
+            const PROJECTION_DISTANCES = [
+                { name: "MARATÓN", distance: 42.195 },
+                { name: "MEDIA", distance: 21.0975 },
+                { name: "10K", distance: 10 },
+                { name: "5K", distance: 5 }
+            ];
             
             // Variables de estado
             let isRunning = false;
@@ -697,6 +720,7 @@
             let lastLapDistance = 0;
             let currentPace = 0;
             let isRestored = false;
+            let currentProjectionIndex = 0;
             
             // Elementos del DOM
             const timerDisplay = document.getElementById('timerDisplay');
@@ -708,7 +732,8 @@
             const currentPaceDisplay = document.getElementById('currentPaceDisplay');
             const avgPaceDisplay = document.getElementById('avgPaceDisplay');
             const speedDisplay = document.getElementById('speedDisplay');
-            const marathonProjectionDisplay = document.getElementById('marathonProjectionDisplay');
+            const projectionDisplay = document.getElementById('projectionDisplay');
+            const projectionTitle = document.getElementById('projectionTitle');
             const progressBar = document.getElementById('progressBar');
             const progressText = document.getElementById('progressText');
             const lapsList = document.getElementById('lapsList');
@@ -722,6 +747,7 @@
             const btnStart = document.getElementById('btnStart');
             const btnStop = document.getElementById('btnStop');
             const btnReset = document.getElementById('btnReset');
+            const btnProjection = document.getElementById('btnProjection');
             const btnTargetMinus = document.getElementById('btnTargetMinus');
             const btnTargetPlus = document.getElementById('btnTargetPlus');
             const quickBtns = document.querySelectorAll('.quick-btn');
@@ -739,6 +765,7 @@
                         laps: laps,
                         lastLapDistance: lastLapDistance,
                         currentPace: currentPace,
+                        currentProjectionIndex: currentProjectionIndex,
                         timestamp: Date.now()
                     };
                     localStorage.setItem('marathonTimerData', JSON.stringify(state));
@@ -764,6 +791,7 @@
                             laps = state.laps || [];
                             lastLapDistance = state.lastLapDistance || 0;
                             currentPace = state.currentPace || 0;
+                            currentProjectionIndex = state.currentProjectionIndex || 0;
                             
                             // Mostrar indicador de datos restaurados
                             dataRestored.style.display = 'block';
@@ -776,8 +804,9 @@
                             // Actualizar display
                             updateDisplay();
                             renderLaps();
+                            updateProjectionDisplay();
                             
-                            // Restaurar botón activo
+                            // Restaurar botones rápidos
                             quickBtns.forEach(btn => {
                                 const distance = parseFloat(btn.dataset.distance);
                                 btn.classList.toggle('active', Math.abs(distance - targetDistance) < 0.01);
@@ -849,6 +878,27 @@
                 return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }
             
+            function updateProjectionDisplay() {
+                const currentProj = PROJECTION_DISTANCES[currentProjectionIndex];
+                projectionTitle.textContent = `PROY. ${currentProj.name}`;
+                
+                const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
+                
+                if (totalDistance > 0.01 && currentTime > 1000) {
+                    const avgPace = (currentTime / 1000 / 60) / totalDistance;
+                    const projectionTime = avgPace * currentProj.distance * 60 * 1000;
+                    projectionDisplay.textContent = formatTimeForProjection(projectionTime);
+                } else {
+                    projectionDisplay.textContent = '--:--';
+                }
+            }
+            
+            function cycleProjection() {
+                currentProjectionIndex = (currentProjectionIndex + 1) % PROJECTION_DISTANCES.length;
+                updateProjectionDisplay();
+                saveToStorage();
+            }
+            
             function updateDisplay() {
                 updateTimerDisplay();
                 
@@ -875,9 +925,8 @@
                     const avgPace = (currentTime / 1000 / 60) / totalDistance;
                     avgPaceDisplay.textContent = formatPace(avgPace);
                     
-                    // Proyección de maratón
-                    const marathonTime = avgPace * MARATHON_DISTANCE * 60 * 1000;
-                    marathonProjectionDisplay.textContent = formatTimeForProjection(marathonTime);
+                    // Actualizar proyección actual
+                    updateProjectionDisplay();
                     
                     // Velocidad (km/h)
                     const speed = totalDistance / (currentTime / 1000 / 3600);
@@ -887,7 +936,7 @@
                     currentPaceDisplay.textContent = formatPace(currentPace);
                 } else {
                     avgPaceDisplay.textContent = '--:--';
-                    marathonProjectionDisplay.textContent = '--:--';
+                    projectionDisplay.textContent = '--:--';
                     speedDisplay.textContent = '0.0';
                     currentPaceDisplay.textContent = '--:--';
                 }
@@ -1065,6 +1114,7 @@
                     lastLapDistance = 0;
                     currentPace = 0;
                     targetDistance = 10.00;
+                    currentProjectionIndex = 0;
                     isRestored = false;
                     
                     btnStart.style.display = 'block';
@@ -1089,6 +1139,7 @@
                     
                     renderLaps();
                     updateDisplay();
+                    updateProjectionDisplay();
                 }
             }
             
@@ -1140,6 +1191,7 @@
             btnStart.addEventListener('click', startTraining);
             btnStop.addEventListener('click', pauseTraining);
             btnReset.addEventListener('click', resetTraining);
+            btnProjection.addEventListener('click', cycleProjection);
             
             btnTargetMinus.addEventListener('click', () => adjustTargetDistance(-0.1));
             btnTargetPlus.addEventListener('click', () => adjustTargetDistance(0.1));
@@ -1170,6 +1222,7 @@
             // Cargar datos guardados al inicio
             loadFromStorage();
             updateDisplay();
+            updateProjectionDisplay();
             
             // Timer para limpiar ritmo actual si no hay movimiento
             setInterval(() => {
