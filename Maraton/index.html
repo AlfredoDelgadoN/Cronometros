@@ -70,6 +70,56 @@
             text-align: center;
         }
 
+        .controls-top {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 16px 10px;
+            border: none;
+            border-radius: 15px;
+            font-size: 0.95rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .btn-reset {
+            background: linear-gradient(145deg, #666666, #444444);
+            color: #ffffff;
+        }
+
+        .btn-reset:active {
+            transform: scale(0.98);
+            background: #444444;
+        }
+
+        .btn-start {
+            background: linear-gradient(145deg, #00ff00, #00cc00);
+            color: #000000;
+        }
+
+        .btn-start:active {
+            transform: scale(0.98);
+            background: #00cc00;
+        }
+
+        .btn-stop {
+            background: linear-gradient(145deg, #888888, #666666);
+            color: #000000;
+        }
+
+        .btn-stop:active {
+            transform: scale(0.98);
+            background: #666666;
+        }
+
         .stats-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -97,9 +147,9 @@
         }
 
         .stat-card.km .stat-value { color: #00ffff; border-color: #00ffff; }
-        .stat-card.falta .stat-value { color: #ff00ff; border-color: #ff00ff; }
+        .stat-card.falta .stat-value { color: #00ff00; border-color: #00ff00; }
         .stat-card.actual .stat-value { color: #ffff00; border-color: #ffff00; }
-        .stat-card.kmh .stat-value { color: #00ff00; border-color: #00ff00; }
+        .stat-card.kmh .stat-value { color: #ff8000; border-color: #ff8000; }
 
         .stat-label {
             font-size: 0.8rem;
@@ -114,10 +164,11 @@
             display: inline-block;
         }
 
-        .stat-unit {
+        .stat-card.actual .stat-label::after {
+            content: " min/km";
             font-size: 0.7rem;
             color: #cccccc;
-            font-weight: 600;
+            margin-left: 3px;
         }
 
         .projection-section {
@@ -225,54 +276,42 @@
             font-weight: 600;
         }
 
-        .controls {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
+        .gps-status-section {
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 15px;
+            padding: 15px;
             margin-bottom: 15px;
+            border: 2px solid #ffff00;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
         }
 
-        .btn {
-            padding: 16px 10px;
-            border: none;
-            border-radius: 15px;
-            font-size: 0.95rem;
-            font-weight: 900;
-            cursor: pointer;
-            transition: all 0.2s ease;
+        .gps-status-title {
+            font-size: 0.8rem;
+            color: #ffff00;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+            margin-bottom: 8px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 3px 8px;
+            border-radius: 5px;
+            display: inline-block;
         }
 
-        .btn-start {
-            background: linear-gradient(145deg, #00ff00, #00cc00);
-            color: #000000;
+        .gps-status-info {
+            font-size: 0.85rem;
+            color: #ffff00;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 5px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
-        .btn-start:active {
-            transform: scale(0.98);
-            background: #00cc00;
-        }
-
-        .btn-stop {
-            background: linear-gradient(145deg, #ff0000, #cc0000);
-            color: #000000;
-        }
-
-        .btn-stop:active {
-            transform: scale(0.98);
-            background: #cc0000;
-        }
-
-        .btn-reset {
-            background: linear-gradient(145deg, #ffff00, #cccc00);
-            color: #000000;
-        }
-
-        .btn-reset:active {
-            transform: scale(0.98);
-            background: #cccc00;
+        .gps-accuracy {
+            font-size: 0.75rem;
+            color: #ff8000;
+            font-weight: 600;
         }
 
         .distance-target-section {
@@ -368,49 +407,11 @@
             transform: scale(0.95);
         }
 
-        .gps-status-section {
-            background: rgba(20, 20, 20, 0.95);
-            border-radius: 15px;
-            padding: 15px;
-            margin-bottom: 15px;
-            border: 2px solid #ffff00;
-            text-align: center;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-        }
-
-        .gps-status-title {
-            font-size: 0.8rem;
-            color: #ffff00;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 8px;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 3px 8px;
-            border-radius: 5px;
-            display: inline-block;
-        }
-
-        .gps-status-info {
-            font-size: 0.85rem;
-            color: #ffff00;
-            font-family: 'Courier New', monospace;
-            margin-bottom: 5px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-        }
-
-        .gps-accuracy {
-            font-size: 0.75rem;
-            color: #ff8000;
-            font-weight: 600;
-        }
-
         .laps-section {
             background: rgba(20, 20, 20, 0.95);
             border-radius: 15px;
             padding: 15px;
-            border: 2px solid #ff00ff;
+            border: 2px solid #00ff00;
             max-height: 200px;
             overflow-y: auto;
             box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
@@ -418,7 +419,7 @@
 
         .laps-title {
             font-size: 0.8rem;
-            color: #ff00ff;
+            color: #00ff00;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
@@ -461,7 +462,7 @@
         }
 
         .lap-pace {
-            color: #ff00ff;
+            color: #00ff00;
             font-family: 'Courier New', monospace;
             font-weight: 700;
             font-size: 0.85rem;
@@ -524,6 +525,19 @@
             font-weight: 700;
         }
 
+        .data-restored {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid #00ff00;
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 0.85rem;
+            color: #00ff00;
+            font-weight: 700;
+            display: none;
+        }
+
         @media (max-width: 380px) {
             .timer-display {
                 font-size: 3.5rem;
@@ -556,19 +570,6 @@
                 font-size: 2rem;
             }
         }
-
-        .data-restored {
-            background: rgba(0, 255, 0, 0.2);
-            border: 2px solid #00ff00;
-            border-radius: 10px;
-            padding: 8px;
-            margin-bottom: 15px;
-            text-align: center;
-            font-size: 0.85rem;
-            color: #00ff00;
-            font-weight: 700;
-            display: none;
-        }
     </style>
 </head>
 <body>
@@ -597,6 +598,11 @@
             </div>
         </div>
 
+        <div class="controls-top">
+            <button class="btn btn-reset" id="btnReset">↻ REINICIAR</button>
+            <button class="btn btn-start" id="btnStart">▶ INICIAR</button>
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card km">
                 <div class="stat-value" id="distanceDisplay">0.00</div>
@@ -609,7 +615,6 @@
             <div class="stat-card actual">
                 <div class="stat-value" id="currentPaceDisplay">--:--</div>
                 <div class="stat-label">ACTUAL</div>
-                <div class="stat-unit">min/km</div>
             </div>
             <div class="stat-card kmh">
                 <div class="stat-value" id="speedDisplay">0.0</div>
@@ -648,12 +653,6 @@
             <div class="gps-accuracy" id="gpsAccuracy">PRECISIÓN: -- M</div>
         </div>
 
-        <div class="controls">
-            <button class="btn btn-start" id="btnStart">▶ INICIAR</button>
-            <button class="btn btn-stop" id="btnStop" style="display: none;">⏸ PAUSAR</button>
-            <button class="btn btn-reset" id="btnReset">↻ REINICIAR</button>
-        </div>
-
         <div class="distance-target-section">
             <div class="distance-target-title">OBJETIVO</div>
             <div class="distance-target-controls">
@@ -676,6 +675,8 @@
                 <div class="no-laps">INICIA EL ENTRENAMIENTO PARA VER TU PROGRESO</div>
             </div>
         </div>
+        
+        <button class="btn btn-stop" id="btnStop" style="display: none; width: 100%; margin-top: 10px;">⏸ PAUSAR</button>
     </div>
 
     <script>
@@ -816,7 +817,6 @@
                 const minutes = Math.floor((totalSeconds % 3600) / 60);
                 const seconds = totalSeconds % 60;
                 
-                // Formato más compacto: h:mm:ss (sin cero inicial en horas)
                 hoursDisplay.textContent = hours;
                 minutesDisplay.textContent = minutes.toString().padStart(2, '0');
                 secondsDisplay.textContent = seconds.toString().padStart(2, '0');
