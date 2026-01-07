@@ -198,6 +198,14 @@
         .calificacion-final {
             font-weight: bold;
         }
+        .persistence-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-size: 14px;
+        }
 
     </style>
 </head>
@@ -216,7 +224,15 @@
 
             <div id="runners-config-area">
                 <p>Ingrese la información de los corredores:</p>
-                </div>
+            </div>
+            
+            <label style="display: block; margin-top: 15px;">
+                <input type="checkbox" id="persist-data" checked> 
+                ✅ Activar persistencia de datos (los datos se guardarán aunque se recargue la página)
+            </label>
+            <p style="font-size: 12px; color: #666; margin-top: 5px;">
+                <strong>Recomendado para pruebas importantes:</strong> Mantiene los datos de vueltas y tiempo si accidentalmente recargas la página o el dispositivo entra en modo de ahorro de energía.
+            </p>
             
             <button type="button" class="nav-button" style="width: 100%; margin-top: 20px;" onclick="saveConfiguration()">GUARDAR E INICIAR TEST</button>
             
@@ -228,18 +244,18 @@
 
     <div id="carrera-screen" class="screen">
         <div class="timer-header">
-            <button class="nav-button" onclick="changeScreen('config-screen'); pauseTimer(true)">Ajustes</button>
+            <button class="nav-button" onclick="navigateToConfig()">Ajustes</button>
             <div id="countdown-timer">12:00</div>
             <div class="timer-controls">
                 <button id="start-btn" onclick="startTimer()">INICIAR</button>
                 <button id="pause-btn" onclick="pauseTimer(false)" disabled>PAUSAR</button>
                 <button id="reset-btn" onclick="resetTimer()" disabled>RESET</button>
-                <button class="nav-button" onclick="finalizeTest()">Resultados</button>
+                <button class="nav-button" onclick="navigateToResults()">Resultados</button>
             </div>
         </div>
         
         <div id="runners-grid">
-            </div>
+        </div>
     </div>
 
     <div id="results-screen" class="screen">
@@ -259,15 +275,20 @@
                     </tr>
                 </thead>
                 <tbody id="results-tbody">
-                    </tbody>
+                </tbody>
             </table>
         </div>
+        
+        <button type="button" class="nav-button" style="width: 100%; margin-top: 10px; background-color: #4CAF50;" 
+                onclick="returnToTimer()">
+            ↩️ Volver al Cronómetro (Continuar Prueba)
+        </button>
         
         <button type="button" class="nav-button" style="width: 100%; margin-top: 10px; background-color: #f44336;" onclick="saveResultsToTxt()">
             💾 Grabar Resultados en .TXT
         </button>
 
-        <button class="nav-button" style="width: 100%; margin-top: 10px; flex-shrink: 0;" onclick="changeScreen('config-screen')">Volver a Configuración</button>
+        <button class="nav-button" style="width: 100%; margin-top: 10px; flex-shrink: 0;" onclick="navigateToConfig()">Volver a Configuración</button>
     </div>
 
 </div>
@@ -311,22 +332,136 @@
         }
     }
 
+    // --- FUNCIONES DE PERSISTENCIA DE DATOS ---
+    function saveToLocalStorage() {
+        if (!document.getElementById('persist-data').checked) return;
+        
+        const state = {
+            timeRemaining: timeRemaining,
+            isRunning: isRunning,
+            runners: runners.map(r => ({
+                id: r.id,
+                name: r.name,
+                age: r.age,
+                sex: r.sex,
+                laps: r.laps,
+                lapTimes: r.lapTimes,
+                lapDistance: r.lapDistance
+            })),
+            lapDistance: lapDistance,
+            lastUpdate: Date.now()
+        };
+        
+        localStorage.setItem('cooperTestState', JSON.stringify(state));
+    }
 
-    // --- FUNCIONES DE NAVEGACIÓN ---
+    function loadFromLocalStorage() {
+        const saved = localStorage.getItem('cooperTestState');
+        if (!saved) return false;
+        
+        try {
+            const state = JSON.parse(saved);
+            
+            // Verificar si los datos son recientes (menos de 24 horas)
+            if (Date.now() - state.lastUpdate > 24 * 60 * 60 * 1000) {
+                localStorage.removeItem('cooperTestState');
+                return false;
+            }
+            
+            timeRemaining = state.timeRemaining;
+            isRunning = false; // Siempre cargar pausado por seguridad
+            runners = state.runners;
+            lapDistance = state.lapDistance;
+            
+            // Restaurar visualización
+            updateTimerDisplay();
+            renderRunnerButtons();
+            
+            // Actualizar estado de botones
+            document.getElementById('start-btn').disabled = false;
+            document.getElementById('pause-btn').disabled = true;
+            document.getElementById('reset-btn').disabled = false;
+            
+            // Mostrar notificación
+            if (runners.some(r => r.laps > 0)) {
+                alert("✅ Se han recuperado datos de una prueba anterior. El cronómetro está pausado. Puedes continuar donde lo dejaste.");
+            }
+            
+            return true;
+        } catch (e) {
+            console.error("Error cargando datos guardados:", e);
+            return false;
+        }
+    }
 
-    function changeScreen(screenId) {
-        if (screenId === 'config-screen') {
-            document.getElementById('results-tbody').innerHTML = '';
+    function clearLocalStorage() {
+        localStorage.removeItem('cooperTestState');
+    }
+
+    // --- FUNCIONES DE NAVEGACIÓN MEJORADAS ---
+    function changeScreen(screenId, skipWarning = false) {
+        // Guardar estado actual si estamos en pantalla de carrera
+        if (document.getElementById('carrera-screen').classList.contains('active')) {
+            saveToLocalStorage();
+        }
+        
+        // Solo mostrar advertencia si el tiempo NO ha terminado (timeRemaining > 0)
+        // y no estamos saltando la advertencia
+        if (!skipWarning && screenId !== 'carrera-screen' && timeRemaining > 0 && (isRunning || runners.some(r => r.laps > 0))) {
+            if (!confirm("⚠️ ¿Continuar? El cronómetro se pausará temporalmente. Tus datos están guardados y podrás regresar para continuar.")) {
+                return;
+            }
+            pauseTimer(true); // Pausar sin advertencia adicional
         }
         
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.remove('active');
         });
         document.getElementById(screenId).classList.add('active');
+        
+        // Si vamos a configuración, actualizar campos con valores actuales
+        if (screenId === 'config-screen' && runners.length > 0) {
+            updateConfigWithCurrentData();
+        }
+        
+        // Si vamos a carrera, verificar si hay datos guardados
+        if (screenId === 'carrera-screen' && document.getElementById('persist-data').checked) {
+            loadFromLocalStorage();
+        }
+        
+        // Limpiar resultados si vamos a configuración
+        if (screenId === 'config-screen') {
+            document.getElementById('results-tbody').innerHTML = '';
+        }
+    }
+
+    // Funciones específicas de navegación con lógica de advertencia
+    function navigateToConfig() {
+        if (timeRemaining > 0 && (isRunning || runners.some(r => r.laps > 0))) {
+            if (!confirm("⚠️ ¿Ir a Ajustes? El cronómetro se pausará. Tus datos se guardarán y podrás volver para continuar.")) {
+                return;
+            }
+            pauseTimer(true);
+        }
+        changeScreen('config-screen', true);
+    }
+
+    function navigateToResults() {
+        if (timeRemaining > 0) {
+            if (!confirm("⚠️ ¿Ver resultados ahora? El test no ha terminado (queda tiempo). ¿Deseas finalizar el test y ver resultados parciales?")) {
+                return;
+            }
+        }
+        pauseTimer(true);
+        renderResults();
+        changeScreen('results-screen', true);
+    }
+
+    function returnToTimer() {
+        changeScreen('carrera-screen');
     }
 
     // --- FUNCIONES DE CONFIGURACIÓN ---
-
     function generateRunnerInputs() {
         const numRunnersInput = document.getElementById('num-runners');
         let numRunners = parseInt(numRunnersInput.value);
@@ -358,7 +493,64 @@
         }
     }
 
+    function updateConfigWithCurrentData() {
+        if (runners.length === 0) return;
+        
+        // Actualizar distancia de vuelta
+        document.getElementById('lap-distance').value = lapDistance;
+        
+        // Actualizar número de corredores
+        document.getElementById('num-runners').value = runners.length;
+        
+        // Regenerar inputs con datos actuales
+        const configArea = document.getElementById('runners-config-area');
+        configArea.innerHTML = `
+            <div class="runner-input-group" style="font-weight: bold; padding: 5px 0;">
+                <span>Nombre</span>
+                <span>Sexo</span>
+                <span>Edad</span>
+            </div>
+        `;
+        
+        runners.forEach((runner, i) => {
+            const index = i + 1;
+            configArea.innerHTML += `
+                <div class="runner-input-group">
+                    <input type="text" id="name-${index}" value="${runner.name.replace('.', '')}" required>
+                    <select id="sex-${index}" required>
+                        <option value="H" ${runner.sex === 'H' ? 'selected' : ''}>H</option>
+                        <option value="M" ${runner.sex === 'M' ? 'selected' : ''}>M</option>
+                    </select>
+                    <input type="number" id="age-${index}" value="${runner.age}" min="10" max="80" required>
+                </div>
+            `;
+        });
+        
+        // Mostrar advertencia si hay datos en curso
+        if (runners.some(r => r.laps > 0) || timeRemaining < COOPER_TIME_MS) {
+            const warning = document.createElement('div');
+            warning.className = 'persistence-warning';
+            warning.innerHTML = `
+                <strong>⚠️ PRUEBA EN CURSO</strong><br>
+                Hay datos de una prueba anterior. Si guardas nueva configuración, se perderán los datos actuales.
+                <button onclick="returnToTimer()" style="margin-top: 5px; padding: 5px 10px; background: #4CAF50; color: white; border: none; border-radius: 3px;">
+                    ↩️ Volver a continuar la prueba
+                </button>
+            `;
+            configArea.parentNode.insertBefore(warning, configArea.nextSibling);
+        }
+    }
+
     function saveConfiguration() {
+        if (document.getElementById('persist-data').checked) {
+            if (runners.length > 0 && runners.some(r => r.laps > 0)) {
+                if (!confirm("⚠️ Al guardar nueva configuración se perderán los datos de la prueba en curso. ¿Continuar?")) {
+                    return;
+                }
+            }
+            clearLocalStorage();
+        }
+        
         resetTimer(true); // Reset sin advertencia
         
         lapDistance = parseFloat(document.getElementById('lap-distance').value);
@@ -402,7 +594,7 @@
         });
     }
 
-    // ACEPTA EL NUEVO RITMO
+    // ACTUALIZAR BOTÓN CON EL RITMO
     function updateRunnerButton(runnerId, lastLapTimeMs, paceMinPerKm) {
         const runner = runners.find(r => r.id === runnerId);
         if (!runner) return;
@@ -430,7 +622,7 @@
         return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
     }
     
-    // NUEVA FUNCIÓN PARA CALCULAR Y DAR FORMATO AL RITMO (MINUTOS:SEGUNDOS / KM)
+    // FUNCIÓN PARA CALCULAR Y DAR FORMATO AL RITMO (MINUTOS:SEGUNDOS / KM)
     function formatPace(lapTimeMs, lapDistanceM) {
         if (lapTimeMs <= 0 || lapDistanceM <= 0) return "--:--";
 
@@ -472,9 +664,19 @@
                 document.getElementById('pause-btn').disabled = true;
                 document.getElementById('start-btn').disabled = true;
                 document.getElementById('reset-btn').disabled = false;
+                saveToLocalStorage();
+                
+                // Notificar que el tiempo ha terminado
+                if (runners.some(r => r.laps > 0)) {
+                    setTimeout(() => {
+                        alert("⏰ ¡El tiempo ha terminado! Puedes ver los resultados finales.");
+                    }, 500);
+                }
             }
             updateTimerDisplay();
         }, 100);
+        
+        saveToLocalStorage();
     }
 
     // LA FUNCIÓN DE PAUSA AHORA RECIBE UN ARGUMENTO (avoidWarning)
@@ -492,6 +694,8 @@
         document.getElementById('start-btn').disabled = false;
         document.getElementById('pause-btn').disabled = true;
         document.getElementById('reset-btn').disabled = false;
+        
+        saveToLocalStorage();
     }
 
     // LA FUNCIÓN DE RESET AHORA RECIBE UN ARGUMENTO (avoidWarning)
@@ -517,10 +721,13 @@
         });
         
         renderRunnerButtons();
+        
+        if (document.getElementById('persist-data').checked) {
+            clearLocalStorage();
+        }
     }
     
     // --- FUNCIÓN DE TOMA DE VUELTAS ---
-
     function recordLap(runnerId) {
         if (!isRunning && timeRemaining > 0) {
             alert("¡Inicie el cronómetro primero!");
@@ -547,10 +754,11 @@
         
         // ACTUALIZAR BOTÓN CON EL RITMO
         updateRunnerButton(runnerId, lapTime, pace);
+        
+        saveToLocalStorage();
     }
 
     // --- FUNCIONES DE RESULTADOS Y CÁLCULO ---
-
     function getCooperRating(distance, age, sex) {
         const d = distance;
         
@@ -661,12 +869,6 @@
         return (COOPER_TIME_MS / avgTimeMs) * runner.lapDistance;
     }
 
-    function finalizeTest() {
-        pauseTimer(true); // Pausa sin advertencia antes de mostrar resultados
-        renderResults();
-        changeScreen('results-screen');
-    }
-
     function renderResults() {
         const tbody = document.getElementById('results-tbody');
         tbody.innerHTML = '';
@@ -710,7 +912,6 @@
     }
     
     // --- FUNCIONES PARA GRABAR ARCHIVO (.TXT) ---
-    
     function saveResultsToTxt() {
         if (runners.length === 0 || document.getElementById('results-tbody').rows.length === 0) {
             alert("No hay resultados para guardar. Finalice el test primero.");
@@ -719,7 +920,7 @@
 
         let fileContent = "=== Resultados del Test de Cooper (12 Min) ===\n";
         fileContent += "Fecha y Hora: " + new Date().toLocaleString() + "\n";
-        fileContent += "Distancia de Vuelta Configuracion: " + lapDistance + " metros\n\n";
+        fileContent += "Distancia de Vuelta Configuración: " + lapDistance + " metros\n\n";
         
         fileContent += "---------------------------------------------------------------------------------------------------------------------------------\n";
         fileContent += "  Corredor  | Edad | Sexo | Vueltas | Dist. Final (m) | Calif. Final | T. Prom. Vuelta (min) | Proyección (m)\n";
@@ -760,13 +961,33 @@
         document.body.removeChild(a);
     }
 
+    // --- AUTO-GUARDADO PERIÓDICO ---
+    setInterval(() => {
+        if (document.getElementById('persist-data').checked && 
+            document.getElementById('carrera-screen').classList.contains('active') &&
+            (isRunning || runners.some(r => r.laps > 0))) {
+            saveToLocalStorage();
+        }
+    }, 30000);
 
     // --- INICIALIZACIÓN ---
-    
     document.addEventListener('DOMContentLoaded', () => {
         generateRunnerInputs();
         updateTimerDisplay();
         changeScreen('config-screen');
+        
+        // Verificar si hay datos guardados al cargar la página
+        setTimeout(() => {
+            if (document.getElementById('persist-data').checked) {
+                const hasSavedData = loadFromLocalStorage();
+                if (hasSavedData) {
+                    // Preguntar si quieren continuar con los datos guardados
+                    if (confirm("Se encontraron datos de una prueba anterior. ¿Deseas continuar con esa prueba?")) {
+                        changeScreen('carrera-screen');
+                    }
+                }
+            }
+        }, 500);
     });
 
 </script>
