@@ -61,6 +61,76 @@
         }
 
         /* ================================================= */
+        /* PANTALLA DE CONFIGURACIÓN (REORGANIZADA) */
+        /* ================================================= */
+        #config-screen {
+            padding: 10px;
+            overflow-y: auto;
+        }
+        #config-screen h2 {
+            text-align: center;
+            color: #333;
+            margin-top: 5px;
+            margin-bottom: 15px;
+        }
+        
+        /* Barra superior de botones en configuración */
+        .config-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding: 0 5px;
+        }
+        
+        .config-top-buttons {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .config-top-buttons .nav-button {
+            margin: 0;
+            padding: 10px 15px;
+            font-size: 14px;
+        }
+        
+        #config-form {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 0 5px;
+        }
+        
+        #config-form label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        #config-form input[type="number"], #config-form input[type="text"], #config-form select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #runners-config-area {
+            max-height: 350px; /* Más espacio para la lista de corredores */
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        .runner-input-group {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 8px;
+            padding: 5px;
+            border-bottom: 1px dashed #eee;
+        }
+        
+        /* ================================================= */
         /* PANTALLA DE CARRERA (CRONÓMETRO) */
         /* ================================================= */
         #carrera-screen {
@@ -69,32 +139,102 @@
         .timer-header {
             background-color: #333;
             color: white;
-            padding: 10px;
+            padding: 5px 10px;
             display: flex;
-            justify-content: space-around;
+            justify-content: space-between;
             align-items: center;
-            height: 120px;
+            height: 80px; /* Altura reducida */
             flex-shrink: 0;
         }
-        #countdown-timer {
-            font-size: 72px;
-            font-weight: bold;
-            letter-spacing: 5px;
-            color: #4CAF50;
-            min-width: 250px;
-            text-align: center;
+        
+        /* Botones de navegación en carrera (más seguros) */
+        .nav-button-safe {
+            padding: 8px 12px;
+            font-size: 14px;
+            cursor: pointer;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
         }
+        
+        .nav-button-safe.confirm {
+            background-color: #dc3545;
+        }
+        
+        .nav-button-safe:hover {
+            background-color: #666;
+        }
+        
+        #countdown-timer {
+            font-size: 48px; /* Tamaño reducido */
+            font-weight: bold;
+            letter-spacing: 3px;
+            color: #4CAF50;
+            text-align: center;
+            flex-grow: 1;
+            margin: 0 10px;
+        }
+        
+        /* Controles del cronómetro más pequeños */
+        .timer-controls {
+            display: flex;
+            gap: 5px;
+        }
+        
         .timer-controls button {
-            padding: 15px 25px;
-            font-size: 18px;
-            margin: 0 5px;
+            padding: 10px 15px;
+            font-size: 14px;
             cursor: pointer;
             border: none;
-            border-radius: 8px;
+            border-radius: 5px;
+            min-width: 80px;
         }
-        #start-btn { background-color: #4CAF50; color: white; }
-        #pause-btn { background-color: #ff9800; color: white; }
-        #reset-btn { background-color: #f44336; color: white; }
+        
+        #start-btn { 
+            background-color: #4CAF50; 
+            color: white; 
+        }
+        #pause-btn { 
+            background-color: #ff9800; 
+            color: white; 
+        }
+        #reset-btn { 
+            background-color: #f44336; 
+            color: white; 
+        }
+        
+        /* Panel de confirmación para navegación */
+        .confirm-panel {
+            display: none;
+            background-color: #ffeb3b;
+            border: 2px solid #ff9800;
+            border-radius: 5px;
+            padding: 5px;
+            margin-top: 5px;
+            font-size: 12px;
+            text-align: center;
+        }
+        
+        .confirm-panel button {
+            padding: 3px 8px;
+            font-size: 12px;
+            margin: 2px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .confirm-panel .confirm-yes {
+            background-color: #4CAF50;
+            color: white;
+        }
+        
+        .confirm-panel .confirm-no {
+            background-color: #f44336;
+            color: white;
+        }
 
         /* Contenedor de Botones de Corredores: Ocupa el resto del espacio */
         #runners-grid {
@@ -104,7 +244,7 @@
             flex-grow: 1; 
             gap: 5px;
             padding: 5px;
-            max-height: calc(686px - 120px);
+            max-height: calc(686px - 80px); /* Ajustado por la altura reducida del header */
         }
         .runner-button {
             display: flex;
@@ -135,76 +275,70 @@
         }
 
         /* ================================================= */
-        /* PANTALLA DE CONFIGURACIÓN Y RESULTADOS */
+        /* PANTALLA DE RESULTADOS */
         /* ================================================= */
-        #config-screen, #results-screen {
-            padding: 20px;
+        #results-screen {
+            padding: 10px;
             overflow-y: auto;
         }
-        #config-screen h2, #results-screen h2 {
+        #results-screen h2 {
             text-align: center;
             color: #333;
-        }
-        #config-form label {
-            display: block;
-            margin-top: 10px;
-            font-weight: bold;
-        }
-        #config-form input[type="number"], #config-form input[type="text"], #config-form select {
-            width: 100%;
-            padding: 8px;
             margin-top: 5px;
-            box-sizing: border-box;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            margin-bottom: 15px;
         }
-        #runners-config-area {
-            max-height: 200px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            padding: 10px;
-            margin-top: 10px;
+        
+        /* Barra superior en resultados */
+        .results-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
         }
-        .runner-input-group {
-            display: grid;
-            grid-template-columns: 3fr 1fr 1fr;
-            gap: 10px;
-            margin-bottom: 8px;
-            padding: 5px;
-            border-bottom: 1px dashed #eee;
-        }
+        
         #results-table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 10px;
+            margin-top: 5px;
+            flex-grow: 1;
         }
         #results-table th, #results-table td {
             border: 1px solid #ddd;
-            padding: 8px 4px;
+            padding: 6px 3px;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
         }
         #results-table th {
             background-color: #4CAF50;
             color: white;
-            font-size: 14px;
+            font-size: 12px;
+            padding: 8px 3px;
         }
         .distancia-final-input {
-            width: 70px;
-            padding: 3px;
+            width: 60px;
+            padding: 2px;
             text-align: center;
-            font-size: 13px;
+            font-size: 12px;
         }
         .calificacion-final {
             font-weight: bold;
         }
+        
+        /* Botones en resultados */
+        .results-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            margin-top: 10px;
+        }
+        
         .persistence-warning {
             background-color: #fff3cd;
             border: 1px solid #ffeaa7;
-            padding: 10px;
-            margin: 10px 0;
+            padding: 8px;
+            margin: 8px 0;
             border-radius: 4px;
-            font-size: 14px;
+            font-size: 13px;
         }
 
     </style>
@@ -213,8 +347,27 @@
 
 <div class="app-container">
     
+    <!-- PANTALLA DE CONFIGURACIÓN -->
     <div id="config-screen" class="screen active">
         <h2>⚙️ Configuración del Test de Cooper</h2>
+        
+        <!-- Barra superior con botones principales -->
+        <div class="config-top-bar">
+            <div class="config-top-buttons">
+                <button type="button" class="nav-button" onclick="saveConfiguration()">
+                    ✅ GUARDAR & INICIAR
+                </button>
+                <button type="button" class="nav-button" style="background-color: #555;" onclick="toggleFullscreen()">
+                    📺 Pantalla Completa
+                </button>
+            </div>
+            
+            <div style="font-size: 12px; color: #666;">
+                <input type="checkbox" id="persist-data" checked style="vertical-align: middle;">
+                <label for="persist-data" style="display: inline; margin: 0;">Persistencia</label>
+            </div>
+        </div>
+        
         <form id="config-form">
             <label for="lap-distance">Distancia de cada vuelta (metros):</label>
             <input type="number" id="lap-distance" value="400" min="50" required>
@@ -223,55 +376,80 @@
             <input type="number" id="num-runners" value="1" min="1" max="20" required onchange="generateRunnerInputs()">
 
             <div id="runners-config-area">
-                <p>Ingrese la información de los corredores:</p>
+                <p style="margin: 5px 0; font-weight: bold;">Información de los corredores:</p>
             </div>
             
-            <label style="display: block; margin-top: 15px;">
-                <input type="checkbox" id="persist-data" checked> 
-                ✅ Activar persistencia de datos (los datos se guardarán aunque se recargue la página)
-            </label>
-            <p style="font-size: 12px; color: #666; margin-top: 5px;">
-                <strong>Recomendado para pruebas importantes:</strong> Mantiene los datos de vueltas y tiempo si accidentalmente recargas la página o el dispositivo entra en modo de ahorro de energía.
-            </p>
-            
-            <button type="button" class="nav-button" style="width: 100%; margin-top: 20px;" onclick="saveConfiguration()">GUARDAR E INICIAR TEST</button>
-            
-            <button type="button" class="nav-button" style="width: 100%; margin-top: 10px; background-color: #555;" onclick="toggleFullscreen()">
-                Activar/Desactivar Pantalla Completa
-            </button>
+            <div style="font-size: 12px; color: #666; margin-top: 10px; padding: 5px; background: #f5f5f5; border-radius: 4px;">
+                <strong>Persistencia:</strong> Mantiene los datos si se recarga la página. Recomendado para pruebas importantes.
+            </div>
         </form>
     </div>
 
+    <!-- PANTALLA DE CARRERA -->
     <div id="carrera-screen" class="screen">
         <div class="timer-header">
-            <button class="nav-button" onclick="navigateToConfig()">Ajustes</button>
+            <!-- Botón Ajustes con confirmación -->
+            <div style="position: relative;">
+                <button class="nav-button-safe" id="btn-ajustes" onclick="showConfirm('ajustes')">⚙️ Ajustes</button>
+                <div class="confirm-panel" id="confirm-ajustes">
+                    ¿Ir a Ajustes?<br>
+                    <button class="confirm-yes" onclick="goToConfig()">Sí</button>
+                    <button class="confirm-no" onclick="hideConfirm('ajustes')">No</button>
+                </div>
+            </div>
+            
+            <!-- Cronómetro -->
             <div id="countdown-timer">12:00</div>
-            <div class="timer-controls">
-                <button id="start-btn" onclick="startTimer()">INICIAR</button>
-                <button id="pause-btn" onclick="pauseTimer(false)" disabled>PAUSAR</button>
-                <button id="reset-btn" onclick="resetTimer()" disabled>RESET</button>
-                <button class="nav-button" onclick="navigateToResults()">Resultados</button>
+            
+            <!-- Botón Resultados con confirmación -->
+            <div style="position: relative;">
+                <button class="nav-button-safe" id="btn-resultados" onclick="showConfirm('resultados')">📊 Resultados</button>
+                <div class="confirm-panel" id="confirm-resultados">
+                    ¿Ver resultados?<br>
+                    <button class="confirm-yes" onclick="goToResults()">Sí</button>
+                    <button class="confirm-no" onclick="hideConfirm('resultados')">No</button>
+                </div>
             </div>
         </div>
         
+        <!-- Controles del cronómetro (más pequeños) -->
+        <div style="background: #333; padding: 5px 10px; display: flex; justify-content: center; gap: 10px;">
+            <button id="start-btn" onclick="startTimer()">▶ INICIAR</button>
+            <button id="pause-btn" onclick="pauseTimer(false)" disabled>⏸ PAUSAR</button>
+            <button id="reset-btn" onclick="resetTimer()" disabled>⏹ RESET</button>
+        </div>
+        
+        <!-- Grid de corredores -->
         <div id="runners-grid">
         </div>
     </div>
 
+    <!-- PANTALLA DE RESULTADOS -->
     <div id="results-screen" class="screen">
-        <h2>🏆 Resultados y Calificación del Test de Cooper (12 Min)</h2>
+        <h2>🏆 Resultados del Test de Cooper</h2>
+        
+        <div class="results-top-bar">
+            <button class="nav-button" onclick="returnToTimer()" style="padding: 8px 12px; font-size: 14px;">
+                ↩️ Volver al Cronómetro
+            </button>
+            
+            <div style="font-size: 12px; color: #666;">
+                <span id="results-timestamp"></span>
+            </div>
+        </div>
+        
         <div style="overflow-x: auto; flex-grow: 1;">
             <table id="results-table">
                 <thead>
                     <tr>
                         <th>Corredor</th>
                         <th>Vueltas</th>
-                        <th>Dist. Prov. (m)</th>
-                        <th>T. Prom. Vuelta (min)</th>
-                        <th>Proyección (m)</th>
-                        <th>Calif. Inicial</th>
-                        <th>**Dist. Final (m)**</th>
-                        <th>**Calif. Final**</th>
+                        <th>Dist. (m)</th>
+                        <th>Tiempo/Vta</th>
+                        <th>Proyección</th>
+                        <th>Calif.</th>
+                        <th>Dist. Final</th>
+                        <th>Calif. Final</th>
                     </tr>
                 </thead>
                 <tbody id="results-tbody">
@@ -279,16 +457,15 @@
             </table>
         </div>
         
-        <button type="button" class="nav-button" style="width: 100%; margin-top: 10px; background-color: #4CAF50;" 
-                onclick="returnToTimer()">
-            ↩️ Volver al Cronómetro (Continuar Prueba)
-        </button>
-        
-        <button type="button" class="nav-button" style="width: 100%; margin-top: 10px; background-color: #f44336;" onclick="saveResultsToTxt()">
-            💾 Grabar Resultados en .TXT
-        </button>
-
-        <button class="nav-button" style="width: 100%; margin-top: 10px; flex-shrink: 0;" onclick="navigateToConfig()">Volver a Configuración</button>
+        <div class="results-buttons">
+            <button type="button" class="nav-button" style="background-color: #f44336;" onclick="saveResultsToTxt()">
+                💾 Exportar a .TXT
+            </button>
+            
+            <button class="nav-button" onclick="goToConfig()">
+                ⚙️ Nueva Configuración
+            </button>
+        </div>
     </div>
 
 </div>
@@ -330,6 +507,70 @@
                 document.msExitFullscreen();
             }
         }
+    }
+
+    // --- FUNCIONES DE CONFIRMACIÓN DE NAVEGACIÓN ---
+    function showConfirm(type) {
+        // Si el tiempo ya terminó, no mostrar confirmación
+        if (timeRemaining <= 0) {
+            if (type === 'ajustes') {
+                goToConfig();
+            } else {
+                goToResults();
+            }
+            return;
+        }
+        
+        // Ocultar todos los paneles de confirmación primero
+        hideConfirm('ajustes');
+        hideConfirm('resultados');
+        
+        // Mostrar el panel correspondiente
+        const panel = document.getElementById(`confirm-${type}`);
+        const button = document.getElementById(`btn-${type}`);
+        
+        if (panel && button) {
+            panel.style.display = 'block';
+            button.classList.add('confirm');
+            
+            // Ocultar después de 5 segundos si no se selecciona
+            setTimeout(() => {
+                if (panel.style.display === 'block') {
+                    hideConfirm(type);
+                }
+            }, 5000);
+        }
+    }
+    
+    function hideConfirm(type) {
+        const panel = document.getElementById(`confirm-${type}`);
+        const button = document.getElementById(`btn-${type}`);
+        
+        if (panel && button) {
+            panel.style.display = 'none';
+            button.classList.remove('confirm');
+        }
+    }
+    
+    function goToConfig() {
+        hideConfirm('ajustes');
+        if (timeRemaining > 0 && (isRunning || runners.some(r => r.laps > 0))) {
+            pauseTimer(true);
+        }
+        changeScreen('config-screen', true);
+    }
+    
+    function goToResults() {
+        hideConfirm('resultados');
+        if (timeRemaining > 0) {
+            pauseTimer(true);
+        }
+        renderResults();
+        changeScreen('results-screen', true);
+    }
+    
+    function returnToTimer() {
+        changeScreen('carrera-screen');
     }
 
     // --- FUNCIONES DE PERSISTENCIA DE DATOS ---
@@ -398,21 +639,16 @@
         localStorage.removeItem('cooperTestState');
     }
 
-    // --- FUNCIONES DE NAVEGACIÓN MEJORADAS ---
+    // --- FUNCIONES DE NAVEGACIÓN ---
     function changeScreen(screenId, skipWarning = false) {
         // Guardar estado actual si estamos en pantalla de carrera
         if (document.getElementById('carrera-screen').classList.contains('active')) {
             saveToLocalStorage();
         }
         
-        // Solo mostrar advertencia si el tiempo NO ha terminado (timeRemaining > 0)
-        // y no estamos saltando la advertencia
-        if (!skipWarning && screenId !== 'carrera-screen' && timeRemaining > 0 && (isRunning || runners.some(r => r.laps > 0))) {
-            if (!confirm("⚠️ ¿Continuar? El cronómetro se pausará temporalmente. Tus datos están guardados y podrás regresar para continuar.")) {
-                return;
-            }
-            pauseTimer(true); // Pausar sin advertencia adicional
-        }
+        // Ocultar todos los paneles de confirmación
+        hideConfirm('ajustes');
+        hideConfirm('resultados');
         
         document.querySelectorAll('.screen').forEach(screen => {
             screen.classList.remove('active');
@@ -433,32 +669,12 @@
         if (screenId === 'config-screen') {
             document.getElementById('results-tbody').innerHTML = '';
         }
-    }
-
-    // Funciones específicas de navegación con lógica de advertencia
-    function navigateToConfig() {
-        if (timeRemaining > 0 && (isRunning || runners.some(r => r.laps > 0))) {
-            if (!confirm("⚠️ ¿Ir a Ajustes? El cronómetro se pausará. Tus datos se guardarán y podrás volver para continuar.")) {
-                return;
-            }
-            pauseTimer(true);
+        
+        // Actualizar timestamp en resultados
+        if (screenId === 'results-screen') {
+            document.getElementById('results-timestamp').textContent = 
+                new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
         }
-        changeScreen('config-screen', true);
-    }
-
-    function navigateToResults() {
-        if (timeRemaining > 0) {
-            if (!confirm("⚠️ ¿Ver resultados ahora? El test no ha terminado (queda tiempo). ¿Deseas finalizar el test y ver resultados parciales?")) {
-                return;
-            }
-        }
-        pauseTimer(true);
-        renderResults();
-        changeScreen('results-screen', true);
-    }
-
-    function returnToTimer() {
-        changeScreen('carrera-screen');
     }
 
     // --- FUNCIONES DE CONFIGURACIÓN ---
@@ -472,7 +688,7 @@
 
         const configArea = document.getElementById('runners-config-area');
         configArea.innerHTML = `
-            <div class="runner-input-group" style="font-weight: bold; padding: 5px 0;">
+            <div class="runner-input-group" style="font-weight: bold; padding: 5px 0; background: #f0f0f0;">
                 <span>Nombre</span>
                 <span>Sexo</span>
                 <span>Edad</span>
@@ -505,7 +721,7 @@
         // Regenerar inputs con datos actuales
         const configArea = document.getElementById('runners-config-area');
         configArea.innerHTML = `
-            <div class="runner-input-group" style="font-weight: bold; padding: 5px 0;">
+            <div class="runner-input-group" style="font-weight: bold; padding: 5px 0; background: #f0f0f0;">
                 <span>Nombre</span>
                 <span>Sexo</span>
                 <span>Edad</span>
@@ -587,7 +803,7 @@
             button.innerHTML = `
                 <span class="name">${runner.name}</span>
                 <span class="lap-info" id="laps-${runner.id}">V: ${runner.laps}</span>
-                <span class="lap-info" id="time-${runner.id}">T. Vta: 00:00</span>
+                <span class="lap-info" id="time-${runner.id}">T.Vta: 00:00</span>
                 <span class="lap-info" id="pace-${runner.id}">Ritmo: --:--/km</span> 
             `;
             grid.appendChild(button);
@@ -602,7 +818,7 @@
         const timeInfo = formatTime(lastLapTimeMs);
 
         document.getElementById(`laps-${runner.id}`).textContent = `V: ${runner.laps}`;
-        document.getElementById(`time-${runner.id}`).textContent = `T. Vta: ${timeInfo}`;
+        document.getElementById(`time-${runner.id}`).textContent = `T.Vta: ${timeInfo}`;
         document.getElementById(`pace-${runner.id}`).textContent = `Ritmo: ${paceMinPerKm}/km`; 
         
         const button = document.getElementById(`runner-btn-${runner.id}`);
@@ -856,7 +1072,7 @@
             }
         }
         
-        return 'Rango de edad no definido';
+        return 'Rango no definido';
     }
 
     function calculateAverageLapTime(runner) {
