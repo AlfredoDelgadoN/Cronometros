@@ -146,24 +146,22 @@
             font-size: 0.6rem;
         }
 
-        /* ESTILO ACTIVO: BORDE BLANCO Y GLOW, NO FONDO */
+        /* ESTILO ACTIVO: BORDE BLANCO Y GLOW */
         .zone-item.active {
             opacity: 1;
             transform: scale(1.1);
             font-weight: 800;
             z-index: 2;
-            /* Borde blanco brillante */
             border: 2px solid white; 
-            /* Resplandor del color de la zona */
             box-shadow: 0 0 12px currentColor, inset 0 0 5px rgba(0,0,0,0.5);
             text-shadow: 0 0 5px currentColor;
-            background-color: rgba(255,255,255,0.1); /* Fondo sutil blanco */
-            color: #fff !important; /* Siempre texto blanco */
+            background-color: rgba(255,255,255,0.1); 
+            color: #fff !important; 
         }
         
         .zone-item { border-color: rgba(255,255,255,0.1); }
         
-        /* Colores de zona (para el texto y glow) */
+        /* Colores de zona */
         .zone-recovery { color: var(--recovery-color); border-color: var(--recovery-color); }
         .zone-1k { color: #4caf50; border-color: #4caf50; }
         .zone-5k { color: #2196f3; border-color: #2196f3; }
@@ -195,7 +193,7 @@
 
         /* Clase dinámica para resaltar el Ritmo Actual */
         .stat-card.zone-highlight {
-            border-color: currentColor; /* Toma el color de la variable */
+            border-color: currentColor; 
             box-shadow: 0 0 15px currentColor;
         }
 
@@ -792,7 +790,7 @@
 
         <!-- Zonas de ritmo -->
         <div class="pace-zone-display">
-            <div class="zone-item zone-small zone-recovery" data-zone="recovery">Suave</div>
+            <div class="zone-item zone-small zone-recovery" data-zone="recovery">Recup</div>
             <div class="zone-item zone-42k" data-zone="42k">42K</div>
             <div class="zone-item zone-21k" data-zone="21k">21K</div>
             <div class="zone-item zone-10k" data-zone="10k">10K</div>
@@ -813,7 +811,7 @@
                 <div><span class="stat-value" id="val-speed">0.0</span> <span class="stat-unit">km/h</span></div>
                 <div class="stat-sub">Zona: <span id="val-pace-zone">--</span></div>
             </div>
-            <!-- TARJETA RITMO ACTUAL: AQUÍ SE COLOREA EL BORDE -->
+            <!-- TARJETA RITMO ACTUAL -->
             <div class="stat-card" id="pace-card">
                 <div class="stat-label">Ritmo Actual</div>
                 <div><span class="stat-value" id="val-pace">--:--</span> <span class="stat-unit">min/km</span></div>
@@ -982,7 +980,7 @@
                     </p>
                     
                     <div class="form-group">
-                        <label class="form-label">Suave (min/km)</label>
+                        <label class="form-label">Recuperación (min/km)</label>
                         <input type="number" id="pace-recovery" class="form-control" value="7.00" step="0.01" min="3.00" max="15.00">
                     </div>
                     
@@ -1050,7 +1048,7 @@
                         <div class="form-group">
                             <label class="form-label">Objetivo de Ritmo</label>
                             <select id="wk-pace" class="form-control">
-                                <option value="recovery">Suave</option>
+                                <option value="recovery">Recuperación</option>
                                 <option value="42k">Maratón (42K)</option>
                                 <option value="21k">Media Maratón (21K)</option>
                                 <option value="10k">10K</option>
@@ -1153,7 +1151,8 @@
                 },
 
                 // Variable temporal para el editor de workouts
-                editingWorkoutSteps: [] 
+                editingWorkoutSteps: [],
+                wakeLock: null
             },
             
             init: function() {
@@ -1176,7 +1175,6 @@
 
                 // Listener para pantalla completa
                 document.addEventListener('fullscreenchange', () => {
-                   // Puedes añadir lógica aquí si necesitas cambiar icono
                    console.log("Full screen changed");
                 });
             },
@@ -1200,6 +1198,27 @@
                     container.classList.add('timer-size-' + this.state.settings.timerSize);
                 }
             },
+
+            // --- Wake Lock System ---
+            enableWakeLock: async function() {
+                if ('wakeLock' in navigator) {
+                    try {
+                        this.state.wakeLock = await navigator.wakeLock.request('screen');
+                        console.log('Wake Lock activado');
+                    } catch (err) {
+                        console.error(`${err.name}, ${err.message}`);
+                    }
+                }
+            },
+
+            disableWakeLock: async function() {
+                if (this.state.wakeLock !== null) {
+                    await this.state.wakeLock.release();
+                    this.state.wakeLock = null;
+                    console.log('Wake Lock desactivado');
+                }
+            },
+            // -------------------------
 
             // --- Lógica de Día de la Semana y Persistencia de Workouts ---
 
@@ -1344,6 +1363,9 @@
                 this.state.startTime = Date.now() - this.state.totalElapsed;
                 this.state.currentLap.startTime = Date.now();
                 
+                // Wake Lock
+                this.enableWakeLock();
+
                 if (this.state.isWorkoutActive && this.state.workoutPlan.length > 0) {
                     this.state.currentStepIndex = 0;
                     this.state.stepStartTime = Date.now();
@@ -1372,6 +1394,10 @@
                 this.state.isRunning = false;
                 this.state.isPaused = true;
                 clearInterval(this.state.timerInterval);
+                
+                // Wake Lock
+                this.disableWakeLock();
+
                 if (this.state.watchId) {
                     navigator.geolocation.clearWatch(this.state.watchId);
                     this.state.watchId = null;
@@ -1384,6 +1410,9 @@
                 this.state.isPaused = false;
                 this.state.startTime = Date.now() - this.state.totalElapsed;
                 
+                // Wake Lock
+                this.enableWakeLock();
+
                 if ("geolocation" in navigator) {
                     this.state.watchId = navigator.geolocation.watchPosition(
                         (pos) => this.onPositionUpdate(pos),
@@ -1415,7 +1444,10 @@
                         lat, lng
                     );
                     
-                    if (accuracy < 50 && dist > 1) {
+                    // AJUSTE CRÍTICO: 
+                    // 1. accuracy < 100 (Relajado para ciudades/caminatas)
+                    // 2. dist > 0.5 (Reducido de 1m para capturar movimientos lentos más precisos)
+                    if (accuracy < 100 && dist > 0.5) {
                         this.state.distance += dist;
                         this.state.currentLap.distance += dist;
                         
@@ -1505,7 +1537,8 @@
             showToast: function(lapData, customTitle) {
                 const toast = document.getElementById('lap-toast');
                 if (lapData.duration !== 0) {
-                    document.getElementById('toast-time').textContent = this.formatTime(lapData.duration);
+                    // formatTime aquí usa forceHours=false
+                    document.getElementById('toast-time').textContent = this.formatTime(lapData.duration, false);
                     document.getElementById('toast-pace').textContent = this.formatPace(lapData.pace);
                     document.getElementById('toast-dist').textContent = (lapData.distance / 1000).toFixed(2);
                 } else {
@@ -1628,7 +1661,7 @@
                     zoneName.textContent = this.getZoneDisplayName(zone);
                     zoneDisplay.textContent = this.getZoneDisplayName(zone);
                     
-                    // 1. Resaltar botón activo (Borde blanco + Glow)
+                    // 1. Resaltar botón activo
                     document.querySelectorAll('.zone-item').forEach(z => {
                         z.classList.remove('active');
                     });
@@ -1637,10 +1670,8 @@
                         activeZone.classList.add('active');
                     }
 
-                    // 2. NUEVO: Resaltar la tarjeta de Ritmo Actual con el color de la zona
+                    // 2. Resaltar la tarjeta de Ritmo Actual con el color de la zona
                     const paceCard = document.getElementById('pace-card');
-                    
-                    // Limpiar estilos anteriores
                     paceCard.style.removeProperty('border-color');
                     paceCard.style.removeProperty('box-shadow');
                     paceCard.classList.remove('zone-highlight');
@@ -1657,7 +1688,7 @@
             
             getZoneDisplayName: function(zone) {
                 const names = {
-                    'recovery': 'Suave',
+                    'recovery': 'Recup',
                     '42k': '42K',
                     '21k': '21K',
                     '10k': '10K',
@@ -1670,7 +1701,7 @@
             },
             
             updateCardHighlights: function(zone) {
-                // Función obsoleta, ahora manejamos esto en updatePaceZoneDisplay directamente
+                // Obsoleto
             },
             
             // --- Lógica de Workout ---
@@ -1722,7 +1753,7 @@
                 
                 if (step.type === 'time') {
                     current = (Date.now() - this.state.stepStartTime) / 1000;
-                    document.getElementById('workout-step-target').textContent = this.formatTime(step.value * 1000);
+                    document.getElementById('workout-step-target').textContent = this.formatTime(step.value * 1000, false);
                 } else {
                     current = this.state.distance - this.state.stepStartDist;
                     document.getElementById('workout-step-target').textContent = (step.value / 1000).toFixed(2) + ' km';
@@ -1900,9 +1931,10 @@
                 
                 [...this.state.laps].reverse().forEach(lap => {
                     const row = document.createElement('tr');
+                    // Tabla usa forceHours=false también
                     row.innerHTML = `
                         <td>${lap.index}</td>
-                        <td>${this.formatTime(lap.duration)}</td>
+                        <td>${this.formatTime(lap.duration, false)}</td>
                         <td>${(lap.distance/1000).toFixed(2)}</td>
                         <td>${this.formatPace(lap.pace)}</td>
                         <td class="${lap.type === 'workout' ? 'lap-workout' : ''}">${lap.type.toUpperCase()}</td>
@@ -1912,7 +1944,8 @@
             },
             
             updateUI: function() {
-                document.getElementById('main-timer').textContent = this.formatTime(this.state.totalElapsed);
+                // Cronómetro principal siempre muestra horas (true)
+                document.getElementById('main-timer').textContent = this.formatTime(this.state.totalElapsed, true);
                 document.getElementById('val-dist').textContent = (this.state.distance / 1000).toFixed(2);
                 
                 const speed = this.state.currentSpeed * 3.6;
@@ -1929,8 +1962,9 @@
 
                 document.getElementById('val-gps-acc').textContent = this.state.accuracy > 0 ? this.state.accuracy + ' m' : '--';
                 
+                // Último lap usa forceHours=false
                 const lastLap = this.state.laps[this.state.laps.length - 1];
-                document.getElementById('val-last-lap').textContent = lastLap ? this.formatTime(lastLap.duration) : '--:--';
+                document.getElementById('val-last-lap').textContent = lastLap ? this.formatTime(lastLap.duration, false) : '--:--';
                 document.getElementById('val-last-dist').textContent = lastLap ? (lastLap.distance/1000).toFixed(2) : '0.00';
                 document.getElementById('val-laps-count').textContent = this.state.laps.length;
                 
@@ -1942,12 +1976,18 @@
                 document.getElementById('val-clock').textContent = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             },
             
-            formatTime: function(ms) {
+            // forceHours: si es true, muestra siempre HH:MM:SS. Si es false, muestra MM:SS a menos que sea > 1h.
+            formatTime: function(ms, forceHours = false) {
                 const totalSec = Math.floor(ms / 1000);
                 const h = Math.floor(totalSec / 3600);
                 const m = Math.floor((totalSec % 3600) / 60);
                 const s = totalSec % 60;
-                return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+
+                if (h > 0 || forceHours) {
+                    return `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                } else {
+                    return `${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+                }
             },
             
             formatPace: function(secPerKm) {
@@ -1958,15 +1998,14 @@
             },
             
             getDistanceFromLatLonInM: function(lat1, lon1, lat2, lon2) {
-                const R = 6371000; // Radio de la Tierra en metros
-                const φ1 = lat1 * Math.PI / 180;
-                const φ2 = lat2 * Math.PI / 180;
-                const Δφ = (lat2 - lat1) * Math.PI / 180;
-                const Δλ = (lon2 - lon1) * Math.PI / 180;
-                const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-                            Math.cos(φ1) * Math.cos(φ2) *
-                            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a)); 
+                const R = 6371000; 
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = 
+                    Math.sin(dLat/2) * Math.sin(dLat/2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+                    Math.sin(dLon/2) * Math.sin(dLon/2); 
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a)); 
                 return R * c;
             },
             
