@@ -520,12 +520,27 @@
         .form-group {
             margin-bottom: 15px;
         }
+        
+        /* Label flexible para incluir tiempo estimado */
+        .label-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
 
         .form-label {
-            display: block;
-            margin-bottom: 6px;
             color: #aaa;
             font-size: 0.9rem;
+        }
+        
+        /* Tiempo estimado pequeño */
+        .calc-target {
+            font-size: 1.2rem; /* Aumentado */
+            color: white; /* Neutro blanco */
+            font-family: var(--font-numbers); /* Fuente de números */
+            font-weight: bold;
+            text-shadow: 0 0 2px rgba(0,0,0,0.5);
         }
 
         .form-control {
@@ -535,7 +550,9 @@
             border: 1px solid #444;
             color: white;
             border-radius: 8px;
-            font-size: 1rem;
+            font-size: 1.1rem;
+            text-align: center;
+            font-weight: bold;
         }
 
         .form-control:focus {
@@ -588,6 +605,7 @@
             padding: 15px;
             border-radius: 10px;
             margin-bottom: 20px;
+            border: 1px solid #444;
         }
 
         .workout-step-row {
@@ -756,6 +774,30 @@
         }
         .btn-share:hover {
             opacity: 0.9;
+        }
+
+        /* Calculadora de Control */
+        .control-calculator-results {
+            margin-top: 15px;
+            background: #222;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        .calc-row {
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid #333;
+            padding: 5px 0;
+        }
+        .calc-row:last-child {
+            border-bottom: none;
+        }
+        /* Para la calculadora por control, usar el estilo grande tambien */
+        .control-calculator-results .calc-row:last-child span {
+            font-family: var(--font-numbers);
+            font-size: 1rem;
+            color: white;
         }
     </style>
 </head>
@@ -976,37 +1018,55 @@
                 <!-- Tab Ritmos -->
                 <div id="tab-paces" class="tab-content">
                     <p style="color: #aaa; font-size: 0.9rem; margin-bottom: 20px;">
-                        Configura tus ritmos objetivo. Se guardarán automáticamente.
+                        Configura tus ritmos objetivo (Formato mm:ss). Se guardarán automáticamente.
                     </p>
                     
                     <div class="form-group">
-                        <label class="form-label">Recuperación (min/km)</label>
-                        <input type="number" id="pace-recovery" class="form-control" value="7.00" step="0.01" min="3.00" max="15.00">
+                        <div class="label-row">
+                            <label class="form-label">Recuperación (min/km)</label>
+                            <!-- Sin calculo de tiempo -->
+                        </div>
+                        <input type="text" id="pace-recovery" class="form-control" inputmode="decimal" placeholder="7:00" oninput="app.updatePaceTargets()">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Maratón 42K (min/km)</label>
-                        <input type="number" id="pace-42k" class="form-control" value="6.00" step="0.01" min="3.00" max="10.00">
+                        <div class="label-row">
+                            <label class="form-label">Maratón 42K (min/km)</label>
+                            <span class="calc-target" id="target-42k">--:--</span>
+                        </div>
+                        <input type="text" id="pace-42k" class="form-control" inputmode="decimal" placeholder="6:00" oninput="app.updatePaceTargets()">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Media Maratón 21K (min/km)</label>
-                        <input type="number" id="pace-21k" class="form-control" value="5.30" step="0.01" min="3.00" max="10.00">
+                        <div class="label-row">
+                            <label class="form-label">Media Maratón 21K (min/km)</label>
+                            <span class="calc-target" id="target-21k">--:--</span>
+                        </div>
+                        <input type="text" id="pace-21k" class="form-control" inputmode="decimal" placeholder="5:30" oninput="app.updatePaceTargets()">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">10K (min/km)</label>
-                        <input type="number" id="pace-10k" class="form-control" value="5.00" step="0.01" min="3.00" max="10.00">
+                        <div class="label-row">
+                            <label class="form-label">10K (min/km)</label>
+                            <span class="calc-target" id="target-10k">--:--</span>
+                        </div>
+                        <input type="text" id="pace-10k" class="form-control" inputmode="decimal" placeholder="5:00" oninput="app.updatePaceTargets()">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">5K (min/km)</label>
-                        <input type="number" id="pace-5k" class="form-control" value="4.40" step="0.01" min="3.00" max="10.00">
+                        <div class="label-row">
+                            <label class="form-label">5K (min/km)</label>
+                            <span class="calc-target" id="target-5k">--:--</span>
+                        </div>
+                        <input type="text" id="pace-5k" class="form-control" inputmode="decimal" placeholder="4:40" oninput="app.updatePaceTargets()">
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">1K / Rápido (min/km)</label>
-                        <input type="number" id="pace-1k" class="form-control" value="4.00" step="0.01" min="2.30" max="8.00">
+                        <div class="label-row">
+                            <label class="form-label">1K / Rápido (min/km)</label>
+                            <span class="calc-target" id="target-1k">--:--</span>
+                        </div>
+                        <input type="text" id="pace-1k" class="form-control" inputmode="decimal" placeholder="4:00" oninput="app.updatePaceTargets()">
                     </div>
                     
                     <button class="btn-activate-workout" onclick="app.savePaces()">
@@ -1017,6 +1077,29 @@
                 <!-- Tab Workout Builder -->
                 <div id="tab-workout" class="tab-content">
                     
+                    <!-- Calculadora por Control -->
+                    <div class="workout-step-builder" style="border-color: var(--recovery-color);">
+                        <h4 style="margin-top:0; color:var(--recovery-color);">📊 Calculadora por Control</h4>
+                        <div class="form-group" style="margin-bottom:10px;">
+                            <label class="form-label">Distancia Control (km)</label>
+                            <input type="number" id="control-dist" class="form-control" value="5" step="0.1" placeholder="Ej: 5">
+                        </div>
+                        <div class="form-group" style="margin-bottom:10px;">
+                            <label class="form-label">Tiempo Control (mm:ss)</label>
+                            <input type="text" id="control-time" class="form-control" value="21:25" placeholder="Ej: 21:25">
+                        </div>
+                        <button class="btn-add-step" style="background: var(--recovery-color);" onclick="app.calculateControlPaces()">
+                            🧮 Calcular Ritmos
+                        </button>
+                        
+                        <div id="control-results" class="control-calculator-results" style="display:none;">
+                            <!-- Resultados llenados por JS -->
+                        </div>
+                        <button id="btn-apply-control" class="btn-activate-workout" style="display:none; margin-top:10px;" onclick="app.applyControlPaces()">
+                            Aplicar y Guardar
+                        </button>
+                    </div>
+
                     <!-- Selector de Día de la Semana -->
                     <div class="day-selector-container">
                         <label class="day-label">📅 Planificar para:</label>
@@ -1152,7 +1235,10 @@
 
                 // Variable temporal para el editor de workouts
                 editingWorkoutSteps: [],
-                wakeLock: null
+                wakeLock: null,
+                
+                // Almacén temporal de cálculos de control
+                calculatedPaces: {}
             },
             
             init: function() {
@@ -1162,6 +1248,7 @@
                 this.updateClock();
                 this.applyTimerSize(); 
                 this.updateUI();
+                this.updatePaceTargets(); // Inicializar cálculos
                 
                 setInterval(() => this.updateClock(), 1000);
                 this.setupPaceZones();
@@ -1219,6 +1306,144 @@
                 }
             },
             // -------------------------
+
+            // --- Utils de Formato de Tiempo mm:ss ---
+            // Convierte segundos a formato mm:ss
+            formatPaceInput: function(seconds) {
+                if (!seconds || seconds === Infinity || seconds === 0) return "0:00";
+                const m = Math.floor(seconds / 60);
+                const s = Math.round(seconds % 60);
+                return `${m}:${s.toString().padStart(2,'0')}`;
+            },
+
+            // Convierte string mm:ss o m.ss a segundos
+            parsePaceInput: function(str) {
+                if (!str) return 0;
+                // Verificar si tiene :
+                if (str.includes(':')) {
+                    const parts = str.split(':');
+                    let m = parseInt(parts[0]) || 0;
+                    let s = parseInt(parts[1]) || 0;
+                    return (m * 60) + s;
+                } else {
+                    // Fallback para datos antiguos decimales (ej 4.50)
+                    const v = parseFloat(str);
+                    if (!v) return 0;
+                    return v * 60;
+                }
+            },
+            // ---------------------------------
+
+            // Calcula tiempos objetivo para las etiquetas
+            updatePaceTargets: function() {
+                const targets = [
+                    { id: 'pace-1k', name: '1k', dist: 1 },
+                    { id: 'pace-5k', name: '5k', dist: 5 },
+                    { id: 'pace-10k', name: '10k', dist: 10 },
+                    { id: 'pace-21k', name: '21k', dist: 21.098 },
+                    { id: 'pace-42k', name: '42k', dist: 42.195 }
+                ];
+
+                targets.forEach(t => {
+                    const inputVal = document.getElementById(t.id).value;
+                    const paceSec = this.parsePaceInput(inputVal);
+                    
+                    const targetEl = document.getElementById('target-' + t.name);
+                    
+                    if (paceSec > 0) {
+                        const totalSec = paceSec * t.dist;
+                        targetEl.textContent = `~${this.formatTime(totalSec * 1000, false)}`;
+                        targetEl.style.visibility = 'visible';
+                    } else {
+                        targetEl.textContent = '--:--';
+                        targetEl.style.visibility = 'hidden';
+                    }
+                });
+            },
+
+            // --- Calculadora por Control CORREGIDA ---
+            calculateControlPaces: function() {
+                const distKm = parseFloat(document.getElementById('control-dist').value);
+                const timeStr = document.getElementById('control-time').value;
+                
+                // 1. Parsear tiempo mm:ss a Segundos
+                const totalInputSec = this.parsePaceInput(timeStr);
+                
+                if (!distKm || !totalInputSec) {
+                    alert("Ingresa distancia y tiempo válidos");
+                    return;
+                }
+
+                // 2. Convertir segundos a Minutos para la fórmula (CORRECCIÓN AQUÍ)
+                const totalControlMin = totalInputSec / 60;
+                
+                // 3. Calcular Ritmo del Control (min/km)
+                const paceControlMin = totalControlMin / distKm;
+                
+                // Targets según petición
+                const targets = [
+                    { id: 'pace-1k', name: '1K (Rápido)', dist: 1 },
+                    { id: 'pace-5k', name: '5K', dist: 5 },
+                    { id: 'pace-10k', name: '10K', dist: 10 },
+                    { id: 'pace-21k', name: '21K', dist: 21.098 },
+                    { id: 'pace-42k', name: '42K', dist: 42.195 }
+                ];
+
+                let pace42kMin = 0;
+                let html = '<strong>Ritmos Calculados:</strong><br>';
+
+                targets.forEach(t => {
+                    // Fórmula: Pace_t = Pace_c * (D_t / D_c)^0.07
+                    const factor = Math.pow(t.dist / distKm, 0.07);
+                    const newPaceMin = paceControlMin * factor;
+                    
+                    const m = Math.floor(newPaceMin);
+                    const s = Math.round((newPaceMin - m) * 60);
+                    
+                    // Guardamos segundos internos para aplicar después
+                    this.state.calculatedPaces[t.id + '_sec'] = (m * 60) + s;
+
+                    if (t.id === 'pace-42k') {
+                        pace42kMin = newPaceMin;
+                    }
+
+                    html += `<div class="calc-row"><span>${t.name}</span><span>${m}:${s.toString().padStart(2,'0')} min/km</span></div>`;
+                });
+
+                // Recuperación: Paso de Maratón x 1.2
+                const recPaceMin = pace42kMin * 1.2;
+                const mRec = Math.floor(recPaceMin);
+                const sRec = Math.round((recPaceMin - mRec) * 60);
+                
+                this.state.calculatedPaces['pace-recovery_sec'] = recPaceMin * 60; // Guardar como segundos
+
+                html += `<div class="calc-row" style="color:var(--recovery-color)"><span>Recuperación</span><span>${mRec}:${sRec.toString().padStart(2,'0')} min/km</span></div>`;
+
+                const resultsDiv = document.getElementById('control-results');
+                resultsDiv.innerHTML = html;
+                resultsDiv.style.display = 'block';
+
+                document.getElementById('btn-apply-control').style.display = 'block';
+            },
+
+            applyControlPaces: function() {
+                // Aplicar valores a los inputs
+                for (let key in this.state.calculatedPaces) {
+                    const elId = key.replace('_sec', '');
+                    const el = document.getElementById(elId);
+                    if (el) {
+                        const sec = this.state.calculatedPaces[key];
+                        el.value = this.formatPaceInput(sec);
+                    }
+                }
+                
+                // Guardar automáticamente
+                this.savePaces();
+                
+                // Cambiar a pestaña Ritmos
+                this.switchTab('paces');
+                this.showToast({duration: 0, pace: 0}, "✅ Ritmos Actualizados");
+            },
 
             // --- Lógica de Día de la Semana y Persistencia de Workouts ---
 
@@ -1537,7 +1762,6 @@
             showToast: function(lapData, customTitle) {
                 const toast = document.getElementById('lap-toast');
                 if (lapData.duration !== 0) {
-                    // formatTime aquí usa forceHours=false
                     document.getElementById('toast-time').textContent = this.formatTime(lapData.duration, false);
                     document.getElementById('toast-pace').textContent = this.formatPace(lapData.pace);
                     document.getElementById('toast-dist').textContent = (lapData.distance / 1000).toFixed(2);
@@ -1561,21 +1785,13 @@
             // --- Sistema de Ritmos y Zonas ---
 
             savePaces: function() {
-                const parseMinSec = (str) => {
-                    const v = parseFloat(str);
-                    if(!v) return 0;
-                    const min = Math.floor(v);
-                    const sec = Math.round((v - min) * 100);
-                    return (min * 60) + sec;
-                };
-
                 const newPaces = {
-                    recovery: parseMinSec(document.getElementById('pace-recovery').value),
-                    '42k': parseMinSec(document.getElementById('pace-42k').value),
-                    '21k': parseMinSec(document.getElementById('pace-21k').value),
-                    '10k': parseMinSec(document.getElementById('pace-10k').value),
-                    '5k': parseMinSec(document.getElementById('pace-5k').value),
-                    '1k': parseMinSec(document.getElementById('pace-1k').value)
+                    recovery: this.parsePaceInput(document.getElementById('pace-recovery').value),
+                    '42k': this.parsePaceInput(document.getElementById('pace-42k').value),
+                    '21k': this.parsePaceInput(document.getElementById('pace-21k').value),
+                    '10k': this.parsePaceInput(document.getElementById('pace-10k').value),
+                    '5k': this.parsePaceInput(document.getElementById('pace-5k').value),
+                    '1k': this.parsePaceInput(document.getElementById('pace-1k').value)
                 };
 
                 this.state.paces = newPaces;
@@ -1590,18 +1806,22 @@
                     try {
                         const p = JSON.parse(savedPaces);
                         this.state.paces = { ...this.state.paces, ...p };
-                        const formatInput = (sec) => {
-                            const m = Math.floor(sec / 60);
-                            const s = Math.round(sec % 60);
-                            return (m + s/100).toFixed(2);
-                        };
-                        document.getElementById('pace-recovery').value = formatInput(this.state.paces.recovery);
-                        document.getElementById('pace-42k').value = formatInput(this.state.paces['42k']);
-                        document.getElementById('pace-21k').value = formatInput(this.state.paces['21k']);
-                        document.getElementById('pace-10k').value = formatInput(this.state.paces['10k']);
-                        document.getElementById('pace-5k').value = formatInput(this.state.paces['5k']);
-                        document.getElementById('pace-1k').value = formatInput(this.state.paces['1k']);
+                        // Usar el nuevo formateador mm:ss
+                        document.getElementById('pace-recovery').value = this.formatPaceInput(this.state.paces.recovery);
+                        document.getElementById('pace-42k').value = this.formatPaceInput(this.state.paces['42k']);
+                        document.getElementById('pace-21k').value = this.formatPaceInput(this.state.paces['21k']);
+                        document.getElementById('pace-10k').value = this.formatPaceInput(this.state.paces['10k']);
+                        document.getElementById('pace-5k').value = this.formatPaceInput(this.state.paces['5k']);
+                        document.getElementById('pace-1k').value = this.formatPaceInput(this.state.paces['1k']);
                     } catch(e) { console.error("Error ritmos", e); }
+                } else {
+                    // Valores por defecto también en formato mm:ss
+                    document.getElementById('pace-recovery').value = this.formatPaceInput(this.state.paces.recovery);
+                    document.getElementById('pace-42k').value = this.formatPaceInput(this.state.paces['42k']);
+                    document.getElementById('pace-21k').value = this.formatPaceInput(this.state.paces['21k']);
+                    document.getElementById('pace-10k').value = this.formatPaceInput(this.state.paces['10k']);
+                    document.getElementById('pace-5k').value = this.formatPaceInput(this.state.paces['5k']);
+                    document.getElementById('pace-1k').value = this.formatPaceInput(this.state.paces['1k']);
                 }
 
                 // Settings Generales
@@ -1931,7 +2151,6 @@
                 
                 [...this.state.laps].reverse().forEach(lap => {
                     const row = document.createElement('tr');
-                    // Tabla usa forceHours=false también
                     row.innerHTML = `
                         <td>${lap.index}</td>
                         <td>${this.formatTime(lap.duration, false)}</td>
@@ -1944,7 +2163,7 @@
             },
             
             updateUI: function() {
-                // Cronómetro principal siempre muestra horas (true)
+                // Cronómetro principal siempre muestra horas
                 document.getElementById('main-timer').textContent = this.formatTime(this.state.totalElapsed, true);
                 document.getElementById('val-dist').textContent = (this.state.distance / 1000).toFixed(2);
                 
