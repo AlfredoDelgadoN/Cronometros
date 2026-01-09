@@ -1101,7 +1101,7 @@
                         </div>
                         <div class="form-group" style="margin-bottom:10px;">
                             <label class="form-label">Tiempo Control (mm:ss)</label>
-                            <input type="text" id="control-time" class="form-control" value="04:00" placeholder="Ej: 21:25">
+                            <input type="text" id="control-time" class="form-control" value="05:00" placeholder="Ej: 21:25">
                         </div>
                         <button class="btn-add-step" style="background: var(--recovery-color);" onclick="app.calculateControlPaces()">
                             🧮 Calcular Ritmos
@@ -1235,6 +1235,7 @@
                 
                 // Zona actual de ritmo
                 currentPaceZone: 'none',
+                currentAvgPaceZone: 'none', // Nueva variable
                 
                 // Colores para zonas
                 zoneColors: {
@@ -1376,12 +1377,14 @@
                 });
             },
 
-            // --- Calculadora por Control CORREGIDA (UNIDADES) ---
+            // --- Calculadora por Control CORREGIDA FINAL ---
             calculateControlPaces: function() {
                 const distKm = parseFloat(document.getElementById('control-dist').value);
                 const timeStr = document.getElementById('control-time').value;
                 
                 // 1. Parsear tiempo mm:ss a Segundos
+                // parsePaceInput("5:00") devuelve 300.
+                // IMPORTANTE: NO multiplicar por 60 aquí.
                 const totalControlSec = this.parsePaceInput(timeStr);
                 
                 if (!distKm || !totalControlSec) {
@@ -1389,9 +1392,7 @@
                     return;
                 }
 
-                // 2. CORRECCIÓN CRÍTICA: Convertir Segundos a Minutos (NO multiplicar por 60)
-                // parsePaceInput ya devuelve segundos (ej: 240 para 4 min).
-                // 240 / 60 = 4 minutos.
+                // 2. Convertir Segundos a Minutos (para la fórmula de Riegel)
                 const totalControlMin = totalControlSec / 60;
                 
                 // 3. Calcular Ritmo del Control (min/km)
@@ -1878,6 +1879,20 @@
                 if (currentPace >= this.state.paces['1k']) return '1k';
                 return 'fast';
             },
+
+            // NUEVO: Calculadora de Zona de Promedio (Independiente)
+            calculateAvgPaceZone: function() {
+                if (this.state.avgSpeed <= 0) return 'none';
+                const avgPaceSec = 3600 / this.state.avgSpeed;
+                
+                if (avgPaceSec >= this.state.paces.recovery) return 'recovery';
+                if (avgPaceSec >= this.state.paces['42k']) return '42k';
+                if (avgPaceSec >= this.state.paces['21k']) return '21k';
+                if (avgPaceSec >= this.state.paces['10k']) return '10k';
+                if (avgPaceSec >= this.state.paces['5k']) return '5k';
+                if (avgPaceSec >= this.state.paces['1k']) return '1k';
+                return 'fast';
+            },
             
             getCurrentPaceInSec: function() {
                 const speedKmh = this.state.currentSpeed * 3.6;
@@ -1886,65 +1901,61 @@
             },
             
             updatePaceZoneDisplay: function() {
+                // --- 1. ZONA DE RITMO ACTUAL (INSTANTÁNEA) ---
                 const zone = this.calculatePaceZone();
-                if (zone !== this.state.currentPaceZone) {
-                    this.state.currentPaceZone = zone;
-                    
-                    const zoneIcon = document.getElementById('pace-zone-icon');
-                    const zoneName = document.getElementById('pace-zone-name');
-                    const zoneDisplay = document.getElementById('val-pace-zone');
-                    
-                    zoneIcon.style.backgroundColor = this.state.zoneColors[zone];
-                    zoneName.textContent = this.getZoneDisplayName(zone);
-                    zoneDisplay.textContent = this.getZoneDisplayName(zone);
-                    
-                    // 1. Resaltar botón activo
-                    document.querySelectorAll('.zone-item').forEach(z => {
-                        z.classList.remove('active');
-                    });
-                    const activeZone = document.querySelector(`.zone-item[data-zone="${zone}"]`);
-                    if (activeZone) {
-                        activeZone.classList.add('active');
-                    }
+                const zoneColor = this.state.zoneColors[zone];
+                const zoneAbbrev = this.getZoneAbbreviation(zone);
 
-                    // 2. Resaltar la tarjeta de Ritmo Actual con el color de la zona
-                    const paceCard = document.getElementById('pace-card');
+                // Actualizar visualmente la tarjeta de Ritmo Actual
+                const paceCard = document.getElementById('pace-card');
+                if (zone !== 'none') {
+                    paceCard.style.borderColor = zoneColor;
+                    paceCard.style.boxShadow = `0 0 15px ${zoneColor}`;
+                    paceCard.classList.add('zone-highlight');
+                } else {
                     paceCard.style.removeProperty('border-color');
                     paceCard.style.removeProperty('box-shadow');
                     paceCard.classList.remove('zone-highlight');
-                    
-                    if (zone !== 'none') {
-                        const color = this.state.zoneColors[zone];
-                        paceCard.style.setProperty('--border-color', color); 
-                        paceCard.style.borderColor = color;
-                        paceCard.style.boxShadow = `0 0 15px ${color}`;
-                        paceCard.classList.add('zone-highlight');
-                    }
+                }
+                
+                // Actualizar botones superiores y badge
+                document.getElementById('val-pace-zone').textContent = this.getZoneDisplayName(zone);
+                const zoneName = this.getZoneDisplayName(zone);
+                document.getElementById('pace-zone-name').textContent = zoneName;
+                
+                document.querySelectorAll('.zone-item').forEach(z => {
+                    z.classList.remove('active');
+                });
+                const activeZone = document.querySelector(`.zone-item[data-zone="${zone}"]`);
+                if (activeZone) {
+                    activeZone.classList.add('active');
+                }
 
-                    // 3. NUEVO: Resaltar y añadir indicador a la tarjeta PROMEDIO
-                    const avgCard = document.getElementById('avg-card');
+                // --- 2. ZONA DE PROMEDIO (ACUMULADA) ---
+                const avgZone = this.calculateAvgPaceZone();
+                const avgZoneColor = this.state.zoneColors[avgZone];
+                const avgZoneAbbrev = this.getZoneAbbreviation(avgZone);
+
+                // Actualizar visualmente la tarjeta de Promedio
+                const avgCard = document.getElementById('avg-card');
+                if (avgZone !== 'none') {
+                    avgCard.style.borderColor = avgZoneColor;
+                    avgCard.style.boxShadow = `0 0 15px ${avgZoneColor}`;
+                    avgCard.classList.add('zone-highlight');
+                } else {
                     avgCard.style.removeProperty('border-color');
                     avgCard.style.removeProperty('box-shadow');
                     avgCard.classList.remove('zone-highlight');
-                    
-                    const avgZoneIndicator = document.getElementById('val-avg-zone');
-                    
-                    if (zone !== 'none') {
-                        const color = this.state.zoneColors[zone];
-                        // Aplicar highlight visual (borde, glow)
-                        avgCard.style.setProperty('--border-color', color); 
-                        avgCard.style.borderColor = color;
-                        avgCard.style.boxShadow = `0 0 15px ${color}`;
-                        avgCard.classList.add('zone-highlight');
-                        
-                        // Actualizar texto del indicador (Abreviaturas solicitadas)
-                        const abbrev = this.getZoneAbbreviation(zone);
-                        avgZoneIndicator.textContent = abbrev;
-                        avgZoneIndicator.style.color = color; // Texto del indicador usa el color
-                    } else {
-                        avgZoneIndicator.textContent = '--';
-                        avgZoneIndicator.style.color = '#888';
-                    }
+                }
+
+                // Actualizar indicador de texto (10, 42, etc) de la tarjeta Promedio
+                const avgZoneIndicator = document.getElementById('val-avg-zone');
+                if (avgZone !== 'none') {
+                    avgZoneIndicator.textContent = avgZoneAbbrev;
+                    avgZoneIndicator.style.color = avgZoneColor; // Texto del indicador usa el color
+                } else {
+                    avgZoneIndicator.textContent = '--';
+                    avgZoneIndicator.style.color = '#888';
                 }
             },
             
