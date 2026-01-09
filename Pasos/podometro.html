@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Cuenta pasos Alfredo Delgado</title>
+    <title>ALFREDO DELGADO PASOS</title>
     <style>
         :root {
             --primary: #00e676;
@@ -44,6 +44,8 @@
         }
         h1 { font-size: 1rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; }
         .btn-icon { background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; padding: 5px; }
+        .wakelock-indicator { color: var(--warn); display: none; text-shadow: 0 0 5px rgba(255, 171, 0, 0.5); }
+        .wakelock-indicator.active { display: block; }
 
         /* --- MAIN --- */
         main {
@@ -184,10 +186,20 @@
         .config-section { margin-bottom: 25px; background: var(--surface); padding: 15px; border-radius: 10px; border: 1px solid #333; }
         .config-section h3 { color: var(--accent); margin-bottom: 15px; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
-        .config-item { margin-bottom: 15px; }
-        .config-label { display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 5px; color: var(--text-secondary); }
+        .config-item { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+        .config-label { font-size: 0.9rem; color: var(--text-secondary); }
+        .config-desc { font-size: 0.7rem; color: #666; margin-top: 2px; display: block; width: 100%; }
+        
+        /* Switch Toggle CSS */
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(24px); }
+
         .config-val { color: var(--primary); font-weight: bold; }
-        .config-desc { font-size: 0.7rem; color: #666; margin-top: 2px; }
+        input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; }
 
         .btn-save {
             width: 100%; padding: 15px; background: var(--primary); color: #000;
@@ -208,13 +220,25 @@
 
         <div class="config-section">
             <h3>General</h3>
+            
+            <!-- WakeLock Toggle -->
+            <div class="config-item">
+                <div style="flex:1">
+                    <div class="config-label">🔥 Mantener pantalla encendida</div>
+                    <div class="config-desc">Evita que el celular se bloquee. (Consume batería)</div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="set-wakelock">
+                    <span class="slider"></span>
+                </label>
+            </div>
+
             <div class="config-item">
                 <div class="config-label">
                     <span>⏱️ Pausa Automática</span>
                     <span class="config-val" id="set-pause-val">5 s</span>
                 </div>
                 <input type="range" id="set-pause" min="1" max="30" step="1" value="5">
-                <div class="config-desc">Tiempo sin movimiento para pausar el reloj.</div>
             </div>
         </div>
 
@@ -226,7 +250,6 @@
                     <span class="config-val" id="set-walk-sen-val">11.5</span>
                 </div>
                 <input type="range" id="set-walk-sen" min="8.0" max="18.0" step="0.1" value="11.5">
-                <div class="config-desc">Baja=Detecta todo | Alta=Ignora movimientos leves.</div>
             </div>
             <div class="config-item">
                 <div class="config-label">
@@ -234,7 +257,6 @@
                     <span class="config-val" id="set-run-sen-val">15.5</span>
                 </div>
                 <input type="range" id="set-run-sen" min="10.0" max="25.0" step="0.1" value="15.5">
-                <div class="config-desc">Ajusta si cuenta pasos dobles al correr rápido.</div>
             </div>
             <div class="config-item">
                 <div class="config-label">
@@ -242,7 +264,6 @@
                     <span class="config-val" id="set-cool-val">320 ms</span>
                 </div>
                 <input type="range" id="set-cool" min="150" max="800" step="10" value="320">
-                <div class="config-desc">Evita conteo doble. Aumenta si cuentas 2-3 pasos por zancada.</div>
             </div>
         </div>
 
@@ -254,7 +275,6 @@
                     <span class="config-val" id="set-jump-air-val">3.5 G</span>
                 </div>
                 <input type="range" id="set-jump-air" min="1.0" max="8.0" step="0.1" value="3.5">
-                <div class="config-desc">Menor=detecta saltos cortos | Mayor=requiere caída libre pura.</div>
             </div>
             <div class="config-item">
                 <div class="config-label">
@@ -262,20 +282,17 @@
                     <span class="config-val" id="set-jump-land-val">16.0 G</span>
                 </div>
                 <input type="range" id="set-jump-land" min="10.0" max="30.0" step="0.5" value="16.0">
-                <div class="config-desc">Menor=detecta aterrizajes suaves | Mayor=solo saltos explosivos.</div>
             </div>
         </div>
 
         <button class="btn-save" onclick="saveSettings()">💾 Guardar y Salir</button>
-        <div style="text-align:center; margin-top:15px; font-size:0.8rem; color:#666;">
-            La calibración de zancada se guarda automáticamente por modo.
-        </div>
     </div>
 
     <!-- INTERFAZ PRINCIPAL -->
     <header>
-        <h1>Alfredo Delgado pasos</h1>
+        <h1>Alfredo Delgado Pasos</h1>
         <div>
+            <span class="wakelock-indicator" id="wk-indicator">🔒</span>
             <button class="btn-icon" onclick="openSettings()">⚙️</button>
             <button class="btn-icon" onclick="toggleFullScreen()">⛶</button>
         </div>
@@ -337,28 +354,17 @@
     </div>
 
     <script>
-        // --- CONFIGURACIÓN POR DEFECTO ---
         const defaultConfig = {
-            walk: { 
-                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676', 
-                threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12,
-                strideLength: 0.45 // VALOR POR DEFECTO CAMINAR
-            },
-            run: { 
-                label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff', 
-                threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14,
-                strideLength: 1.63 // VALOR POR DEFECTO CORRER
-            },
-            jump: { 
-                label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100', 
-                freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15,
-                strideLength: 0 // Saltar no usa zancada, pero por estructura está
-            },
-            general: { inactivityDelay: 5000 }
+            walk: { label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#00e676', threshold: 11.5, cooldown: 350, kcalPerUnit: 0.04, autoStartThreshold: 12, strideLength: 0.75 },
+            run: { label: 'Pasos', s1Label: 'Kilómetros', s2Label: 'Kcal', color: '#2979ff', threshold: 15.5, cooldown: 280, kcalPerUnit: 0.08, autoStartThreshold: 14, strideLength: 1.50 },
+            jump: { label: 'Saltos', s1Label: 'Pico (G)', s2Label: 'Media (G)', color: '#ff9100', freeFallThreshold: 3.5, impactThreshold: 16.0, maxAirTime: 1000, autoStartThreshold: 15, strideLength: 0 },
+            general: { inactivityDelay: 5000, enableWakeLock: false }
         };
         const config = JSON.parse(JSON.stringify(defaultConfig));
 
-        // --- CARGAR CONFIGURACIÓN GUARDADA ---
+        // --- WAKELOCK VARIABLES ---
+        let wakeLock = null;
+
         function loadSettings() {
             const saved = localStorage.getItem('entrenadorProSettings');
             if (saved) {
@@ -368,11 +374,37 @@
                     if(parsed.walk) config.walk = {...config.walk, ...parsed.walk};
                     if(parsed.run) config.run = {...config.run, ...parsed.run};
                     if(parsed.jump) config.jump = {...config.jump, ...parsed.jump};
-                    console.log("Configuración cargada (incluyendo zancadas)");
+                    console.log("Configuración cargada");
                 } catch(e) { console.error("Error cargando config", e); }
             }
         }
         loadSettings();
+
+        // --- WAKELOCK FUNCTIONS ---
+        async function enableWakeLock() {
+            if ('wakeLock' in navigator && config.general.enableWakeLock) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    document.getElementById('wk-indicator').classList.add('active');
+                    console.log('Wake Lock activo');
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock liberado');
+                        document.getElementById('wk-indicator').classList.remove('active');
+                        wakeLock = null;
+                    });
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                }
+            }
+        }
+
+        async function disableWakeLock() {
+            if (wakeLock !== null) {
+                await wakeLock.release();
+                wakeLock = null;
+            }
+            document.getElementById('wk-indicator').classList.remove('active');
+        }
 
         // --- ESTADO ---
         const state = {
@@ -380,7 +412,7 @@
             mode: 'walk',
             timerRunning: false, timerStartedAt: 0, elapsed: 0, lapStart: 0,
             autoPauseId: null,
-            count: 0, distance: 0, calories: 0, strideLength: config.walk.strideLength, // Cargar zancada inicial
+            count: 0, distance: 0, calories: 0, strideLength: config.walk.strideLength,
             lastStepTime: 0,
             jumpState: 'GROUND', jumpAirStartTime: 0, jumpMaxPower: 0, jumpTotalPower: 0,
             lastStepsTimestamps: []
@@ -406,6 +438,7 @@
 
         function openSettings() {
             ui.modal.classList.add('open');
+            document.getElementById('set-wakelock').checked = config.general.enableWakeLock;
             document.getElementById('set-pause').value = config.general.inactivityDelay / 1000;
             document.getElementById('set-pause-val').textContent = (config.general.inactivityDelay / 1000) + ' s';
             document.getElementById('set-walk-sen').value = config.walk.threshold;
@@ -430,6 +463,7 @@
         }
         function closeSettings() { ui.modal.classList.remove('open'); }
         function saveSettings() {
+            config.general.enableWakeLock = document.getElementById('set-wakelock').checked;
             config.general.inactivityDelay = parseInt(document.getElementById('set-pause').value) * 1000;
             config.walk.threshold = parseFloat(document.getElementById('set-walk-sen').value);
             config.walk.autoStartThreshold = config.walk.threshold + 0.5;
@@ -439,7 +473,6 @@
             config.run.cooldown = newCooldown; config.walk.cooldown = newCooldown + 50;
             config.jump.freeFallThreshold = parseFloat(document.getElementById('set-jump-air').value);
             config.jump.impactThreshold = parseFloat(document.getElementById('set-jump-land').value);
-            
             localStorage.setItem('entrenadorProSettings', JSON.stringify(config));
             closeSettings(); showToast("Configuración guardada");
         }
@@ -468,12 +501,14 @@
             ui.btnLap.disabled = false; ui.debug.textContent = "EN MARCHA"; ui.debug.style.color = "var(--primary)";
             timerInterval = setInterval(updateTimerDisplay, 30);
             resetAutoPauseTimer();
+            enableWakeLock(); // AQUI SE ACTIVA WAKELOCK
         }
         function stopSystem() {
             state.status = 'STOPPED'; pauseTimerLogic();
             ui.btnMain.textContent = "▶ Continuar"; ui.btnMain.className = "btn-timer btn-main";
             ui.btnLap.disabled = true; ui.debug.textContent = "PAUSADO MANUAL"; ui.debug.style.color = "#888";
             stopSensors();
+            disableWakeLock(); // AQUI SE LIBERA
         }
         function pauseSystemAuto() {
             state.status = 'AUTO_PAUSED'; pauseTimerLogic();
@@ -481,6 +516,7 @@
             ui.btnMain.textContent = "▶ Reanudar"; ui.btnMain.className = "btn-timer btn-main";
             ui.btnLap.disabled = true; ui.debug.textContent = "⏸ PAUSADO (Párate a descansar)";
             ui.debug.style.color = "var(--text-secondary)";
+            disableWakeLock(); // AQUI TAMBIEN SE LIBERA
         }
         function resumeSystem() { startRunning(); }
         function pauseTimerLogic() {
@@ -502,6 +538,7 @@
             ui.btnMain.textContent = "▶ Iniciar"; ui.timerLap.textContent = "Vuelta: --:--";
             ui.debug.textContent = "Listo para iniciar"; ui.debug.style.color = "var(--text-secondary)";
             updateTimerDisplay(); updateStats();
+            disableWakeLock(); // ASEGURARSE DE LIMPIAR EN RESET
         }
         function startSensorsOnly() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -617,22 +654,13 @@
             ui.mainLabel.textContent = conf.label; ui.label1.textContent = conf.s1Label;
             ui.label2.textContent = conf.s2Label; ui.counterBox.style.borderColor = conf.color;
             ui.vizBar.style.backgroundColor = conf.color;
-            
-            if (mode === 'jump') { 
-                ui.calibPanel.classList.add('hidden'); 
-            } else {
+            if (mode === 'jump') { ui.calibPanel.classList.add('hidden'); } 
+            else {
                 ui.calibPanel.classList.remove('hidden');
-                
-                // CAMBIO CLAVE: Recuperar zancada guardada en config en lugar de hardcoded
                 state.strideLength = config[mode].strideLength;
-                
                 ui.strideSlider.value = state.strideLength;
                 ui.strideVal.textContent = state.strideLength.toFixed(2) + ' m';
-                
-                if(state.count > 0) { 
-                    state.distance = state.count * state.strideLength; 
-                    updateStats(); 
-                }
+                if(state.count > 0) { state.distance = state.count * state.strideLength; updateStats(); }
             }
         }
         function toggleFullScreen() {
@@ -640,20 +668,23 @@
             else if (document.exitFullscreen) document.exitFullscreen();
         }
         
-        // ACTUALIZAR SLIDER Y CONFIG EN TIEMPO REAL
         ui.strideSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             state.strideLength = val;
-            // GUARDAR EN LA CONFIGURACIÓN ACTIVA DEL MODO
             config[state.mode].strideLength = val;
-            
             ui.strideVal.textContent = val.toFixed(2) + " m";
             if(state.count > 0 && state.mode !== 'jump') {
-                state.distance = state.count * state.strideLength;
-                updateStats();
+                state.distance = state.count * state.strideLength; updateStats();
             }
         });
         
+        // Re-solicitar WakeLock si se vuelve visible la pestaña
+        document.addEventListener('visibilitychange', async () => {
+            if (state.timerRunning && document.visibilityState === 'visible') {
+                await enableWakeLock();
+            }
+        });
+
         setMode('walk'); 
     </script>
 </body>
