@@ -191,7 +191,7 @@
             transition: border-color 0.3s, box-shadow 0.3s;
         }
 
-        /* Clase dinámica para resaltar el Ritmo Actual */
+        /* Clase dinámica para resaltar el Ritmo Actual y Promedio */
         .stat-card.zone-highlight {
             border-color: currentColor; 
             box-shadow: 0 0 15px currentColor;
@@ -222,6 +222,18 @@
             font-size: 0.7rem;
             color: #888;
             margin-top: 3px;
+            display: flex;
+            justify-content: space-between; /* Para acomodar Velocidad y Zona */
+            align-items: center;
+        }
+
+        /* Indicador de Zona en la tarjeta Promedio */
+        .avg-zone-indicator {
+            font-family: var(--font-numbers);
+            font-size: 1.2rem;
+            font-weight: bold;
+            text-shadow: 0 0 2px rgba(0,0,0,0.5);
+            padding: 0 5px;
         }
 
         /* Fila secundaria */
@@ -534,7 +546,7 @@
             font-size: 0.9rem;
         }
         
-        /* Tiempo estimado pequeño */
+        /* TIEMPO PROYECTADO GRANDE Y NEUTRO */
         .calc-target {
             font-size: 1.2rem; /* Aumentado */
             color: white; /* Neutro blanco */
@@ -859,11 +871,14 @@
                 <div><span class="stat-value" id="val-pace">--:--</span> <span class="stat-unit">min/km</span></div>
                 <div class="stat-sub">Objetivo: <span id="val-target-pace">--:--</span></div>
             </div>
-            <!-- TARJETA PROMEDIO -->
+            <!-- TARJETA PROMEDIO CON INDICADOR DE ZONA -->
             <div class="stat-card" id="avg-card">
                 <div class="stat-label">Promedio</div>
                 <div><span class="stat-value" id="val-avg-pace">--:--</span> <span class="stat-unit">min/km</span></div>
-                <div class="stat-sub"><span id="val-avg-speed">0.0</span> km/h</div>
+                <div class="stat-sub">
+                    <span id="val-avg-speed">0.0</span> km/h
+                    <span id="val-avg-zone" class="avg-zone-indicator">--</span>
+                </div>
             </div>
         </div>
 
@@ -1082,11 +1097,11 @@
                         <h4 style="margin-top:0; color:var(--recovery-color);">📊 Calculadora por Control</h4>
                         <div class="form-group" style="margin-bottom:10px;">
                             <label class="form-label">Distancia Control (km)</label>
-                            <input type="number" id="control-dist" class="form-control" value="5" step="0.1" placeholder="Ej: 5">
+                            <input type="number" id="control-dist" class="form-control" value="1" step="0.1" placeholder="Ej: 5">
                         </div>
                         <div class="form-group" style="margin-bottom:10px;">
                             <label class="form-label">Tiempo Control (mm:ss)</label>
-                            <input type="text" id="control-time" class="form-control" value="21:25" placeholder="Ej: 21:25">
+                            <input type="text" id="control-time" class="form-control" value="04:00" placeholder="Ej: 21:25">
                         </div>
                         <button class="btn-add-step" style="background: var(--recovery-color);" onclick="app.calculateControlPaces()">
                             🧮 Calcular Ritmos
@@ -1361,21 +1376,23 @@
                 });
             },
 
-            // --- Calculadora por Control CORREGIDA ---
+            // --- Calculadora por Control CORREGIDA (UNIDADES) ---
             calculateControlPaces: function() {
                 const distKm = parseFloat(document.getElementById('control-dist').value);
                 const timeStr = document.getElementById('control-time').value;
                 
                 // 1. Parsear tiempo mm:ss a Segundos
-                const totalInputSec = this.parsePaceInput(timeStr);
+                const totalControlSec = this.parsePaceInput(timeStr);
                 
-                if (!distKm || !totalInputSec) {
+                if (!distKm || !totalControlSec) {
                     alert("Ingresa distancia y tiempo válidos");
                     return;
                 }
 
-                // 2. Convertir segundos a Minutos para la fórmula (CORRECCIÓN AQUÍ)
-                const totalControlMin = totalInputSec / 60;
+                // 2. CORRECCIÓN CRÍTICA: Convertir Segundos a Minutos (NO multiplicar por 60)
+                // parsePaceInput ya devuelve segundos (ej: 240 para 4 min).
+                // 240 / 60 = 4 minutos.
+                const totalControlMin = totalControlSec / 60;
                 
                 // 3. Calcular Ritmo del Control (min/km)
                 const paceControlMin = totalControlMin / distKm;
@@ -1415,7 +1432,7 @@
                 const mRec = Math.floor(recPaceMin);
                 const sRec = Math.round((recPaceMin - mRec) * 60);
                 
-                this.state.calculatedPaces['pace-recovery_sec'] = recPaceMin * 60; // Guardar como segundos
+                this.state.calculatedPaces['pace-recovery_sec'] = recPaceMin * 60;
 
                 html += `<div class="calc-row" style="color:var(--recovery-color)"><span>Recuperación</span><span>${mRec}:${sRec.toString().padStart(2,'0')} min/km</span></div>`;
 
@@ -1903,6 +1920,31 @@
                         paceCard.style.boxShadow = `0 0 15px ${color}`;
                         paceCard.classList.add('zone-highlight');
                     }
+
+                    // 3. NUEVO: Resaltar y añadir indicador a la tarjeta PROMEDIO
+                    const avgCard = document.getElementById('avg-card');
+                    avgCard.style.removeProperty('border-color');
+                    avgCard.style.removeProperty('box-shadow');
+                    avgCard.classList.remove('zone-highlight');
+                    
+                    const avgZoneIndicator = document.getElementById('val-avg-zone');
+                    
+                    if (zone !== 'none') {
+                        const color = this.state.zoneColors[zone];
+                        // Aplicar highlight visual (borde, glow)
+                        avgCard.style.setProperty('--border-color', color); 
+                        avgCard.style.borderColor = color;
+                        avgCard.style.boxShadow = `0 0 15px ${color}`;
+                        avgCard.classList.add('zone-highlight');
+                        
+                        // Actualizar texto del indicador (Abreviaturas solicitadas)
+                        const abbrev = this.getZoneAbbreviation(zone);
+                        avgZoneIndicator.textContent = abbrev;
+                        avgZoneIndicator.style.color = color; // Texto del indicador usa el color
+                    } else {
+                        avgZoneIndicator.textContent = '--';
+                        avgZoneIndicator.style.color = '#888';
+                    }
                 }
             },
             
@@ -1918,6 +1960,21 @@
                     'none': '--'
                 };
                 return names[zone] || zone;
+            },
+            
+            // Obtiene abreviaturas para el indicador grande (LE, 42, etc.)
+            getZoneAbbreviation: function(zone) {
+                const abbrevs = {
+                    'recovery': 'LE',     // Lento/Recup
+                    '42k': '42',       // Maratón
+                    '21k': '21',       // Media
+                    '10k': '10',       // 10k
+                    '5k': '5K',        // 5k
+                    '1k': '1K',        // 1k
+                    'fast': 'Ra',       // Rápido
+                    'none': '--'
+                };
+                return abbrevs[zone] || '--';
             },
             
             updateCardHighlights: function(zone) {
