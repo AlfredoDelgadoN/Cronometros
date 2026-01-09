@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ALFREDO DELGADO PASOS</title>
+    <title>Alfredo Delgado Pasos</title>
     <style>
         :root {
             --primary: #00e676;
@@ -70,12 +70,15 @@
             padding: 5px;
         }
 
-        /* Estado Pausado: Visible, Gris Claro */
         .main-time.paused {
             opacity: 1; 
             color: #d4d4d4; 
             border: 2px solid var(--warn); 
             text-shadow: 0 0 10px rgba(255, 171, 0, 0.2);
+        }
+        
+        .timer-label {
+            font-size: 0.7rem; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 2px;
         }
 
         .lap-time { font-family: var(--font-digital); font-size: 1rem; color: var(--warn); min-height: 1.5rem; }
@@ -184,13 +187,12 @@
         .modal-close { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; }
         
         .config-section { margin-bottom: 25px; background: var(--surface); padding: 15px; border-radius: 10px; border: 1px solid #333; }
-        .config-section h3 { color: var(--accent); margin-bottom: 15px; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .config-section h3 { color: var(--accent); margin-bottom: 15px; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom:5px; }
         
         .config-item { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
         .config-label { font-size: 0.9rem; color: var(--text-secondary); }
         .config-desc { font-size: 0.7rem; color: #666; margin-top: 2px; display: block; width: 100%; }
         
-        /* Switch Toggle CSS */
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
@@ -221,7 +223,6 @@
         <div class="config-section">
             <h3>General</h3>
             
-            <!-- WakeLock Toggle -->
             <div class="config-item">
                 <div style="flex:1">
                     <div class="config-label">🔥 Mantener pantalla encendida</div>
@@ -235,10 +236,11 @@
 
             <div class="config-item">
                 <div class="config-label">
-                    <span>⏱️ Pausa Automática</span>
+                    <span>⏱️ Pausa Automática (Segundos a restar)</span>
                     <span class="config-val" id="set-pause-val">5 s</span>
                 </div>
                 <input type="range" id="set-pause" min="1" max="30" step="1" value="5">
+                <div class="config-desc">Tiempo muerto antes de pausar (se restará del total).</div>
             </div>
         </div>
 
@@ -290,7 +292,7 @@
 
     <!-- INTERFAZ PRINCIPAL -->
     <header>
-        <h1>Alfredo Delgado Pasos</h1>
+        <h1>ALFREDO DELGADO PASOS</h1>
         <div>
             <span class="wakelock-indicator" id="wk-indicator">🔒</span>
             <button class="btn-icon" onclick="openSettings()">⚙️</button>
@@ -300,11 +302,12 @@
 
     <main>
         <div class="timer-container">
+            <div class="timer-label">TIEMPO NETO DE MOVIMIENTO</div>
             <div class="main-time" id="main-timer">00:00.00</div>
             <div class="lap-time" id="lap-timer">Vuelta: --:--</div>
         </div>
 
-        <div class="spm-display hidden" id="spm-box">🏃 120 Pasos/Min</div>
+        <div class="spm-display hidden" id="spm-box">🏃 120 Prom/Min</div>
 
         <div class="counter-container" id="counter-box">
             <div class="step-count" id="count-display">0</div>
@@ -362,7 +365,6 @@
         };
         const config = JSON.parse(JSON.stringify(defaultConfig));
 
-        // --- WAKELOCK VARIABLES ---
         let wakeLock = null;
 
         function loadSettings() {
@@ -374,35 +376,25 @@
                     if(parsed.walk) config.walk = {...config.walk, ...parsed.walk};
                     if(parsed.run) config.run = {...config.run, ...parsed.run};
                     if(parsed.jump) config.jump = {...config.jump, ...parsed.jump};
-                    console.log("Configuración cargada");
                 } catch(e) { console.error("Error cargando config", e); }
             }
         }
         loadSettings();
 
-        // --- WAKELOCK FUNCTIONS ---
         async function enableWakeLock() {
             if ('wakeLock' in navigator && config.general.enableWakeLock) {
                 try {
                     wakeLock = await navigator.wakeLock.request('screen');
                     document.getElementById('wk-indicator').classList.add('active');
-                    console.log('Wake Lock activo');
                     wakeLock.addEventListener('release', () => {
-                        console.log('Wake Lock liberado');
                         document.getElementById('wk-indicator').classList.remove('active');
                         wakeLock = null;
                     });
-                } catch (err) {
-                    console.error(`${err.name}, ${err.message}`);
-                }
+                } catch (err) { console.error(err); }
             }
         }
-
         async function disableWakeLock() {
-            if (wakeLock !== null) {
-                await wakeLock.release();
-                wakeLock = null;
-            }
+            if (wakeLock !== null) { await wakeLock.release(); wakeLock = null; }
             document.getElementById('wk-indicator').classList.remove('active');
         }
 
@@ -412,6 +404,7 @@
             mode: 'walk',
             timerRunning: false, timerStartedAt: 0, elapsed: 0, lapStart: 0,
             autoPauseId: null,
+            autoPauseCount: 0, // Contador de veces que se pausó automáticamente
             count: 0, distance: 0, calories: 0, strideLength: config.walk.strideLength,
             lastStepTime: 0,
             jumpState: 'GROUND', jumpAirStartTime: 0, jumpMaxPower: 0, jumpTotalPower: 0,
@@ -501,22 +494,23 @@
             ui.btnLap.disabled = false; ui.debug.textContent = "EN MARCHA"; ui.debug.style.color = "var(--primary)";
             timerInterval = setInterval(updateTimerDisplay, 30);
             resetAutoPauseTimer();
-            enableWakeLock(); // AQUI SE ACTIVA WAKELOCK
+            enableWakeLock();
         }
         function stopSystem() {
             state.status = 'STOPPED'; pauseTimerLogic();
             ui.btnMain.textContent = "▶ Continuar"; ui.btnMain.className = "btn-timer btn-main";
             ui.btnLap.disabled = true; ui.debug.textContent = "PAUSADO MANUAL"; ui.debug.style.color = "#888";
             stopSensors();
-            disableWakeLock(); // AQUI SE LIBERA
+            disableWakeLock();
         }
         function pauseSystemAuto() {
             state.status = 'AUTO_PAUSED'; pauseTimerLogic();
+            state.autoPauseCount++; // Registrar pausa automática
             ui.timerMain.classList.add('paused');
             ui.btnMain.textContent = "▶ Reanudar"; ui.btnMain.className = "btn-timer btn-main";
-            ui.btnLap.disabled = true; ui.debug.textContent = "⏸ PAUSADO (Párate a descansar)";
+            ui.btnLap.disabled = true; ui.debug.textContent = "⏸ PAUSADO (Descansando)";
             ui.debug.style.color = "var(--text-secondary)";
-            disableWakeLock(); // AQUI TAMBIEN SE LIBERA
+            disableWakeLock();
         }
         function resumeSystem() { startRunning(); }
         function pauseTimerLogic() {
@@ -534,11 +528,13 @@
             stopSystem(); state.status = 'IDLE'; state.elapsed = 0; state.lapStart = 0;
             state.count = 0; state.distance = 0; state.calories = 0;
             state.jumpMaxPower = 0; state.jumpTotalPower = 0; state.lastStepsTimestamps = [];
+            state.autoPauseCount = 0; // Reset contador de pausas
+            
             ui.timerMain.classList.remove('paused'); ui.spmBox.classList.add('hidden');
             ui.btnMain.textContent = "▶ Iniciar"; ui.timerLap.textContent = "Vuelta: --:--";
             ui.debug.textContent = "Listo para iniciar"; ui.debug.style.color = "var(--text-secondary)";
             updateTimerDisplay(); updateStats();
-            disableWakeLock(); // ASEGURARSE DE LIMPIAR EN RESET
+            disableWakeLock();
         }
         function startSensorsOnly() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -584,23 +580,32 @@
         }
         function registerStep(now) {
             state.count++; state.distance += state.strideLength; state.calories += config[state.mode].kcalPerUnit;
-            resetAutoPauseTimer(); calculateCadence(now); updateStats();
+            resetAutoPauseTimer(); calculateCadence(); updateStats();
         }
         function registerJump(now, force) {
             state.count++; state.jumpTotalPower += force;
             if (force > state.jumpMaxPower) state.jumpMaxPower = force;
-            resetAutoPauseTimer(); calculateCadence(now); updateStats();
+            resetAutoPauseTimer(); calculateCadence(); updateStats();
             if(navigator.vibrate) navigator.vibrate(50);
         }
-        function calculateCadence(now) {
-            state.lastStepsTimestamps.push(now);
-            if (state.lastStepsTimestamps.length > 3) state.lastStepsTimestamps.shift();
-            if (state.lastStepsTimestamps.length >= 2) {
-                const diffMs = state.lastStepsTimestamps[state.lastStepsTimestamps.length-1] - state.lastStepsTimestamps[0];
-                const spm = Math.round((state.lastStepsTimestamps.length * 60000) / diffMs);
-                if (state.mode === 'jump') ui.spmBox.textContent = `⬆️ ${spm} Saltos/Min`;
-                else ui.spmBox.textContent = `🏃 ${spm} Pasos/Min`;
-                ui.spmBox.classList.remove('hidden');
+        // NUEVA LÓGICA DE CADENCIA PROMEDIO REAL
+        function calculateCadence() {
+            if (state.count > 0) {
+                // Usamos el tiempo neto que se calcula en updateTimerDisplay
+                // Reutilizamos la lógica interna para no duplicar código complejo aquí
+                let currentElapsed = state.elapsed;
+                if (state.timerRunning) {
+                    currentElapsed += Date.now() - state.timerStartedAt;
+                }
+                const deadTime = state.autoPauseCount * config.general.inactivityDelay;
+                const netTimeMs = Math.max(0, currentElapsed - deadTime);
+
+                if (netTimeMs > 1000) { // Al menos 1 segundo para evitar infinitos
+                    const spm = Math.round((state.count * 60000) / netTimeMs);
+                    if (state.mode === 'jump') ui.spmBox.textContent = `⬆️ ${spm} Saltos/Min`;
+                    else ui.spmBox.textContent = `🏃 ${spm} Prom/Min`;
+                    ui.spmBox.classList.remove('hidden');
+                }
             }
         }
         function formatTime(ms) {
@@ -611,22 +616,37 @@
         }
         function pad(n) { return n < 10 ? '0' + n : n; }
         function updateTimerDisplay() {
+            let currentElapsed = state.elapsed;
             if (state.timerRunning) {
                 const now = Date.now();
-                const currentElapsed = state.elapsed + (now - state.timerStartedAt);
-                ui.timerMain.textContent = formatTime(currentElapsed);
-                const currentLap = currentElapsed - state.lapStart;
+                currentElapsed += (now - state.timerStartedAt);
+            }
+
+            // CÁLCULO DE TIEMPO NETO
+            // Restamos el tiempo muerto que pasó contando antes de activarse la pausa
+            const deadTime = state.autoPauseCount * config.general.inactivityDelay;
+            const netTime = Math.max(0, currentElapsed - deadTime);
+
+            ui.timerMain.textContent = formatTime(netTime);
+            
+            if (state.timerRunning) {
+                const currentLap = netTime - state.lapStart;
                 ui.timerLap.textContent = "Vuelta: " + formatTime(currentLap);
             } else {
-                ui.timerMain.textContent = formatTime(state.elapsed);
+                ui.timerLap.textContent = "Vuelta: --:--";
             }
         }
         function doLap() {
             if (state.status !== 'RUNNING') return;
+            
+            // Recalcular Net Time para el lap actual
             const now = Date.now();
-            const currentElapsed = state.elapsed + (now - state.timerStartedAt);
-            const lapTime = currentElapsed - state.lapStart;
-            state.lapStart = currentElapsed;
+            const totalElapsed = state.elapsed + (now - state.timerStartedAt);
+            const deadTime = state.autoPauseCount * config.general.inactivityDelay;
+            const netTime = Math.max(0, totalElapsed - deadTime);
+            
+            const lapTime = netTime - state.lapStart;
+            state.lapStart = netTime;
             ui.timerLap.style.color = "#fff";
             setTimeout(() => ui.timerLap.style.color = "var(--warn)", 300);
             ui.debug.textContent = `Vuelta: ${formatTime(lapTime)}`;
@@ -667,7 +687,6 @@
             if (!document.fullscreenElement) document.documentElement.requestFullscreen();
             else if (document.exitFullscreen) document.exitFullscreen();
         }
-        
         ui.strideSlider.addEventListener('input', (e) => {
             const val = parseFloat(e.target.value);
             state.strideLength = val;
@@ -677,14 +696,9 @@
                 state.distance = state.count * state.strideLength; updateStats();
             }
         });
-        
-        // Re-solicitar WakeLock si se vuelve visible la pestaña
         document.addEventListener('visibilitychange', async () => {
-            if (state.timerRunning && document.visibilityState === 'visible') {
-                await enableWakeLock();
-            }
+            if (state.timerRunning && document.visibilityState === 'visible') { await enableWakeLock(); }
         });
-
         setMode('walk'); 
     </script>
 </body>
