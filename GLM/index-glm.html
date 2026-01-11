@@ -15,7 +15,7 @@
             --secondary-color: #2979ff;
             --danger-color: #ff1744;
             --warning-color: #ff9800;
-            --recovery-color: #9c27b0;
+            --recovery-color: #ffffff; /* CAMBIADO A BLANCO */
             --text-main: #ffffff;
             --font-numbers: 'Teko', sans-serif; 
         }
@@ -162,7 +162,7 @@
         .zone-item { border-color: rgba(255,255,255,0.1); }
         
         /* Colores de zona */
-        .zone-recovery { color: var(--recovery-color); border-color: var(--recovery-color); }
+        .zone-recovery { color: var(--recovery-color); border-color: var(--recovery-color); } /* BLANCO */
         .zone-1k { color: #4caf50; border-color: #4caf50; }
         .zone-5k { color: #2196f3; border-color: #2196f3; }
         .zone-10k { color: #ff9800; border-color: #ff9800; }
@@ -811,6 +811,39 @@
             font-size: 1rem;
             color: white;
         }
+
+        /* Tabla de Zonas */
+        .zones-summary-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .zones-summary-table th {
+            text-align: left;
+            padding: 10px;
+            border-bottom: 2px solid #444;
+            color: #fff;
+        }
+        .zones-summary-table td {
+            padding: 10px;
+            border-bottom: 1px solid #333;
+            color: #eee;
+        }
+        .zone-row-bar {
+            height: 6px;
+            background: #333;
+            border-radius: 3px;
+            margin-top: 5px;
+            overflow: hidden;
+        }
+        .zone-row-fill {
+            height: 100%;
+            background: #fff;
+        }
+        .zone-percent {
+            text-align: right;
+            font-family: var(--font-numbers);
+        }
     </style>
 </head>
 <body>
@@ -825,6 +858,9 @@
         <div class="top-controls">
             <button onclick="app.toggleFullScreen()" title="Pantalla Completa">
                 ⛶
+            </button>
+            <button onclick="app.openZonesModal()" title="Resumen Zonas">
+                📊 Zonas
             </button>
             <button onclick="app.openSettings()" title="Configuración">
                 ⚙️ Config
@@ -938,6 +974,26 @@
         <div class="toast-data" id="toast-pace">--:-- min/km</div>
         <div style="margin-top: 10px; font-size: 0.9rem; color: #aaa;">
             Distancia: <span id="toast-dist">0.00</span> km
+        </div>
+    </div>
+
+    <!-- Modal de Zonas (Nuevo) -->
+    <div id="modal-zones" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 style="margin: 0;">Distribución de Zonas</h3>
+                <button class="close-btn" onclick="app.closeModal('modal-zones')">×</button>
+            </div>
+            <div class="modal-body">
+                <table class="zones-summary-table" id="zones-table-body">
+                    <!-- JS llenará esto -->
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-share" onclick="app.closeModal('modal-zones')">
+                    Cerrar
+                </button>
+            </div>
         </div>
     </div>
 
@@ -1226,20 +1282,24 @@
                     '1k': 4 * 60        
                 },
                 
-                // Workout
-                workoutPlan: [], 
-                isWorkoutActive: false,
-                currentStepIndex: -1,
-                stepStartTime: 0,
-                stepStartDist: 0,
-                
                 // Zona actual de ritmo
                 currentPaceZone: 'none',
                 currentAvgPaceZone: 'none', // Nueva variable
                 
+                // Tiempos por Zona (Segundos)
+                zoneTimes: {
+                    recovery: 0,
+                    '42k': 0,
+                    '21k': 0,
+                    '10k': 0,
+                    '5k': 0,
+                    '1k': 0,
+                    'fast': 0
+                },
+
                 // Colores para zonas
                 zoneColors: {
-                    'recovery': '#9c27b0',
+                    'recovery': '#ffffff', /* CAMBIADO A BLANCO */
                     '42k': '#9c27b0',
                     '21k': '#e91e63',
                     '10k': '#ff9800',
@@ -1249,6 +1309,13 @@
                     'none': '#666666'
                 },
 
+                // Workout
+                workoutPlan: [], 
+                isWorkoutActive: false,
+                currentStepIndex: -1,
+                stepStartTime: 0,
+                stepStartDist: 0,
+                
                 // Variable temporal para el editor de workouts
                 editingWorkoutSteps: [],
                 wakeLock: null,
@@ -1339,6 +1406,7 @@
                 if (str.includes(':')) {
                     const parts = str.split(':');
                     let m = parseInt(parts[0]) || 0;
+                    // CORRECCIÓN: Si escribes "4:", parts[1] está vacío. Asumir 0 segundos.
                     let s = parseInt(parts[1]) || 0;
                     return (m * 60) + s;
                 } else {
@@ -1383,8 +1451,6 @@
                 const timeStr = document.getElementById('control-time').value;
                 
                 // 1. Parsear tiempo mm:ss a Segundos
-                // parsePaceInput("5:00") devuelve 300.
-                // IMPORTANTE: NO multiplicar por 60 aquí.
                 const totalControlSec = this.parsePaceInput(timeStr);
                 
                 if (!distKm || !totalControlSec) {
@@ -1392,7 +1458,8 @@
                     return;
                 }
 
-                // 2. Convertir Segundos a Minutos (para la fórmula de Riegel)
+                // 2. CORRECCIÓN CRÍTICA: Convertir Segundos a Minutos (NO multiplicar por 60)
+                // parsePaceInput ya devuelve segundos (ej: 240 para 4 min).
                 const totalControlMin = totalControlSec / 60;
                 
                 // 3. Calcular Ritmo del Control (min/km)
@@ -1731,6 +1798,14 @@
                     this.state.avgSpeed = (this.state.distance / this.state.totalElapsed) * 3600;
                 }
                 
+                // --- ACUMULADOR DE ZONAS ---
+                if (this.state.isRunning) {
+                    const zone = this.calculatePaceZone();
+                    if (zone !== 'none') {
+                        this.state.zoneTimes[zone]++;
+                    }
+                }
+                
                 if (this.state.isWorkoutActive) {
                     this.updateWorkoutProgress();
                 }
@@ -1927,9 +2002,11 @@
                     z.classList.remove('active');
                 });
                 const activeZone = document.querySelector(`.zone-item[data-zone="${zone}"]`);
-                if (activeZone) {
-                    activeZone.classList.add('active');
-                }
+                if (activeZone) activeZone.classList.add('active');
+                
+                const zoneIcon = document.getElementById('pace-zone-icon');
+                zoneIcon.style.backgroundColor = zoneColor;
+
 
                 // --- 2. ZONA DE PROMEDIO (ACUMULADA) ---
                 const avgZone = this.calculateAvgPaceZone();
@@ -1952,7 +2029,7 @@
                 const avgZoneIndicator = document.getElementById('val-avg-zone');
                 if (avgZone !== 'none') {
                     avgZoneIndicator.textContent = avgZoneAbbrev;
-                    avgZoneIndicator.style.color = avgZoneColor; // Texto del indicador usa el color
+                    avgZoneIndicator.style.color = avgZoneColor;
                 } else {
                     avgZoneIndicator.textContent = '--';
                     avgZoneIndicator.style.color = '#888';
@@ -1972,7 +2049,7 @@
                 };
                 return names[zone] || zone;
             },
-            
+
             // Obtiene abreviaturas para el indicador grande (LE, 42, etc.)
             getZoneAbbreviation: function(zone) {
                 const abbrevs = {
@@ -2101,6 +2178,56 @@
             },
 
             // --- UI Utils ---
+
+            openZonesModal: function() {
+                this.updateZonesTable();
+                this.openModal('modal-zones');
+            },
+
+            updateZonesTable: function() {
+                const tbody = document.getElementById('zones-table-body');
+                tbody.innerHTML = '';
+                
+                // Ordenar zonas por tiempo descendente
+                const zonesOrder = ['recovery', '42k', '21k', '10k', '5k', '1k', 'fast'];
+                const displayNames = {
+                    'recovery': 'Recuperación',
+                    '42k': 'Maratón 42K',
+                    '21k': 'Media Maratón 21K',
+                    '10k': '10K',
+                    '5k': '5K',
+                    '1k': '1K',
+                    'fast': 'Rápido'
+                };
+                const colors = this.state.zoneColors;
+
+                let totalT = 0;
+                zonesOrder.forEach(z => totalT += this.state.zoneTimes[z]);
+
+                if (totalT === 0) {
+                    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px; color: #666;">Sin datos de entrenamiento</td></tr>';
+                    return;
+                }
+
+                zonesOrder.forEach(z => {
+                    const t = this.state.zoneTimes[z];
+                    const pct = totalT > 0 ? ((t / totalT) * 100).toFixed(1) + '%' : '0%';
+                    const color = colors[z];
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td style="color:${color}; font-weight:bold;">${displayNames[z]}</td>
+                        <td>${this.formatTime(t * 1000, true)}</td>
+                        <td class="zone-percent">${pct}</td>
+                        <td style="width: 100px;">
+                             <div class="zone-row-bar">
+                                <div class="zone-row-fill" style="width: ${pct}; background: ${color};"></div>
+                             </div>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                });
+            },
 
             addWorkoutStep: function() {
                 const type = document.getElementById('wk-type').value;
