@@ -2,7 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Tennis Stats Pro - Fixed Tiebreak</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tennis Stats Pro - Mobile</title>
     <style>
         :root {
             --tennis-yellow: #dff115;
@@ -10,82 +11,175 @@
             --max-green: #27ae60;
             --mid-green: #82e0aa;
             --min-red: #ec7063;
-            --grp-1: rgba(236, 240, 241, 0.5); 
-            --grp-2: rgba(212, 230, 241, 0.5); 
-            --grp-3: rgba(213, 245, 227, 0.5); 
-            --grp-4: rgba(252, 243, 207, 0.5); 
+            --bg-body: #f0f2f5;
+            --grp-1: rgba(236, 240, 241, 0.7); 
+            --grp-2: rgba(212, 230, 241, 0.7); 
+            --grp-3: rgba(213, 245, 227, 0.7); 
+            --grp-4: rgba(252, 243, 207, 0.7); 
         }
 
-        body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 10px; }
-        .main-container { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 750px; }
+        /* Bloqueo de scroll global */
+        * { box-sizing: border-box; touch-action: manipulation; }
         
-        .scoreboard { display: grid; grid-template-columns: 1fr 1fr; background: var(--court-blue); color: white; border-radius: 12px; overflow: hidden; margin-bottom: 15px; border: 3px solid #1a252f; }
-        .player-zone { padding: 20px 10px; text-align: center; cursor: pointer; transition: all 0.3s ease; user-select: none; border-bottom: 8px solid transparent; }
-        .serving-now { border-bottom-color: var(--tennis-yellow) !important; background: rgba(255,255,255,0.05); }
-        .serving-now .player-name { color: var(--tennis-yellow) !important; transform: scale(1.05); }
-        
-        .player-name { font-size: 1.1rem; font-weight: bold; border: none; background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); text-align: center; width: 90%; outline: none; border-radius: 4px; padding: 6px 0; }
-        .pts-big { font-size: 5rem; font-weight: 800; color: var(--tennis-yellow); line-height: 1; margin: 10px 0; }
-        
-        .action-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
-        button { padding: 12px; font-weight: bold; border: none; border-radius: 10px; cursor: pointer; }
+        body, html { 
+            margin: 0; padding: 0; 
+            height: 100%; width: 100%;
+            overflow: hidden; /* Evita que la página se mueva */
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--bg-body);
+        }
+
+        .app-wrapper {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 10px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Layout para Tablet/Escritorio ancho */
+        @media (min-width: 900px) {
+            .app-wrapper {
+                flex-direction: row;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            .left-side { flex: 1; position: sticky; top: 0; }
+            .right-side { flex: 1.2; height: 95vh; overflow-y: auto; }
+        }
+
+        /* Marcador Principal */
+        .scoreboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            background: var(--court-blue);
+            color: white;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid #1a252f;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .player-zone {
+            padding: 15px 5px;
+            text-align: center;
+            border-bottom: 8px solid transparent;
+            transition: 0.3s;
+        }
+
+        .serving-now { border-bottom-color: var(--tennis-yellow); background: rgba(255,255,255,0.05); }
+        .serving-now .player-name { color: var(--tennis-yellow); }
+
+        .player-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            border: none;
+            text-align: center;
+            width: 85%;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .pts-big {
+            font-size: clamp(3.5rem, 12vw, 5.5rem);
+            font-weight: 800;
+            color: var(--tennis-yellow);
+            margin: 10px 0;
+        }
+
+        /* Controles */
+        .controls {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr;
+            gap: 8px;
+            margin: 10px 0;
+        }
+
+        button {
+            padding: 12px 5px;
+            border-radius: 8px;
+            border: none;
+            font-weight: bold;
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
         .btn-undo { background: #e74c3c; color: white; }
         .btn-reset { background: #7f8c8d; color: white; }
+        .btn-full { background: #2c3e50; color: white; }
 
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th { background: #2c3e50; color: white; padding: 10px; }
-        td { border: 1px solid #ddd; padding: 6px; text-align: center; font-weight: bold; }
-        
+        /* Tabla con scroll interno */
+        .table-container {
+            flex: 1;
+            overflow-y: auto;
+            background: white;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            -webkit-overflow-scrolling: touch; /* Scroll suave en iOS */
+        }
+
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th { position: sticky; top: 0; background: #2c3e50; color: white; padding: 10px; z-index: 10; font-size: 0.8rem; }
+        td { border: 1px solid #eee; padding: 8px 4px; text-align: center; font-weight: bold; font-size: 0.85rem; }
+
         .g1 { background-color: var(--grp-1); }
         .g2 { background-color: var(--grp-2); }
         .g3 { background-color: var(--grp-3); }
         .g4 { background-color: var(--grp-4); }
-
-        .rank-1 { color: var(--max-green); font-size: 1.1rem; }
-        .streak-dot { font-size: 1.2rem; }
+        
+        .streak-dot { font-size: 1rem; }
         .flash-effect { animation: flash 0.3s ease-out; }
         @keyframes flash { 0% { background-color: rgba(255, 255, 255, 0.4); } 100% { background-color: transparent; } }
+
+        .tb-mode { color: #3498db !important; }
     </style>
 </head>
 <body>
 
-<div class="main-container">
-    <div class="scoreboard">
-        <div id="zone1" class="player-zone serving-now" onclick="addPoint(1, event)">
-            <input type="text" class="player-name" id="name1" value="Jugador 1" oninput="renderTable()" onclick="event.stopPropagation()">
-            <div class="pts-big" id="pts1">0</div>
-            <div style="font-weight: bold;">SETS: <span id="s1">0</span> | GMS: <span id="g1">0</span></div>
+<div class="app-wrapper">
+    <div class="left-side">
+        <div class="scoreboard">
+            <div id="zone1" class="player-zone serving-now" onclick="addPoint(1, event)">
+                <input type="text" id="name1" class="player-name" value="Jugador 1" oninput="renderTable()">
+                <div id="pts1" class="pts-big">0</div>
+                <div style="font-size: 0.8rem; font-weight: bold;">S: <span id="s1">0</span> | G: <span id="g1">0</span></div>
+            </div>
+            <div id="zone2" class="player-zone" onclick="addPoint(2, event)">
+                <input type="text" id="name2" class="player-name" value="Jugador 2" oninput="renderTable()">
+                <div id="pts2" class="pts-big">0</div>
+                <div style="font-size: 0.8rem; font-weight: bold;">S: <span id="s2">0</span> | G: <span id="g2">0</span></div>
+            </div>
         </div>
-        <div id="zone2" class="player-zone" onclick="addPoint(2, event)">
-            <input type="text" class="player-name" id="name2" value="Jugador 2" oninput="renderTable()" onclick="event.stopPropagation()">
-            <div class="pts-big" id="pts2">0</div>
-            <div style="font-weight: bold;">SETS: <span id="s2">0</span> | GMS: <span id="g2">0</span></div>
+
+        <div class="controls">
+            <button class="btn-undo" onclick="undo()">⬅ Deshacer</button>
+            <button class="btn-full" onclick="toggleFullScreen()">⛶ Pantalla</button>
+            <button class="btn-reset" onclick="if(confirm('¿Reset?')) location.reload()">Reset</button>
         </div>
     </div>
 
-    <div class="action-row">
-        <button class="btn-undo" onclick="undo()">⬅ DESHACER</button>
-        <button class="btn-reset" onclick="if(confirm('¿Reiniciar?')) location.reload()">RESET</button>
+    <div class="table-container right-side">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 30%;">Marcador</th>
+                    <th id="th-n1">J1</th>
+                    <th>F</th>
+                    <th id="th-n2">J2</th>
+                    <th>F</th>
+                </tr>
+            </thead>
+            <tbody id="table-body"></tbody>
+        </table>
     </div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Marcador</th>
-                <th colspan="2" id="th-n1">Saque J1</th>
-                <th colspan="2" id="th-n2">Saque J2</th>
-            </tr>
-            <tr style="background: #ecf0f1; font-size: 0.7rem;">
-                <th>GRUPO</th>
-                <th>CANT.</th><th>FLUJO</th>
-                <th>CANT.</th><th>FLUJO</th>
-            </tr>
-        </thead>
-        <tbody id="table-body"></tbody>
-    </table>
 </div>
 
 <script>
+    // --- Lógica de Juego (Misma que perfeccionamos) ---
     let p1 = 0, p2 = 0, g1 = 0, g2 = 0, s1 = 0, s2 = 0;
     let server = 1, isTiebreak = false, history = [];
     let deuceCounted = false;
@@ -93,8 +187,7 @@
     let lastSeenInGame = { 1: {}, 2: {} };
 
     const groups = {
-        "15-0": "g1", "0-15": "g1",
-        "30-0": "g2", "15-15": "g2", "0-30": "g2",
+        "15-0": "g1", "0-15": "g1", "30-0": "g2", "15-15": "g2", "0-30": "g2",
         "40-0": "g3", "30-15": "g3", "15-30": "g3", "0-40": "g3",
         "Gano-0": "g4", "40-15": "g4", "30-30": "g4", "15-40": "g4", "Perdio-0": "g4",
         "40-30": "", "30-40": "", "40-40": ""
@@ -108,6 +201,14 @@
 
     function capitalize(s) { return s.toLowerCase().replace(/\b\w/g, l => l.toUpperCase()); }
 
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen();
+        } else {
+            if (document.exitFullscreen) document.exitFullscreen();
+        }
+    }
+
     function addPoint(winner, event) {
         if (event && event.target.tagName === 'INPUT') return;
         const zone = document.getElementById('zone' + winner);
@@ -116,7 +217,6 @@
         let currentServ = server;
         const labels = ["0", "15", "30", "40", "AD"];
         
-        // Guardar estado previo para Undo
         history.push({
             state: JSON.parse(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTiebreak, deuceCounted, gameCount, lastSeenInGame: JSON.parse(JSON.stringify(lastSeenInGame))})),
             statKey: null, statServer: currentServ
@@ -124,38 +224,30 @@
 
         if (isTiebreak) {
             if (winner === 1) p1++; else p2++;
-            // Lógica de fin de Tie-break
-            if ((p1 >= 7 || p2 >= 7) && Math.abs(p1 - p2) >= 2) {
-                finishGame(winner);
-            }
+            if ((p1 >= 7 || p2 >= 7) && Math.abs(p1 - p2) >= 2) finishGame(winner);
         } else {
-            let nextP1 = p1, nextP2 = p2;
-            if (winner === 1) { if (p1 === 3 && p2 === 4) nextP2 = 3; else nextP1++; } 
-            else { if (p2 === 3 && p1 === 4) nextP1 = 3; else nextP2++; }
+            let n1 = p1, n2 = p2;
+            if (winner === 1) { if (p1 === 3 && p2 === 4) n2 = 3; else n1++; } 
+            else { if (p2 === 3 && p1 === 4) n1 = 3; else n2++; }
 
-            let sLabel = (server === 1) ? `${labels[nextP1]}-${labels[nextP2]}` : `${labels[nextP2]}-${labels[nextP1]}`;
-            let isGameEnd = (winner === 1 && (nextP1 >= 4 && nextP1 > nextP2 + 1)) || (winner === 2 && (nextP2 >= 4 && nextP2 > nextP1 + 1));
+            let sLabel = (server === 1) ? `${labels[n1]}-${labels[n2]}` : `${labels[n2]}-${labels[n1]}`;
+            let isEnd = (winner === 1 && (n1 >= 4 && n1 > n2 + 1)) || (winner === 2 && (n2 >= 4 && n2 > n1 + 1));
 
-            let finalStatKey = null;
-            if (isGameEnd) {
-                let recPts = (server === 1) ? p2 : p1;
-                if (winner === server && recPts === 0) finalStatKey = "Gano-0";
-                else if (winner !== server && recPts === 0) finalStatKey = "Perdio-0";
-                else if (groups.hasOwnProperty(sLabel)) finalStatKey = sLabel;
-                
-                history[history.length-1].statKey = finalStatKey;
-                if (finalStatKey) { stats[currentServ][finalStatKey]++; lastSeenInGame[currentServ][finalStatKey] = gameCount[currentServ]; }
+            let key = null;
+            if (isEnd) {
+                let rec = (server === 1) ? p2 : p1;
+                if (winner === server && rec === 0) key = "Gano-0";
+                else if (winner !== server && rec === 0) key = "Perdio-0";
+                else if (groups.hasOwnProperty(sLabel)) key = sLabel;
+                if (key) { stats[currentServ][key]++; lastSeenInGame[currentServ][key] = gameCount[currentServ]; }
+                history[history.length-1].statKey = key;
                 finishGame(winner);
             } else {
-                if (sLabel === "40-40") {
-                    if (!deuceCounted) { finalStatKey = "40-40"; deuceCounted = true; }
-                } else if (groups.hasOwnProperty(sLabel)) {
-                    finalStatKey = sLabel;
-                }
-                
-                history[history.length-1].statKey = finalStatKey;
-                if (finalStatKey) { stats[currentServ][finalStatKey]++; lastSeenInGame[currentServ][finalStatKey] = gameCount[currentServ]; }
-                p1 = nextP1; p2 = nextP2;
+                if (sLabel === "40-40") { if (!deuceCounted) { key = "40-40"; deuceCounted = true; } }
+                else if (groups.hasOwnProperty(sLabel)) key = sLabel;
+                if (key) { stats[currentServ][key]++; lastSeenInGame[currentServ][key] = gameCount[currentServ]; }
+                history[history.length-1].statKey = key;
+                p1 = n1; p2 = n2;
             }
         }
         updateUI(); renderTable();
@@ -163,31 +255,18 @@
 
     function finishGame(winner) {
         if (winner === 1) g1++; else g2++;
-        p1 = 0; p2 = 0;
-        
-        // Rotación de saque tras juego o TB
-        server = (server === 1) ? 2 : 1;
-        gameCount[1]++; gameCount[2]++; // Incrementar contador de juegos para flujo
-        deuceCounted = false;
-
-        // Comprobar fin de Set
-        if (isTiebreak) {
-            winSet(winner);
-        } else if (g1 >= 6 && (g1 - g2) >= 2) {
-            winSet(1);
-        } else if (g2 >= 6 && (g2 - g1) >= 2) {
-            winSet(2);
-        } else if (g1 === 6 && g2 === 6) {
-            isTiebreak = true;
-            alert("¡Inicia Tie-break!");
-        }
+        p1 = 0; p2 = 0; server = (server === 1) ? 2 : 1;
+        gameCount[1]++; gameCount[2]++; deuceCounted = false;
+        if (isTiebreak) winSet(winner);
+        else if (g1 >= 6 && (g1-g2) >= 2) winSet(1);
+        else if (g2 >= 6 && (g2-g1) >= 2) winSet(2);
+        else if (g1 === 6 && g2 === 6) { isTiebreak = true; alert("Tie-break"); }
     }
 
-    function winSet(winner) {
-        if (winner === 1) s1++; else s2++;
-        g1 = 0; g2 = 0; p1 = 0; p2 = 0;
-        isTiebreak = false;
-        alert("¡Set para " + capitalize(document.getElementById('name' + winner).value) + "!");
+    function winSet(w) { 
+        if (w === 1) s1++; else s2++; 
+        g1=0; g2=0; isTiebreak=false; 
+        alert("Set completado"); 
     }
 
     function undo() {
@@ -200,47 +279,45 @@
         updateUI(); renderTable();
     }
 
-    function getStreakIcon(srv, key) {
-        let lastGame = lastSeenInGame[srv][key];
-        if (lastGame === -1) return "➖";
-        let diff = (gameCount[srv] - 1) - lastGame;
-        if (diff <= 1) return "🟢";
-        if (diff <= 3) return "⚪";
-        return "🔴";
+    function getStreak(srv, k) {
+        let last = lastSeenInGame[srv][k];
+        if (last === -1) return "➖";
+        let d = (gameCount[srv] - 1) - last;
+        return d <= 1 ? "🟢" : (d <= 3 ? "⚪" : "🔴");
     }
 
     function renderTable() {
-        const body = document.getElementById('table-body');
-        body.innerHTML = "";
+        const b = document.getElementById('table-body');
+        b.innerHTML = "";
         const n1 = capitalize(document.getElementById('name1').value);
         const n2 = capitalize(document.getElementById('name2').value);
-        document.getElementById('th-n1').innerText = "Saque " + n1;
-        document.getElementById('th-n2').innerText = "Saque " + n2;
+        document.getElementById('th-n1').innerText = n1.substring(0,6);
+        document.getElementById('th-n2').innerText = n2.substring(0,6);
 
-        Object.keys(groups).forEach(key => {
-            const v1 = stats[1][key], v2 = stats[2][key];
-            const grpClass = groups[key];
-            body.innerHTML += `<tr class="${grpClass}">
-                <td class="score-label">${key}</td>
-                <td class="${v1 > 0 ? 'rank-1' : ''}">${v1}</td>
-                <td class="streak-dot">${getStreakIcon(1, key)}</td>
-                <td class="${v2 > 0 ? 'rank-1' : ''}">${v2}</td>
-                <td class="streak-dot">${getStreakIcon(2, key)}</td>
+        Object.keys(groups).forEach(k => {
+            b.innerHTML += `<tr class="${groups[k]}">
+                <td>${k}</td>
+                <td style="color:var(--max-green)">${stats[1][k]}</td><td>${getStreak(1,k)}</td>
+                <td style="color:var(--max-green)">${stats[2][k]}</td><td>${getStreak(2,k)}</td>
             </tr>`;
         });
     }
 
     function updateUI() {
         const labels = ["0", "15", "30", "40", "AD"];
-        document.getElementById('pts1').innerText = isTiebreak ? p1 : (labels[p1] || "0");
-        document.getElementById('pts2').innerText = isTiebreak ? p2 : (labels[p2] || "0");
+        const p1disp = document.getElementById('pts1');
+        const p2disp = document.getElementById('pts2');
+        p1disp.innerText = isTiebreak ? p1 : (labels[p1] || "0");
+        p2disp.innerText = isTiebreak ? p2 : (labels[p2] || "0");
+        p1disp.className = "pts-big " + (isTiebreak ? "tb-mode" : "");
+        p2disp.className = "pts-big " + (isTiebreak ? "tb-mode" : "");
         document.getElementById('g1').innerText = g1; document.getElementById('g2').innerText = g2;
         document.getElementById('s1').innerText = s1; document.getElementById('s2').innerText = s2;
         document.getElementById('zone1').classList.toggle('serving-now', server === 1);
         document.getElementById('zone2').classList.toggle('serving-now', server === 2);
     }
 
-    updateUI(); renderTable();
+    renderTable();
 </script>
 </body>
 </html>
