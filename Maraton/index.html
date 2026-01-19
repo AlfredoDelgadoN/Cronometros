@@ -722,6 +722,11 @@
             let isRestored = false;
             let currentProjectionIndex = 0;
             
+            // NUEVO: Array para promediar ritmo actual
+            let paceSamples = [];
+            const MAX_SAMPLES = 5; // Número de muestras para el promedio móvil
+            let lastValidPaceTime = 0;
+            
             // Elementos del DOM
             const timerDisplay = document.getElementById('timerDisplay');
             const hoursDisplay = document.getElementById('hours');
@@ -878,6 +883,30 @@
                 return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
             }
             
+            // NUEVA FUNCIÓN: Calcular ritmo actual con promedio móvil
+            function calculateCurrentPace(newPace) {
+                if (!newPace || newPace <= 0 || newPace > 20) return 0; // Filtrar valores absurdos (ritmo > 20:00 min/km)
+                
+                // Agregar nueva muestra al array
+                paceSamples.push(newPace);
+                
+                // Mantener solo las últimas MAX_SAMPLES muestras
+                if (paceSamples.length > MAX_SAMPLES) {
+                    paceSamples.shift();
+                }
+                
+                // Calcular promedio de las muestras
+                const sum = paceSamples.reduce((a, b) => a + b, 0);
+                return sum / paceSamples.length;
+            }
+            
+            // NUEVA FUNCIÓN: Resetear muestras de ritmo
+            function resetPaceSamples() {
+                paceSamples = [];
+                currentPace = 0;
+                currentPaceDisplay.textContent = '--:--';
+            }
+            
             function updateProjectionDisplay() {
                 const currentProj = PROJECTION_DISTANCES[currentProjectionIndex];
                 projectionTitle.textContent = `PROY. ${currentProj.name}`;
@@ -928,12 +957,17 @@
                     // Actualizar proyección actual
                     updateProjectionDisplay();
                     
-                    // Velocidad (km/h)
+                    // Velocidad (km/h) - basada en promedio, no en ritmo actual
                     const speed = totalDistance / (currentTime / 1000 / 3600);
                     speedDisplay.textContent = speed.toFixed(1);
                     
-                    // Mostrar ritmo actual
-                    currentPaceDisplay.textContent = formatPace(currentPace);
+                    // Mostrar ritmo actual (si tenemos datos)
+                    if (currentPace > 0) {
+                        currentPaceDisplay.textContent = formatPace(currentPace);
+                    } else {
+                        // Si no tenemos ritmo actual, mostrar el promedio
+                        currentPaceDisplay.textContent = formatPace(avgPace);
+                    }
                 } else {
                     avgPaceDisplay.textContent = '--:--';
                     projectionDisplay.textContent = '--:--';
@@ -966,18 +1000,22 @@
                     position.coords.longitude
                 );
                 
-                // Solo contar si la precisión es buena (< 30 metros) y distancia razonable
-                if (accuracy < 30 && distance > 0 && distance < 0.1) {
+                // Solo contar si la precisión es buena (< 50 metros) y distancia razonable
+                if (accuracy < 50 && distance > 0 && distance < 0.5) {
                     totalDistance += distance;
                     
                     // Calcular ritmo actual (basado en el último segmento)
                     const timeDiff = (now - lastUpdateTime) / 1000;
-                    if (timeDiff > 0) {
-                        const currentSpeed = (distance / timeDiff) * 3600;
+                    if (timeDiff > 0 && distance > 0.001) { // Al menos 1 metro
+                        const instantSpeed = (distance / timeDiff) * 3600; // km/h
                         
-                        // Solo calcular ritmo si velocidad es razonable (entre 3 y 25 km/h)
-                        if (currentSpeed >= 3 && currentSpeed <= 25) {
-                            currentPace = 60 / currentSpeed;
+                        // Solo calcular ritmo si velocidad es razonable (entre 3 y 25 km/h para correr)
+                        if (instantSpeed >= 2 && instantSpeed <= 25) {
+                            const instantPace = 60 / instantSpeed; // min/km
+                            
+                            // Usar promedio móvil para suavizar el ritmo
+                            currentPace = calculateCurrentPace(instantPace);
+                            lastValidPaceTime = now;
                         }
                         
                         // Registrar kilómetros completados
@@ -1036,8 +1074,8 @@
                         handlePositionError,
                         {
                             enableHighAccuracy: true,
-                            maximumAge: 2000,
-                            timeout: 10000
+                            maximumAge: 1000, // Reducido para mayor precisión
+                            timeout: 5000
                         }
                     );
                 } else {
@@ -1065,6 +1103,9 @@
                     btnStart.style.display = 'none';
                     btnStop.style.display = 'block';
                     runningIndicator.classList.add('active');
+                    
+                    // Resetear muestras de ritmo al iniciar
+                    resetPaceSamples();
                     
                     // Iniciar GPS
                     startGPS();
@@ -1097,6 +1138,9 @@
                     runningIndicator.classList.remove('active');
                     gpsStatus.textContent = 'PAUSADO';
                     
+                    // Resetear muestras de ritmo al pausar
+                    resetPaceSamples();
+                    
                     saveToStorage();
                 }
             }
@@ -1116,6 +1160,9 @@
                     targetDistance = 10.00;
                     currentProjectionIndex = 0;
                     isRestored = false;
+                    
+                    // Resetear muestras de ritmo
+                    resetPaceSamples();
                     
                     btnStart.style.display = 'block';
                     btnStop.style.display = 'none';
@@ -1226,11 +1273,17 @@
             
             // Timer para limpiar ritmo actual si no hay movimiento
             setInterval(() => {
-                if (isRunning && currentPace > 0) {
+                if (isRunning) {
                     const now = Date.now();
-                    if (now - lastUpdateTime > 10000) {
-                        currentPace = 0;
-                        currentPaceDisplay.textContent = '--:--';
+                    // Si han pasado más de 15 segundos sin una actualización válida de ritmo
+                    if (now - lastValidPaceTime > 15000) {
+                        resetPaceSamples();
+                        // Mostrar promedio en lugar de ritmo actual
+                        const currentTime = isRunning ? Date.now() - startTime + elapsedTime : elapsedTime;
+                        if (totalDistance > 0.01 && currentTime > 1000) {
+                            const avgPace = (currentTime / 1000 / 60) / totalDistance;
+                            currentPaceDisplay.textContent = formatPace(avgPace);
+                        }
                     }
                 }
             }, 5000);
