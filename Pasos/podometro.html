@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Entrenador Pro v10</title>
+    <title>Entrenador Pro v11</title>
     <style>
         :root {
             --primary: #00e676;
@@ -30,7 +30,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            /* IMPORTANTE: Espacio extra para iPhone X en adelante */
+            /* Espacio seguro para botones iPhone X en adelante */
             padding-bottom: env(safe-area-inset-bottom);
         }
 
@@ -140,7 +140,7 @@
             border: 1px solid rgba(255, 171, 0, 0.2);
         }
 
-        /* SELECTOR DE MODO (AHORA DENTRO DE MAIN) */
+        /* SELECTOR DE MODO (DENTRO DE MAIN) */
         .mode-selector-main {
             width: 100%; display: flex; background: var(--surface); border-radius: 8px; padding: 4px; margin-bottom: 8px; border: 1px solid #333;
         }
@@ -157,15 +157,28 @@
         .controls {
             background: var(--surface); padding: 10px;
             border-radius: 20px 20px 0 0;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 8px; z-index: 30;
-            padding-bottom: 10px; /* Extra padding inside the footer */
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 5px; z-index: 30;
         }
 
-        /* PROYECCIONES (ARRIBA EN EL FOOTER) */
+        /* 1. TIMER ROW (ARRIBA AHORA) */
+        .timer-row { display: flex; gap: 8px; }
+        .btn-tri {
+            flex: 1; padding: 14px 5px; border: none; border-radius: 8px; font-size: 0.8rem;
+            font-weight: 700; text-transform: uppercase; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
+        }
+        .btn-lap { background: #333; color: white; border: 1px solid #555; }
+        .btn-main { background: var(--primary); color: #000; }
+        .btn-stop { background: var(--danger); color: white; }
+        .btn-reset { background: #444; color: #ccc; border: 1px solid #666; }
+        .btn-cancel { background: #666; color: white; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+
+        /* 2. PROYECCIONES (ABAJO AHORA) */
         .projection-box {
             width: 100%; background: rgba(0, 0, 0, 0.3);
             border: 1px solid #333; border-radius: 8px;
-            padding: 5px; margin-bottom: 5px;
+            padding: 5px; margin-bottom: 2px;
         }
         .proj-title {
             font-size: 0.6rem; color: var(--text-secondary); text-transform: uppercase;
@@ -181,21 +194,8 @@
             display: flex; flex-direction: column; align-items: center;
             background: rgba(255,255,255,0.03); border-radius: 4px; padding: 2px;
         }
-        .p-dist { color: #888; font-weight: bold; font-size: 0.65rem; margin-bottom: 1px; }
-        .p-time { color: var(--accent); font-family: var(--font-digital); font-size: 0.75rem; }
-
-        /* TIMER ROW (BOTONES) */
-        .timer-row { display: flex; gap: 8px; }
-        .btn-tri {
-            flex: 1; padding: 14px 5px; border: none; border-radius: 8px; font-size: 0.8rem;
-            font-weight: 700; text-transform: uppercase; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; flex-direction: column;
-        }
-        .btn-lap { background: #333; color: white; border: 1px solid #555; }
-        .btn-main { background: var(--primary); color: #000; }
-        .btn-stop { background: var(--danger); color: white; }
-        .btn-reset { background: #444; color: #ccc; border: 1px solid #666; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .p-dist { color: #888; font-weight: bold; font-size: 0.6rem; margin-bottom: 1px; }
+        .p-time { color: var(--accent); font-family: var(--font-digital); font-size: 0.7rem; }
 
         /* --- MODAL CONFIG --- */
         .modal {
@@ -311,7 +311,7 @@
 
     <!-- INTERFAZ PRINCIPAL -->
     <header>
-        <h1>Entrenador Pro v10</h1>
+        <h1>Entrenador Pro v11</h1>
         <div>
             <span class="wakelock-indicator" id="wk-indicator">🔒</span>
             <button class="btn-icon" onclick="openSettings()">⚙️</button>
@@ -357,7 +357,7 @@
         </div>
         <div class="status-msg" id="debug-info">Listo</div>
 
-        <!-- SELECTOR DE MODO MOVIDO AQUÍ (DENTRO DE MAIN) -->
+        <!-- SELECTOR DE MODO DENTRO DE MAIN -->
         <div class="mode-selector-main mode-selector" id="main-mode-selector">
             <button class="mode-btn walk active" onclick="setMode('walk')">🚶 Caminar</button>
             <button class="mode-btn run" onclick="setMode('run')">🏃 Correr</button>
@@ -366,7 +366,14 @@
     </main>
 
     <div class="controls">
-        <!-- PROYECCIONES -->
+        <!-- 1. BOTONES (ARRIBA) -->
+        <div class="timer-row">
+            <button class="btn-tri btn-lap" id="btn-lap" onclick="doLap()" disabled>⏺ Vuelta</button>
+            <button class="btn-tri btn-reset" id="btn-reset" onclick="middleAction()">❌ Reset</button>
+            <button class="btn-tri btn-main" id="btn-start" onclick="toggleMainAction()">▶ Iniciar</button>
+        </div>
+
+        <!-- 2. PROYECCIONES (ABAJO) -->
         <div class="projection-box" id="proj-box">
             <div class="proj-title">📊 Proyección</div>
             <div class="proj-grid">
@@ -395,12 +402,6 @@
                     <span class="p-time" id="p-42195">--</span>
                 </div>
             </div>
-        </div>
-
-        <div class="timer-row">
-            <button class="btn-tri btn-lap" id="btn-lap" onclick="doLap()" disabled>⏺ Vuelta</button>
-            <button class="btn-tri btn-reset" id="btn-reset" onclick="middleAction()">❌ Reset</button>
-            <button class="btn-tri btn-main" id="btn-start" onclick="toggleMainAction()">▶ Iniciar</button>
         </div>
     </div>
 
@@ -474,7 +475,7 @@
             btnReset: document.getElementById('btn-reset'),
             modeBtns: document.querySelectorAll('.mode-btn'),
             modal: document.getElementById('settings-modal'),
-            projBox: document.getElementById('proj-box'), // Referencia
+            projBox: document.getElementById('proj-box'),
             proj: {
                 '400': document.getElementById('p-400'),
                 '800': document.getElementById('p-800'),
@@ -773,7 +774,6 @@
             ui.mainLabel.textContent = conf.label; ui.label1.textContent = conf.s1Label;
             ui.label2.textContent = conf.s2Label; ui.counterBox.style.borderColor = conf.color;
             ui.vizBar.style.backgroundColor = conf.color;
-            
             if (mode === 'jump') { ui.calibPanel.classList.add('hidden'); ui.projBox.classList.add('hidden'); } 
             else {
                 ui.calibPanel.classList.remove('hidden'); ui.projBox.classList.remove('hidden');
