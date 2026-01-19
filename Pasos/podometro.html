@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Alfredo Delgado Pasos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Entrenador Pro v10</title>
     <style>
         :root {
             --primary: #00e676;
@@ -30,6 +30,8 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            /* IMPORTANTE: Espacio extra para iPhone X en adelante */
+            padding-bottom: env(safe-area-inset-bottom);
         }
 
         /* --- HEADER --- */
@@ -55,9 +57,10 @@
             align-items: center;
             padding: 10px 20px;
             position: relative;
+            overflow-y: auto;
         }
 
-        .timer-container { text-align: center; margin-bottom: 10px; width: 100%; }
+        .timer-container { text-align: center; margin-bottom: 5px; width: 100%; }
         
         .main-time {
             font-family: var(--font-digital);
@@ -67,7 +70,7 @@
             transition: color 0.3s, border 0.3s;
             border: 0px solid transparent; 
             border-radius: 10px;
-            padding: 5px;
+            padding: 2px;
         }
 
         .main-time.paused {
@@ -77,102 +80,122 @@
             text-shadow: 0 0 10px rgba(255, 171, 0, 0.2);
         }
         
-        .timer-label {
-            font-size: 0.7rem; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 2px;
-        }
-
-        .lap-time { font-family: var(--font-digital); font-size: 1rem; color: var(--warn); min-height: 1.5rem; }
+        .timer-label { font-size: 0.65rem; color: var(--text-secondary); letter-spacing: 1px; margin-bottom: 2px; }
+        .lap-time { font-family: var(--font-digital); font-size: 0.9rem; color: var(--warn); min-height: 1.4rem; }
         
         .spm-display {
-            font-size: 1.1rem; font-weight: 700; color: var(--accent);
-            background: rgba(41, 121, 255, 0.1); padding: 4px 12px; border-radius: 12px;
-            border: 1px solid rgba(41, 121, 255, 0.3); margin-bottom: 10px;
+            font-size: 1rem; font-weight: 700; color: var(--accent);
+            background: rgba(41, 121, 255, 0.1); padding: 3px 10px; border-radius: 10px;
+            border: 1px solid rgba(41, 121, 255, 0.3); margin-bottom: 8px;
         }
 
         .counter-container {
-            width: 130px; height: 130px; position: relative;
+            width: 110px; height: 110px; position: relative;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             border-radius: 50%; background: #181818; border: 3px solid #333;
-            margin-bottom: 15px; box-shadow: 0 0 25px rgba(0,0,0,0.6);
+            margin-bottom: 10px; box-shadow: 0 0 25px rgba(0,0,0,0.6);
         }
-        .step-count { font-size: 2.0rem; font-weight: 700; line-height: 1; }
-        .step-label { font-size: 0.7rem; color: var(--text-secondary); margin-top: 5px; text-transform: uppercase; }
+        .step-count { font-size: 1.8rem; font-weight: 700; line-height: 1; }
+        .step-label { font-size: 0.65rem; color: var(--text-secondary); margin-top: 3px; text-transform: uppercase; }
 
         .calibration-panel {
             width: 100%; max-width: 300px; background: rgba(255,255,255,0.05);
-            padding: 8px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #333;
+            padding: 6px; border-radius: 8px; margin-bottom: 8px; border: 1px solid #333;
         }
-        .calib-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
-        .calib-label { font-size: 0.7rem; color: var(--text-secondary); }
-        .calib-val { font-size: 0.8rem; font-weight: bold; color: var(--primary); }
+        .calib-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 3px; }
+        .calib-label { font-size: 0.65rem; color: var(--text-secondary); }
+        .calib-val { font-size: 0.75rem; font-weight: bold; color: var(--primary); }
         
-        input[type=range] {
-            width: 100%; -webkit-appearance: none; background: transparent;
-        }
+        input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; }
         input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%; 
-            background: var(--primary); cursor: pointer; margin-top: -6px;
+            -webkit-appearance: none; height: 14px; width: 14px; border-radius: 50%; 
+            background: var(--primary); cursor: pointer; margin-top: -5px;
         }
         input[type=range]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; cursor: pointer; background: #444; border-radius: 2px;
+            width: 100%; height: 3px; cursor: pointer; background: #444; border-radius: 2px;
         }
 
         .stats-grid {
-            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; margin-bottom: 10px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px; width: 100%; margin-bottom: 8px;
         }
         .stat-card {
-            background: var(--surface); padding: 10px; border-radius: 8px;
+            background: var(--surface); padding: 8px; border-radius: 8px;
             text-align: center; border: 1px solid #333;
         }
-        .stat-value { font-size: 1.1rem; font-weight: 600; color: var(--primary); }
-        .stat-label { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; }
+        .stat-value { font-size: 1rem; font-weight: 600; color: var(--primary); }
+        .stat-label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; }
 
-        .sensor-viz { width: 100%; height: 30px; background: #000; border-radius: 4px; margin-bottom: 10px; position: relative; overflow: hidden; display: flex; align-items: center; }
+        .sensor-viz { width: 100%; height: 25px; background: #000; border-radius: 4px; margin-bottom: 5px; position: relative; overflow: hidden; display: flex; align-items: center; }
         .sensor-bar { height: 100%; background: var(--primary); width: 0%; transition: width 0.05s linear; }
         
         .status-msg { 
-            font-size: 0.8rem; 
+            font-size: 0.75rem; 
             color: var(--warn); 
             text-align: center; 
             font-weight: bold; 
-            min-height: 1.2rem;
+            min-height: 1rem;
             background: rgba(255, 171, 0, 0.1);
-            padding: 4px 10px;
+            padding: 3px 8px;
             border-radius: 4px;
             border: 1px solid rgba(255, 171, 0, 0.2);
         }
 
-        /* --- CONTROLS --- */
-        .controls {
-            background: var(--surface); padding: 15px; border-radius: 20px 20px 0 0;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 15px; z-index: 30;
+        /* SELECTOR DE MODO (AHORA DENTRO DE MAIN) */
+        .mode-selector-main {
+            width: 100%; display: flex; background: var(--surface); border-radius: 8px; padding: 4px; margin-bottom: 8px; border: 1px solid #333;
         }
-        .mode-selector { display: flex; background: #121212; border-radius: 8px; padding: 4px; }
         .mode-btn {
             flex: 1; border: none; background: transparent; color: var(--text-secondary);
-            padding: 10px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; cursor: pointer;
+            padding: 8px; font-size: 0.75rem; font-weight: 600; border-radius: 6px; cursor: pointer;
         }
-        .mode-btn.active { background: var(--surface); color: var(--text); }
+        .mode-btn.active { background: var(--bg); color: var(--text); box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         .mode-btn.active.walk { color: var(--primary); }
         .mode-btn.active.run { color: var(--accent); }
         .mode-btn.active.jump { color: var(--jump); }
 
-        .timer-row { display: flex; gap: 10px; }
-        .btn-timer {
-            flex: 1; padding: 15px; border: none; border-radius: 8px; font-size: 1rem;
+        /* --- CONTROLS (FOOTER) --- */
+        .controls {
+            background: var(--surface); padding: 10px;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 8px; z-index: 30;
+            padding-bottom: 10px; /* Extra padding inside the footer */
+        }
+
+        /* PROYECCIONES (ARRIBA EN EL FOOTER) */
+        .projection-box {
+            width: 100%; background: rgba(0, 0, 0, 0.3);
+            border: 1px solid #333; border-radius: 8px;
+            padding: 5px; margin-bottom: 5px;
+        }
+        .proj-title {
+            font-size: 0.6rem; color: var(--text-secondary); text-transform: uppercase;
+            text-align: center; margin-bottom: 3px; letter-spacing: 1px;
+        }
+        .proj-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 2px;
+            font-size: 0.7rem;
+        }
+        .proj-item {
+            display: flex; flex-direction: column; align-items: center;
+            background: rgba(255,255,255,0.03); border-radius: 4px; padding: 2px;
+        }
+        .p-dist { color: #888; font-weight: bold; font-size: 0.65rem; margin-bottom: 1px; }
+        .p-time { color: var(--accent); font-family: var(--font-digital); font-size: 0.75rem; }
+
+        /* TIMER ROW (BOTONES) */
+        .timer-row { display: flex; gap: 8px; }
+        .btn-tri {
+            flex: 1; padding: 14px 5px; border: none; border-radius: 8px; font-size: 0.8rem;
             font-weight: 700; text-transform: uppercase; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; flex-direction: column;
         }
         .btn-lap { background: #333; color: white; border: 1px solid #555; }
         .btn-main { background: var(--primary); color: #000; }
         .btn-stop { background: var(--danger); color: white; }
-        .btn-cancel { background: #666; color: white; }
-        
-        .btn-reset-row { display: flex; }
-        .btn-reset {
-            width: 100%; padding: 12px; background: #2b1d1d; color: var(--danger);
-            border: 1px solid #553333; border-radius: 8px; font-weight: 700; font-size: 0.9rem;
-            text-transform: uppercase; cursor: pointer;
-        }
+        .btn-reset { background: #444; color: #ccc; border: 1px solid #666; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
 
         /* --- MODAL CONFIG --- */
         .modal {
@@ -186,8 +209,8 @@
         .modal-title { font-size: 1.5rem; color: var(--primary); font-weight: 700; }
         .modal-close { background: none; border: none; color: white; font-size: 2rem; cursor: pointer; }
         
-        .config-section { margin-bottom: 25px; background: var(--surface); padding: 15px; border-radius: 10px; border: 1px solid #333; }
-        .config-section h3 { color: var(--accent); margin-bottom: 15px; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom:5px; }
+        .config-section { margin-bottom: 20px; background: var(--surface); padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        .config-section h3 { color: var(--accent); margin-bottom: 15px; font-size: 1rem; border-bottom: 1px solid #333; padding-bottom: 5px; }
         
         .config-item { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
         .config-label { font-size: 0.9rem; color: var(--text-secondary); }
@@ -207,7 +230,6 @@
             width: 100%; padding: 15px; background: var(--primary); color: #000;
             border: none; border-radius: 10px; font-weight: 700; font-size: 1.1rem; cursor: pointer; margin-top: 20px;
         }
-
         .hidden { display: none !important; }
     </style>
 </head>
@@ -222,25 +244,22 @@
 
         <div class="config-section">
             <h3>General</h3>
-            
             <div class="config-item">
                 <div style="flex:1">
                     <div class="config-label">🔥 Mantener pantalla encendida</div>
-                    <div class="config-desc">Evita que el celular se bloquee. (Consume batería)</div>
+                    <div class="config-desc">Evita que el celular se bloquee.</div>
                 </div>
                 <label class="switch">
                     <input type="checkbox" id="set-wakelock">
                     <span class="slider"></span>
                 </label>
             </div>
-
             <div class="config-item">
                 <div class="config-label">
-                    <span>⏱️ Pausa Automática (Segundos a restar)</span>
+                    <span>⏱️ Pausa Automática</span>
                     <span class="config-val" id="set-pause-val">5 s</span>
                 </div>
                 <input type="range" id="set-pause" min="1" max="30" step="1" value="5">
-                <div class="config-desc">Tiempo muerto antes de pausar (se restará del total).</div>
             </div>
         </div>
 
@@ -292,7 +311,7 @@
 
     <!-- INTERFAZ PRINCIPAL -->
     <header>
-        <h1>ALFREDO DELGADO PASOS</h1>
+        <h1>Entrenador Pro v10</h1>
         <div>
             <span class="wakelock-indicator" id="wk-indicator">🔒</span>
             <button class="btn-icon" onclick="openSettings()">⚙️</button>
@@ -302,7 +321,7 @@
 
     <main>
         <div class="timer-container">
-            <div class="timer-label">TIEMPO NETO DE MOVIMIENTO</div>
+            <div class="timer-label">TIEMPO NETO MOVIMIENTO</div>
             <div class="main-time" id="main-timer">00:00.00</div>
             <div class="lap-time" id="lap-timer">Vuelta: --:--</div>
         </div>
@@ -337,22 +356,51 @@
             <div class="sensor-bar" id="viz-bar"></div>
         </div>
         <div class="status-msg" id="debug-info">Listo</div>
-    </main>
 
-    <div class="controls">
-        <div class="mode-selector">
+        <!-- SELECTOR DE MODO MOVIDO AQUÍ (DENTRO DE MAIN) -->
+        <div class="mode-selector-main mode-selector" id="main-mode-selector">
             <button class="mode-btn walk active" onclick="setMode('walk')">🚶 Caminar</button>
             <button class="mode-btn run" onclick="setMode('run')">🏃 Correr</button>
             <button class="mode-btn jump" onclick="setMode('jump')">⬆️ Saltar</button>
         </div>
-        
-        <div class="timer-row">
-            <button class="btn-timer btn-lap" id="btn-lap" onclick="doLap()" disabled>⏺ Vuelta</button>
-            <button class="btn-timer btn-main" id="btn-main" onclick="toggleMainAction()">▶ Iniciar</button>
+    </main>
+
+    <div class="controls">
+        <!-- PROYECCIONES -->
+        <div class="projection-box" id="proj-box">
+            <div class="proj-title">📊 Proyección</div>
+            <div class="proj-grid">
+                <div class="proj-item">
+                    <span class="p-dist">400</span>
+                    <span class="p-time" id="p-400">--</span>
+                </div>
+                <div class="proj-item">
+                    <span class="p-dist">800</span>
+                    <span class="p-time" id="p-800">--</span>
+                </div>
+                <div class="proj-item">
+                    <span class="p-dist">1k</span>
+                    <span class="p-time" id="p-1000">--</span>
+                </div>
+                <div class="proj-item">
+                    <span class="p-dist">5k</span>
+                    <span class="p-time" id="p-5000">--</span>
+                </div>
+                <div class="proj-item">
+                    <span class="p-dist">21k</span>
+                    <span class="p-time" id="p-21098">--</span>
+                </div>
+                <div class="proj-item">
+                    <span class="p-dist">42k</span>
+                    <span class="p-time" id="p-42195">--</span>
+                </div>
+            </div>
         </div>
 
-        <div class="btn-reset-row">
-            <button class="btn-reset" onclick="hardReset()">↺ RESET (Todo a 0)</button>
+        <div class="timer-row">
+            <button class="btn-tri btn-lap" id="btn-lap" onclick="doLap()" disabled>⏺ Vuelta</button>
+            <button class="btn-tri btn-reset" id="btn-reset" onclick="middleAction()">❌ Reset</button>
+            <button class="btn-tri btn-main" id="btn-start" onclick="toggleMainAction()">▶ Iniciar</button>
         </div>
     </div>
 
@@ -398,13 +446,12 @@
             document.getElementById('wk-indicator').classList.remove('active');
         }
 
-        // --- ESTADO ---
         const state = {
             status: 'IDLE', 
             mode: 'walk',
             timerRunning: false, timerStartedAt: 0, elapsed: 0, lapStart: 0,
             autoPauseId: null,
-            autoPauseCount: 0, // Contador de veces que se pausó automáticamente
+            autoPauseCount: 0,
             count: 0, distance: 0, calories: 0, strideLength: config.walk.strideLength,
             lastStepTime: 0,
             jumpState: 'GROUND', jumpAirStartTime: 0, jumpMaxPower: 0, jumpTotalPower: 0,
@@ -423,9 +470,19 @@
             calibPanel: document.getElementById('calib-panel'),
             strideSlider: document.getElementById('stride-slider'), strideVal: document.getElementById('stride-val'),
             vizBar: document.getElementById('viz-bar'), debug: document.getElementById('debug-info'),
-            btnMain: document.getElementById('btn-main'), btnLap: document.getElementById('btn-lap'),
+            btnStart: document.getElementById('btn-start'), btnLap: document.getElementById('btn-lap'),
+            btnReset: document.getElementById('btn-reset'),
             modeBtns: document.querySelectorAll('.mode-btn'),
-            modal: document.getElementById('settings-modal')
+            modal: document.getElementById('settings-modal'),
+            projBox: document.getElementById('proj-box'), // Referencia
+            proj: {
+                '400': document.getElementById('p-400'),
+                '800': document.getElementById('p-800'),
+                '1000': document.getElementById('p-1000'),
+                '5000': document.getElementById('p-5000'),
+                '21098': document.getElementById('p-21098'),
+                '42195': document.getElementById('p-42195'),
+            }
         };
         let timerInterval;
 
@@ -477,37 +534,57 @@
         function toggleMainAction() {
             if (state.status === 'IDLE' || state.status === 'STOPPED') { armSystem(); }
             else if (state.status === 'WAITING') { resetSystemUI(); }
-            else if (state.status === 'RUNNING') { stopSystem(); }
+            else if (state.status === 'RUNNING') { /* Ya hay botón stop */ }
             else if (state.status === 'AUTO_PAUSED') { resumeSystem(); }
         }
+
+        function middleAction() {
+            if (state.status === 'RUNNING') { stopSystem(); }
+            else { hardReset(); }
+        }
+
         function armSystem() {
             state.status = 'WAITING';
-            ui.btnMain.textContent = "Cancelar"; ui.btnMain.className = "btn-timer btn-cancel";
-            ui.btnLap.disabled = true; ui.debug.textContent = "Esperando movimiento...";
+            ui.btnStart.textContent = "Cancelar"; ui.btnStart.className = "btn-tri btn-cancel";
+            ui.btnLap.disabled = true; ui.btnReset.disabled = true;
+            ui.debug.textContent = "Esperando movimiento...";
             ui.debug.style.color = "var(--warn)";
             startSensorsOnly();
         }
         function startRunning() {
             state.status = 'RUNNING'; state.timerRunning = true; state.timerStartedAt = Date.now();
             ui.timerMain.classList.remove('paused');
-            ui.btnMain.textContent = "❚❚ Detener"; ui.btnMain.className = "btn-timer btn-stop";
+            
+            ui.btnStart.disabled = true;
+            ui.btnStart.textContent = "Corriendo"; ui.btnStart.className = "btn-tri btn-main";
+            
+            ui.btnReset.textContent = "⏹ Detener"; ui.btnReset.className = "btn-tri btn-stop"; ui.btnReset.disabled = false;
             ui.btnLap.disabled = false; ui.debug.textContent = "EN MARCHA"; ui.debug.style.color = "var(--primary)";
+            
             timerInterval = setInterval(updateTimerDisplay, 30);
             resetAutoPauseTimer();
             enableWakeLock();
         }
         function stopSystem() {
             state.status = 'STOPPED'; pauseTimerLogic();
-            ui.btnMain.textContent = "▶ Continuar"; ui.btnMain.className = "btn-timer btn-main";
+            
+            ui.btnStart.disabled = false;
+            ui.btnStart.textContent = "▶ Continuar"; ui.btnStart.className = "btn-tri btn-main";
+            
+            ui.btnReset.textContent = "❌ Reset"; ui.btnReset.className = "btn-tri btn-reset";
             ui.btnLap.disabled = true; ui.debug.textContent = "PAUSADO MANUAL"; ui.debug.style.color = "#888";
             stopSensors();
             disableWakeLock();
         }
         function pauseSystemAuto() {
             state.status = 'AUTO_PAUSED'; pauseTimerLogic();
-            state.autoPauseCount++; // Registrar pausa automática
+            state.autoPauseCount++;
             ui.timerMain.classList.add('paused');
-            ui.btnMain.textContent = "▶ Reanudar"; ui.btnMain.className = "btn-timer btn-main";
+            
+            ui.btnStart.disabled = false;
+            ui.btnStart.textContent = "▶ Reanudar"; ui.btnStart.className = "btn-tri btn-main";
+            
+            ui.btnReset.textContent = "❌ Reset"; ui.btnReset.className = "btn-tri btn-reset";
             ui.btnLap.disabled = true; ui.debug.textContent = "⏸ PAUSADO (Descansando)";
             ui.debug.style.color = "var(--text-secondary)";
             disableWakeLock();
@@ -528,12 +605,17 @@
             stopSystem(); state.status = 'IDLE'; state.elapsed = 0; state.lapStart = 0;
             state.count = 0; state.distance = 0; state.calories = 0;
             state.jumpMaxPower = 0; state.jumpTotalPower = 0; state.lastStepsTimestamps = [];
-            state.autoPauseCount = 0; // Reset contador de pausas
+            state.autoPauseCount = 0;
             
             ui.timerMain.classList.remove('paused'); ui.spmBox.classList.add('hidden');
-            ui.btnMain.textContent = "▶ Iniciar"; ui.timerLap.textContent = "Vuelta: --:--";
+            ui.timerLap.textContent = "Vuelta: --:--";
+            
+            ui.btnStart.textContent = "▶ Iniciar"; ui.btnStart.className = "btn-tri btn-main"; ui.btnStart.disabled = false;
+            ui.btnReset.textContent = "❌ Reset"; ui.btnReset.className = "btn-tri btn-reset";
+            ui.btnLap.disabled = true;
+            
             ui.debug.textContent = "Listo para iniciar"; ui.debug.style.color = "var(--text-secondary)";
-            updateTimerDisplay(); updateStats();
+            updateTimerDisplay(); updateStats(); clearProjections();
             disableWakeLock();
         }
         function startSensorsOnly() {
@@ -588,25 +670,46 @@
             resetAutoPauseTimer(); calculateCadence(); updateStats();
             if(navigator.vibrate) navigator.vibrate(50);
         }
-        // NUEVA LÓGICA DE CADENCIA PROMEDIO REAL
         function calculateCadence() {
             if (state.count > 0) {
-                // Usamos el tiempo neto que se calcula en updateTimerDisplay
-                // Reutilizamos la lógica interna para no duplicar código complejo aquí
                 let currentElapsed = state.elapsed;
-                if (state.timerRunning) {
-                    currentElapsed += Date.now() - state.timerStartedAt;
-                }
+                if (state.timerRunning) currentElapsed += Date.now() - state.timerStartedAt;
                 const deadTime = state.autoPauseCount * config.general.inactivityDelay;
                 const netTimeMs = Math.max(0, currentElapsed - deadTime);
 
-                if (netTimeMs > 1000) { // Al menos 1 segundo para evitar infinitos
+                if (netTimeMs > 5000) {
                     const spm = Math.round((state.count * 60000) / netTimeMs);
                     if (state.mode === 'jump') ui.spmBox.textContent = `⬆️ ${spm} Saltos/Min`;
                     else ui.spmBox.textContent = `🏃 ${spm} Prom/Min`;
                     ui.spmBox.classList.remove('hidden');
+                    
+                    updateProjections(spm);
                 }
             }
+        }
+        function updateProjections(spm) {
+            const dists = [400, 800, 1000, 5000, 21098, 42195];
+            const stride = state.strideLength;
+            const speedMperMin = spm * stride;
+            if (speedMperMin <= 0) return;
+
+            dists.forEach(d => {
+                const minutes = d / speedMperMin;
+                const el = ui.proj[d];
+                if (el) el.textContent = formatProjection(minutes);
+            });
+        }
+        function clearProjections() {
+            Object.values(ui.proj).forEach(el => el.textContent = "--");
+        }
+        function formatProjection(minutes) {
+            const totalSec = Math.floor(minutes * 60);
+            const hrs = Math.floor(totalSec / 3600);
+            const mins = Math.floor((totalSec % 3600) / 60);
+            const secs = totalSec % 60;
+            
+            if (hrs > 0) { return `${hrs}:${pad(mins)}:${pad(secs)}`; }
+            else { return `${pad(mins)}:${pad(secs)}`; }
         }
         function formatTime(ms) {
             const totalSec = Math.floor(ms / 1000);
@@ -621,9 +724,6 @@
                 const now = Date.now();
                 currentElapsed += (now - state.timerStartedAt);
             }
-
-            // CÁLCULO DE TIEMPO NETO
-            // Restamos el tiempo muerto que pasó contando antes de activarse la pausa
             const deadTime = state.autoPauseCount * config.general.inactivityDelay;
             const netTime = Math.max(0, currentElapsed - deadTime);
 
@@ -638,13 +738,10 @@
         }
         function doLap() {
             if (state.status !== 'RUNNING') return;
-            
-            // Recalcular Net Time para el lap actual
             const now = Date.now();
             const totalElapsed = state.elapsed + (now - state.timerStartedAt);
             const deadTime = state.autoPauseCount * config.general.inactivityDelay;
             const netTime = Math.max(0, totalElapsed - deadTime);
-            
             const lapTime = netTime - state.lapStart;
             state.lapStart = netTime;
             ui.timerLap.style.color = "#fff";
@@ -662,7 +759,9 @@
             }
         }
         function resetSystemUI() {
-            state.status = 'IDLE'; ui.btnMain.textContent = "▶ Iniciar"; ui.btnMain.className = "btn-timer btn-main";
+            state.status = 'IDLE'; ui.btnStart.textContent = "▶ Iniciar"; ui.btnStart.className = "btn-tri btn-main";
+            ui.btnReset.textContent = "❌ Reset"; ui.btnReset.className = "btn-tri btn-reset";
+            ui.btnStart.disabled = false;
             ui.debug.textContent = "Cancelado"; ui.debug.style.color = "var(--text-secondary)";
             stopSensors();
         }
@@ -674,9 +773,10 @@
             ui.mainLabel.textContent = conf.label; ui.label1.textContent = conf.s1Label;
             ui.label2.textContent = conf.s2Label; ui.counterBox.style.borderColor = conf.color;
             ui.vizBar.style.backgroundColor = conf.color;
-            if (mode === 'jump') { ui.calibPanel.classList.add('hidden'); } 
+            
+            if (mode === 'jump') { ui.calibPanel.classList.add('hidden'); ui.projBox.classList.add('hidden'); } 
             else {
-                ui.calibPanel.classList.remove('hidden');
+                ui.calibPanel.classList.remove('hidden'); ui.projBox.classList.remove('hidden');
                 state.strideLength = config[mode].strideLength;
                 ui.strideSlider.value = state.strideLength;
                 ui.strideVal.textContent = state.strideLength.toFixed(2) + ' m';
@@ -694,6 +794,14 @@
             ui.strideVal.textContent = val.toFixed(2) + " m";
             if(state.count > 0 && state.mode !== 'jump') {
                 state.distance = state.count * state.strideLength; updateStats();
+                let currentElapsed = state.elapsed;
+                if (state.timerRunning) currentElapsed += Date.now() - state.timerStartedAt;
+                const deadTime = state.autoPauseCount * config.general.inactivityDelay;
+                const netTimeMs = Math.max(0, currentElapsed - deadTime);
+                if (netTimeMs > 1000) {
+                    const spm = Math.round((state.count * 60000) / netTimeMs);
+                    updateProjections(spm);
+                }
             }
         });
         document.addEventListener('visibilitychange', async () => {
