@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Entrenador Pro v11</title>
+    <title>Entrenador Pro v12</title>
     <style>
         :root {
             --primary: #00e676;
@@ -30,7 +30,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            /* Espacio seguro para botones iPhone X en adelante */
+            /* Seguro para iOS */
             padding-bottom: env(safe-area-inset-bottom);
         }
 
@@ -140,9 +140,19 @@
             border: 1px solid rgba(255, 171, 0, 0.2);
         }
 
-        /* SELECTOR DE MODO (DENTRO DE MAIN) */
+        /* --- CONTROLS (FOOTER) --- */
+        .controls {
+            background: var(--surface); 
+            padding: 10px;
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.3); 
+            display: flex; flex-direction: column; gap: 8px; z-index: 30;
+            padding-bottom: 10px; /* Espacio interno extra */
+        }
+
+        /* 1. MODE SELECTOR (AHORA ARRIBA) */
         .mode-selector-main {
-            width: 100%; display: flex; background: var(--surface); border-radius: 8px; padding: 4px; margin-bottom: 8px; border: 1px solid #333;
+            width: 100%; display: flex; background: var(--surface); border-radius: 8px; padding: 4px; margin-bottom: 5px; border: 1px solid #333;
         }
         .mode-btn {
             flex: 1; border: none; background: transparent; color: var(--text-secondary);
@@ -153,32 +163,29 @@
         .mode-btn.active.run { color: var(--accent); }
         .mode-btn.active.jump { color: var(--jump); }
 
-        /* --- CONTROLS (FOOTER) --- */
-        .controls {
-            background: var(--surface); padding: 10px;
-            border-radius: 20px 20px 0 0;
-            box-shadow: 0 -5px 20px rgba(0,0,0,0.3); display: flex; flex-direction: column; gap: 5px; z-index: 30;
+        /* 2. BOTONES DE ACCION (DINAMICOS) */
+        .action-row {
+            display: flex; gap: 8px; height: 60px; /* Altura fija para pulgares grandes */
         }
-
-        /* 1. TIMER ROW (ARRIBA AHORA) */
-        .timer-row { display: flex; gap: 8px; }
-        .btn-tri {
-            flex: 1; padding: 14px 5px; border: none; border-radius: 8px; font-size: 0.8rem;
-            font-weight: 700; text-transform: uppercase; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; flex-direction: column;
+        .btn-action {
+            flex: 1; 
+            border: none; border-radius: 8px; 
+            font-size: 1rem; font-weight: 700; text-transform: uppercase; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
         }
         .btn-lap { background: #333; color: white; border: 1px solid #555; }
-        .btn-main { background: var(--primary); color: #000; }
-        .btn-stop { background: var(--danger); color: white; }
-        .btn-reset { background: #444; color: #ccc; border: 1px solid #666; }
-        .btn-cancel { background: #666; color: white; }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+        .btn-reset { background: #444; color: #ccc; border: 1px solid #666; } /* Estilo Reset */
+        .btn-start { background: var(--primary); color: #000; } /* Estilo Iniciar */
+        .btn-stop { background: var(--danger); color: white; } /* Estilo Stop */
+        .btn-disabled { opacity: 0; pointer-events: none; }
 
-        /* 2. PROYECCIONES (ABAJO AHORA) */
+        /* 3. PROYECCIONES (ABAJO DE TODO) */
         .projection-box {
             width: 100%; background: rgba(0, 0, 0, 0.3);
             border: 1px solid #333; border-radius: 8px;
-            padding: 5px; margin-bottom: 2px;
+            padding: 5px; /* Padding reducido */
+            margin-bottom: 0; /* Sin margen abajo para pegarse al borde */
         }
         .proj-title {
             font-size: 0.6rem; color: var(--text-secondary); text-transform: uppercase;
@@ -311,7 +318,7 @@
 
     <!-- INTERFAZ PRINCIPAL -->
     <header>
-        <h1>Entrenador Pro v11</h1>
+        <h1>Entrenador Pro v12</h1>
         <div>
             <span class="wakelock-indicator" id="wk-indicator">🔒</span>
             <button class="btn-icon" onclick="openSettings()">⚙️</button>
@@ -356,51 +363,38 @@
             <div class="sensor-bar" id="viz-bar"></div>
         </div>
         <div class="status-msg" id="debug-info">Listo</div>
+    </main>
 
-        <!-- SELECTOR DE MODO DENTRO DE MAIN -->
+    <!-- FOOTER REESTRUCTURADO -->
+    <div class="controls">
+        
+        <!-- 1. SELECTOR DE MODO (ARRIBA) -->
         <div class="mode-selector-main mode-selector" id="main-mode-selector">
             <button class="mode-btn walk active" onclick="setMode('walk')">🚶 Caminar</button>
             <button class="mode-btn run" onclick="setMode('run')">🏃 Correr</button>
             <button class="mode-btn jump" onclick="setMode('jump')">⬆️ Saltar</button>
         </div>
-    </main>
 
-    <div class="controls">
-        <!-- 1. BOTONES (ARRIBA) -->
-        <div class="timer-row">
-            <button class="btn-tri btn-lap" id="btn-lap" onclick="doLap()" disabled>⏺ Vuelta</button>
-            <button class="btn-tri btn-reset" id="btn-reset" onclick="middleAction()">❌ Reset</button>
-            <button class="btn-tri btn-main" id="btn-start" onclick="toggleMainAction()">▶ Iniciar</button>
+        <!-- 2. BOTONES DE ACCIÓN (CENTRO) -->
+        <div class="action-row">
+            <!-- Boton Izquierdo: VUELTA (Corriendo) / RESET (Detenido) -->
+            <button class="btn-action btn-lap hidden" id="btn-left" onclick="leftAction()">⏺ Vuelta</button>
+            <button class="btn-action btn-reset btn-disabled" id="btn-left" style="display:none" onclick="leftAction()">❌ Reset</button>
+
+            <!-- Boton Derecho: START (Detenido) / STOP (Corriendo) -->
+            <button class="btn-action btn-main" id="btn-right" onclick="rightAction()">▶ Iniciar</button>
         </div>
 
-        <!-- 2. PROYECCIONES (ABAJO) -->
+        <!-- 3. PROYECCIONES (ABAJO) -->
         <div class="projection-box" id="proj-box">
             <div class="proj-title">📊 Proyección</div>
             <div class="proj-grid">
-                <div class="proj-item">
-                    <span class="p-dist">400</span>
-                    <span class="p-time" id="p-400">--</span>
-                </div>
-                <div class="proj-item">
-                    <span class="p-dist">800</span>
-                    <span class="p-time" id="p-800">--</span>
-                </div>
-                <div class="proj-item">
-                    <span class="p-dist">1k</span>
-                    <span class="p-time" id="p-1000">--</span>
-                </div>
-                <div class="proj-item">
-                    <span class="p-dist">5k</span>
-                    <span class="p-time" id="p-5000">--</span>
-                </div>
-                <div class="proj-item">
-                    <span class="p-dist">21k</span>
-                    <span class="p-time" id="p-21098">--</span>
-                </div>
-                <div class="proj-item">
-                    <span class="p-dist">42k</span>
-                    <span class="p-time" id="p-42195">--</span>
-                </div>
+                <div class="proj-item"><span class="p-dist">400</span><span class="p-time" id="p-400">--</span></div>
+                <div class="proj-item"><span class="p-dist">800</span><span class="p-time" id="p-800">--</span></div>
+                <div class="proj-item"><span class="p-dist">1k</span><span class="p-time" id="p-1000">--</span></div>
+                <div class="proj-item"><span class="p-dist">5k</span><span class="p-time" id="p-5000">--</span></div>
+                <div class="proj-item"><span class="p-dist">21k</span><span class="p-time" id="p-21098">--</span></div>
+                <div class="proj-item"><span class="p-dist">42k</span><span class="p-time" id="p-42195">--</span></div>
             </div>
         </div>
     </div>
@@ -471,8 +465,8 @@
             calibPanel: document.getElementById('calib-panel'),
             strideSlider: document.getElementById('stride-slider'), strideVal: document.getElementById('stride-val'),
             vizBar: document.getElementById('viz-bar'), debug: document.getElementById('debug-info'),
-            btnStart: document.getElementById('btn-start'), btnLap: document.getElementById('btn-lap'),
-            btnReset: document.getElementById('btn-reset'),
+            btnLeft: document.getElementById('btn-left'), 
+            btnRight: document.getElementById('btn-right'),
             modeBtns: document.querySelectorAll('.mode-btn'),
             modal: document.getElementById('settings-modal'),
             projBox: document.getElementById('proj-box'),
@@ -532,22 +526,59 @@
             setTimeout(() => { if(state.status === 'IDLE') ui.debug.textContent = "Listo para iniciar"; }, 2000);
         }
 
-        function toggleMainAction() {
-            if (state.status === 'IDLE' || state.status === 'STOPPED') { armSystem(); }
-            else if (state.status === 'WAITING') { resetSystemUI(); }
-            else if (state.status === 'RUNNING') { /* Ya hay botón stop */ }
-            else if (state.status === 'AUTO_PAUSED') { resumeSystem(); }
+        // --- GESTIÓN DE BOTONES DINÁMICOS ---
+        function updateButtons() {
+            // Limpiar estilos
+            ui.btnLeft.className = "btn-action btn-disabled";
+            ui.btnLeft.style.display = "none";
+            ui.btnRight.className = "btn-action btn-main";
+
+            if (state.status === 'RUNNING') {
+                // IZQUIERDA: VUELTA
+                ui.btnLeft.style.display = "flex";
+                ui.btnLeft.textContent = "⏺ Vuelta";
+                ui.btnLeft.classList.remove('btn-disabled');
+                
+                // DERECHA: STOP
+                ui.btnRight.textContent = "⏹ Detener";
+                ui.btnRight.classList.remove('btn-main');
+                ui.btnRight.classList.add('btn-stop');
+            } 
+            else if (state.status === 'IDLE' || state.status === 'STOPPED' || state.status === 'AUTO_PAUSED') {
+                // IZQUIERDA: RESET (Solo si es STOPPED o AUTO_PAUSED, no en IDLE para evitar accidentes)
+                // Opcional: Podríamos mostrar RESET siempre que no sea running.
+                if (state.status !== 'IDLE') {
+                    ui.btnLeft.style.display = "flex";
+                    ui.btnLeft.textContent = "❌ Reset";
+                    ui.btnLeft.classList.remove('btn-disabled');
+                    ui.btnLeft.classList.add('btn-reset');
+                }
+
+                // DERECHA: INICIAR / CONTINUAR
+                ui.btnRight.textContent = "▶ Iniciar"; // O "Continuar" si prefieres
+                ui.btnRight.classList.add('btn-main');
+                ui.btnRight.classList.remove('btn-stop');
+            }
         }
 
-        function middleAction() {
-            if (state.status === 'RUNNING') { stopSystem(); }
+        function leftAction() {
+            if (state.status === 'RUNNING') { doLap(); }
             else { hardReset(); }
+        }
+
+        function rightAction() {
+            if (state.status === 'IDLE' || state.status === 'STOPPED') { armSystem(); }
+            else if (state.status === 'RUNNING') { stopSystem(); }
+            else if (state.status === 'WAITING') { resetSystemUI(); }
+            else if (state.status === 'AUTO_PAUSED') { resumeSystem(); }
         }
 
         function armSystem() {
             state.status = 'WAITING';
-            ui.btnStart.textContent = "Cancelar"; ui.btnStart.className = "btn-tri btn-cancel";
-            ui.btnLap.disabled = true; ui.btnReset.disabled = true;
+            ui.btnRight.textContent = "Cancelar"; 
+            ui.btnRight.classList.remove('btn-main');
+            ui.btnRight.style.background = "#666"; // Cancel color
+            ui.btnLeft.style.display = "none";
             ui.debug.textContent = "Esperando movimiento...";
             ui.debug.style.color = "var(--warn)";
             startSensorsOnly();
@@ -555,40 +586,27 @@
         function startRunning() {
             state.status = 'RUNNING'; state.timerRunning = true; state.timerStartedAt = Date.now();
             ui.timerMain.classList.remove('paused');
-            
-            ui.btnStart.disabled = true;
-            ui.btnStart.textContent = "Corriendo"; ui.btnStart.className = "btn-tri btn-main";
-            
-            ui.btnReset.textContent = "⏹ Detener"; ui.btnReset.className = "btn-tri btn-stop"; ui.btnReset.disabled = false;
-            ui.btnLap.disabled = false; ui.debug.textContent = "EN MARCHA"; ui.debug.style.color = "var(--primary)";
-            
+            updateButtons();
             timerInterval = setInterval(updateTimerDisplay, 30);
             resetAutoPauseTimer();
             enableWakeLock();
+            ui.debug.textContent = "EN MARCHA"; ui.debug.style.color = "var(--primary)";
         }
         function stopSystem() {
             state.status = 'STOPPED'; pauseTimerLogic();
-            
-            ui.btnStart.disabled = false;
-            ui.btnStart.textContent = "▶ Continuar"; ui.btnStart.className = "btn-tri btn-main";
-            
-            ui.btnReset.textContent = "❌ Reset"; ui.btnReset.className = "btn-tri btn-reset";
-            ui.btnLap.disabled = true; ui.debug.textContent = "PAUSADO MANUAL"; ui.debug.style.color = "#888";
+            updateButtons();
             stopSensors();
             disableWakeLock();
+            ui.debug.textContent = "PAUSADO MANUAL"; ui.debug.style.color = "#888";
         }
         function pauseSystemAuto() {
             state.status = 'AUTO_PAUSED'; pauseTimerLogic();
             state.autoPauseCount++;
             ui.timerMain.classList.add('paused');
-            
-            ui.btnStart.disabled = false;
-            ui.btnStart.textContent = "▶ Reanudar"; ui.btnStart.className = "btn-tri btn-main";
-            
-            ui.btnReset.textContent = "❌ Reset"; ui.btnReset.className = "btn-tri btn-reset";
-            ui.btnLap.disabled = true; ui.debug.textContent = "⏸ PAUSADO (Descansando)";
-            ui.debug.style.color = "var(--text-secondary)";
+            updateButtons(); // Muestra boton Reanudar
             disableWakeLock();
+            ui.debug.textContent = "⏸ PAUSADO (Descansando)";
+            ui.debug.style.color = "var(--text-secondary)";
         }
         function resumeSystem() { startRunning(); }
         function pauseTimerLogic() {
@@ -610,14 +628,8 @@
             
             ui.timerMain.classList.remove('paused'); ui.spmBox.classList.add('hidden');
             ui.timerLap.textContent = "Vuelta: --:--";
-            
-            ui.btnStart.textContent = "▶ Iniciar"; ui.btnStart.className = "btn-tri btn-main"; ui.btnStart.disabled = false;
-            ui.btnReset.textContent = "❌ Reset"; ui.btnReset.className = "btn-tri btn-reset";
-            ui.btnLap.disabled = true;
-            
             ui.debug.textContent = "Listo para iniciar"; ui.debug.style.color = "var(--text-secondary)";
             updateTimerDisplay(); updateStats(); clearProjections();
-            disableWakeLock();
         }
         function startSensorsOnly() {
             if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
@@ -760,9 +772,10 @@
             }
         }
         function resetSystemUI() {
-            state.status = 'IDLE'; ui.btnStart.textContent = "▶ Iniciar"; ui.btnStart.className = "btn-tri btn-main";
-            ui.btnReset.textContent = "❌ Reset"; ui.btnReset.className = "btn-tri btn-reset";
-            ui.btnStart.disabled = false;
+            state.status = 'IDLE'; 
+            ui.btnRight.textContent = "▶ Iniciar";
+            ui.btnRight.classList.add('btn-main');
+            ui.btnLeft.style.display = "none";
             ui.debug.textContent = "Cancelado"; ui.debug.style.color = "var(--text-secondary)";
             stopSensors();
         }
