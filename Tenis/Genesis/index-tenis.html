@@ -3,219 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tennis Stats Pro - Tablet Optimized</title>
+    <title>Tennis Stats Pro - Shot Tracker</title>
     <style>
         :root {
             --col-E: #1b5e20; --col-V: #2e7d32; --col-B: #66bb6a;
             --col-draw: #78909c; --col-M: #ef6c00; --col-X: #c62828;
             --court-blue: #2c3e50; --tennis-yellow: #dff115;
-            --bg-p1: #e3f2fd; --bg-p2: #fff9c4;
         }
         * { box-sizing: border-box; touch-action: manipulation; }
         body { 
-            margin: 0; padding: 4px; font-family: sans-serif; 
+            margin: 0; padding: 0; font-family: sans-serif; 
             background: #f0f3f5; height: 100vh; 
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
-        /* Marcador más compacto para Tablet */
-        .scoreboard { display: grid; grid-template-columns: 1fr 1fr; background: var(--court-blue); border-radius: 8px; }
-        .player-zone { padding: 4px; text-align: center; border-bottom: 4px solid transparent; }
-        .serving-now { border-bottom-color: var(--tennis-yellow); background: rgba(255,255,255,0.2) !important; }
-        .pts-big { font-size: 2.8rem; font-weight: 900; color: var(--tennis-yellow); margin: 0; line-height: 1; }
-        .player-name { background: rgba(0,0,0,0.3); color: white; border: 1px solid rgba(255,255,255,0.3); font-weight: bold; text-align: center; font-size: 0.8rem; padding: 2px; border-radius: 4px; width: 90%; }
-        .set-game-info { font-size: 0.75rem; color: white; margin-top: 2px; }
+        /* CABECERA ULTRA COMPACTA */
+        .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; z-index: 10; border-bottom: 2px solid #444; }
+        .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+        .p-box { text-align: center; padding: 2px 4px; border-bottom: 3px solid transparent; }
+        .serving-now { background: rgba(255,255,255,0.1); border-bottom-color: var(--tennis-yellow); }
+        .pts { font-size: 2.2rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 2px 0; }
+        .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 100%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        
+        .line-info { font-size: 0.65rem; color: #fff; display: flex; justify-content: center; gap: 8px; font-family: monospace; opacity: 0.9; }
+        .srv-highlight { color: var(--tennis-yellow); font-weight: bold; }
 
-        /* Controles de Deshacer/Reset */
-        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 4px 0; }
-        .btn-ctrl { padding: 8px; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 0.75rem; }
+        /* TABLA TENDENCIAS */
+        .trend-table { width: 100%; background: #fff; border-collapse: collapse; font-size: 0.55rem; color: #333; }
+        .trend-table td { border: 1px solid #eee; padding: 2px; text-align: center; font-weight: bold; }
+        .row-label { background: #f5f5f5; width: 20%; color: #888; }
 
-        /* Área de Tendencias - Ahora se encoge dinámicamente */
-        .tendency-box { 
-            background: white; padding: 4px; border-radius: 8px; border: 1px solid #ddd; 
-            flex: 1; display: flex; flex-direction: column; min-height: 0; 
-        }
-        .stream { 
-            flex: 1; display: flex; align-items: flex-end; gap: 4px; 
-            overflow-x: auto; padding: 5px; border-bottom: 1px solid #eee; 
-        }
-        .dot { 
-            width: 24px; height: 22px; border-radius: 3px; display: flex; 
-            align-items: center; justify-content: center; color: white; 
-            font-size: 0.65rem; font-weight: bold; flex-shrink: 0; 
-        }
+        /* AREA CENTRAL SCROLLABLE */
+        .main-scroll { flex: 1; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
+        .stream-container { background: white; border-radius: 4px; padding: 2px; border: 1px solid #ddd; }
+        .stream { height: 60px; display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 4px; }
+        .dot { width: 20px; height: 18px; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.55rem; font-weight: bold; flex-shrink: 0; }
 
-        /* Resumen de ocurrencias */
-        .stats-summary { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin: 4px 0; }
-        .player-card { padding: 4px; border-radius: 6px; border: 1px solid #ccc; background: white; }
-        .player-counters { display: flex; justify-content: space-around; gap: 1px; }
-        .counter-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
-        .c-val { color: #2c3e50; font-size: 0.8rem; font-weight: 900; }
-        .c-tag { font-size: 0.55rem; color: #fff; padding: 1px 0; border-radius: 2px; width: 95%; text-align: center; font-weight: bold; }
+        .counters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+        .player-card { background: white; padding: 3px; border-radius: 4px; border: 1px solid #ccc; }
+        .c-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
+        .c-val { font-size: 0.75rem; font-weight: 900; }
+        .c-tag { font-size: 0.45rem; color: #fff; width: 95%; text-align: center; border-radius: 1px; }
 
-        /* Selector de Análisis Fijo Abajo */
-        .analysis-selector { 
-            display: grid; grid-template-columns: repeat(6, 1fr); 
-            gap: 2px; background: var(--court-blue); padding: 4px; border-radius: 6px; 
-        }
-        .sel-btn { 
-            background: #455a64; color: white; border: none; 
-            padding: 8px 0; border-radius: 4px; font-weight: bold; font-size: 0.6rem; 
-        }
+        /* PIE FIJO */
+        .footer-fixed { background: var(--court-blue); padding: 4px; flex-shrink: 0; }
+        .analysis-selector { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
+        .sel-btn { background: #455a64; color: white; border: none; padding: 12px 0; border-radius: 4px; font-size: 0.5rem; font-weight: bold; }
         .sel-btn.active { background: var(--tennis-yellow); color: #2c3e50; }
+        .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
+        .btn-act { padding: 6px; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 0.65rem; }
 
-        /* Ajustes de alturas de bolas */
-        .h-5 { margin-bottom: 40px; } .h-4 { margin-bottom: 30px; } .h-3 { margin-bottom: 20px; } 
-        .h-2 { margin-bottom: 10px; } .h-1 { margin-bottom: 0px; }
+        .h-5 { margin-bottom: 35px; } .h-4 { margin-bottom: 25px; } .h-3 { margin-bottom: 15px; } .h-2 { margin-bottom: 5px; } .h-1 { margin-bottom: 0px; }
     </style>
 </head>
 <body>
 
-<div class="scoreboard">
-    <div id="zone1" class="player-zone serving-now" onclick="handleZoneClick(1, event)" style="background:rgba(33, 150, 243, 0.15)">
-        <input type="text" id="name1" class="player-name" value="JUGADOR 1" oninput="updateNames()">
-        <div id="pts1" class="pts-big">0</div>
-        <div class="set-game-info">S:<span id="s1">0</span> G:<span id="g1">0</span></div>
+<div class="header-fixed">
+    <div class="score-row">
+        <div id="zone1" class="p-box serving-now" onclick="addPoint(1)">
+            <input type="text" id="name1" class="p-name" value="JUGADOR 1" oninput="updateNames()">
+            <div id="pts1" class="pts">0</div>
+            <div class="line-info">
+                <span>S:<b id="s1">0</b> G:<b id="g1">0</b></span>
+                <span class="srv-highlight"><span id="sw1">0</span>W / <span id="sl1">0</span>L</span>
+            </div>
+        </div>
+        <div id="zone2" class="p-box" onclick="addPoint(2)">
+            <input type="text" id="name2" class="p-name" value="JUGADOR 2" oninput="updateNames()">
+            <div id="pts2" class="pts">0</div>
+            <div class="line-info">
+                <span>S:<b id="s2">0</b> G:<b id="g2">0</b></span>
+                <span class="srv-highlight"><span id="sw2">0</span>W / <span id="sl2">0</span>L</span>
+            </div>
+        </div>
     </div>
-    <div id="zone2" class="player-zone" onclick="handleZoneClick(2, event)" style="background:rgba(255, 235, 59, 0.15)">
-        <input type="text" id="name2" class="player-name" value="JUGADOR 2" oninput="updateNames()">
-        <div id="pts2" class="pts-big">0</div>
-        <div class="set-game-info">S:<span id="s2">0</span> G:<span id="g2">0</span></div>
+    <table class="trend-table">
+        <tr><td id="p1-b1" style="width:40%">-</td><td class="row-label">1°B</td><td id="p2-b1" style="width:40%">-</td></tr>
+        <tr><td id="p1-b2">-</td><td class="row-label">2°B</td><td id="p2-b2">-</td></tr>
+        <tr><td id="p1-b3">-</td><td class="row-label">3°B</td><td id="p2-b3">-</td></tr>
+        <tr><td id="p1-b4">-</td><td class="row-label">4°B</td><td id="p2-b4">-</td></tr>
+    </table>
+</div>
+
+<div class="main-scroll">
+    <div class="stream-container" style="background:#e3f2fd"><div id="stream1" class="stream"></div></div>
+    <div class="stream-container" style="background:#fff9c4"><div id="stream2" class="stream"></div></div>
+    
+    <div class="counters-grid">
+        <div class="player-card"><div id="p1-counts" style="display:flex; gap:1px"></div></div>
+        <div class="player-card"><div id="p2-counts" style="display:flex; gap:1px"></div></div>
     </div>
 </div>
 
-<div class="controls">
-    <button class="btn-ctrl" style="background:#e74c3c" onclick="undo()">⬅ Deshacer</button>
-    <button class="btn-ctrl" style="background:#7f8c8d" onclick="if(confirm('¿Reiniciar?')) location.reload()">Reset</button>
-</div>
-
-<div class="tendency-box">
-    <div id="stream1" class="stream" style="background:var(--bg-p1)"></div>
-    <div id="stream2" class="stream" style="background:var(--bg-p2)"></div>
-</div>
-
-<div class="stats-summary">
-    <div class="player-card"><div id="card-n1" style="font-size:0.6rem; font-weight:bold; text-align:center;">J1</div><div class="player-counters" id="p1-counts"></div></div>
-    <div class="player-card"><div id="card-n2" style="font-size:0.6rem; font-weight:bold; text-align:center;">J2</div><div class="player-counters" id="p2-counts"></div></div>
-</div>
-
-<div class="analysis-selector">
-    <button class="sel-btn active" onclick="setView('G')">GAME</button>
-    <button class="sel-btn" onclick="setView('I')">IGUAL</button>
-    <button class="sel-btn" onclick="setView(1)">1°B</button>
-    <button class="sel-btn" onclick="setView(2)">2°B</button>
-    <button class="sel-btn" onclick="setView(3)">3°B</button>
-    <button class="sel-btn" onclick="setView(4)">4°B</button>
+<div class="footer-fixed">
+    <div class="analysis-selector">
+        <button class="sel-btn active" onclick="setView('G')">GAME</button>
+        <button class="sel-btn" onclick="setView('I')">IGUAL</button>
+        <button class="sel-btn" onclick="setView(1)">1°B</button>
+        <button class="sel-btn" onclick="setView(2)">2°B</button>
+        <button class="sel-btn" onclick="setView(3)">3°B</button>
+        <button class="sel-btn" onclick="setView(4)">4°B</button>
+    </div>
+    <div class="action-btns">
+        <button class="btn-act" style="background:#e74c3c" onclick="undo()">⬅ DESHACER</button>
+        <button class="btn-act" style="background:#7f8c8d" onclick="if(confirm('¿Reiniciar?')) location.reload()">RESET</button>
+    </div>
 </div>
 
 <script>
     let p1=0, p2=0, g1=0, g2=0, s1=0, s2=0, server=1, isTB=false;
+    let srvPoints = { 1: {w:0, l:0}, 2: {w:0, l:0} }; // W: Ganados al saque, L: Perdidos al saque
     let currentView = 'G';
     let history = [], stats = { 1: [], 2: [] }, tempBallLog = { 1: {}, 2: {} }, currentDeuces = { 15: false, 30: false, 40: false };
-    const COL = { E: 'var(--col-E)', V: 'var(--col-V)', B: 'var(--col-B)', D: 'var(--col-draw)', M: 'var(--col-M)', X: 'var(--col-X)' };
+    const COL = { E: '#1b5e20', V: '#2e7d32', B: '#66bb6a', D: '#78909c', M: '#ef6c00', X: '#c62828' };
 
-    function handleZoneClick(p, e) { if (e.target.tagName !== 'INPUT') addPoint(p); }
-    function updateNames() {
-        document.getElementById('card-n1').innerText = document.getElementById('name1').value.substring(0,10);
-        document.getElementById('card-n2').innerText = document.getElementById('name2').value.substring(0,10);
-    }
-    function setView(v) {
-        currentView = v;
-        document.querySelectorAll('.sel-btn').forEach(btn => {
-            const label = v === 'G' ? 'GAME' : (v === 'I' ? 'IGUAL' : v + '°B');
-            btn.classList.toggle('active', btn.innerText === label);
-        });
-        renderStreams();
-    }
+    function updateNames() {}
+
     function addPoint(w) {
-        history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, currentDeuces}));
+        history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, currentDeuces, srvPoints}));
+        
+        // Lógica de puntos al saque (Punto por Punto)
+        if (w === server) srvPoints[server].w++; else srvPoints[server].l++;
+
         if (!isTB) {
-            let nP1 = (w===1)?p1+1:p1; let nP2 = (w===2)?p2+1:p2;
-            if (nP1 === 1 && nP2 === 1) currentDeuces[15] = true;
-            if (nP1 === 2 && nP2 === 2) currentDeuces[30] = true;
-            if (nP1 === 3 && nP2 === 3) currentDeuces[40] = true;
+            let nP1=(w===1)?p1+1:p1, nP2=(w===2)?p2+1:p2;
+            if (nP1===1 && nP2===1) currentDeuces[15]=true;
+            if (nP1===2 && nP2===2) currentDeuces[30]=true;
+            if (nP1===3 && nP2===3) currentDeuces[40]=true;
+            
+            let sP=(server===1)?p1:p2, rP=(server===1)?p2:p1;
+            if ((sP+rP)<4) {
+                let bNum=(sP+rP)+1;
+                tempBallLog[server][bNum] = calcBallData(bNum, (w===server?sP+1:sP), (w===server?rP:rP+1));
+            }
         }
-        let sP = (server === 1) ? p1 : p2;
-        let rP = (server === 1) ? p2 : p1;
-        if (!isTB && (sP + rP) < 4) {
-            let bNum = (sP + rP) + 1;
-            tempBallLog[server][bNum] = calcBallData(bNum, (w === server ? sP+1 : sP), (w === server ? rP : rP+1));
+
+        if(isTB) { 
+            w===1?p1++:p2++; 
+            if((p1>=7||p2>=7)&&Math.abs(p1-p2)>=2) finishGame(w); 
+        } else { 
+            w===1?(p1===3&&p2===4?p2=3:p1++):(p2===3&&p1===4?p1=3:p2++);
+            if((p1>=4||p2>=4)&&Math.abs(p1-p2)>=2) finishGame(w); 
         }
-        if(isTB) { w === 1 ? p1++ : p2++; if((p1 >= 7 || p2 >= 7) && Math.abs(p1 - p2) >= 2) finishGame(w); } 
-        else { w === 1 ? (p1===3 && p2===4 ? p2=3 : p1++) : (p2===3 && p1===4 ? p1=3 : p2++); if((p1 >= 4 || p2 >= 4) && Math.abs(p1 - p2) >= 2) finishGame(w); }
         updateUI();
     }
+
     function calcBallData(b, s, r) {
-        const labels = ["0", "15", "30", "40", "G"];
-        let txt = labels[s] || "G";
-        if (s > r) return (r === 0) ? {txt:txt, c:COL.E, h:'h-5'} : {txt:txt, c:COL.V, h:'h-4'};
-        if (s === r) return {txt:txt, c:COL.D, h:'h-3'};
-        if (r > s) return (r - s === 1) ? {txt:txt, c:COL.M, h:'h-2'} : {txt:txt, c:COL.X, h:'h-1'};
+        const labels=["0","15","30","40","G"]; let txt=labels[s]||"G";
+        if(s>r) return (r===0)?{txt,c:COL.E,h:'h-5'}:{txt,c:COL.V,h:'h-4'};
+        if(s===r) return {txt,c:COL.D,h:'h-3'};
+        return (r-s===1)?{txt,c:COL.M,h:'h-2'}:{txt,c:COL.X,h:'h-1'};
     }
+
     function finishGame(w) {
-        let srv = server;
-        let sP = (srv === 1) ? p1 : p2, rP = (srv === 1) ? p2 : p1;
-        let gRes = (w === srv) ? (rP === 0 ? {txt:'E', c:COL.E, h:'h-5'} : (rP === 1 ? {txt:'V', c:COL.V, h:'h-4'} : {txt:'B', c:COL.B, h:'h-3'}))
-                               : (sP >= 2 ? {txt:'M', c:COL.M, h:'h-2'} : {txt:'X', c:COL.X, h:'h-1'});
-        stats[srv].push({ type: 'G', data: gRes });
-        stats[srv].push({ type: 'I', data: { tower: {...currentDeuces}, none: !(currentDeuces[15] || currentDeuces[30] || currentDeuces[40]) } });
-        for(let i=1; i<=4; i++) if(tempBallLog[srv][i]) stats[srv].push({ type: i, data: tempBallLog[srv][i] });
-        tempBallLog = {1:{}, 2:{}}; currentDeuces = {15:false, 30:false, 40:false};
+        let srv=server, sP=(srv===1)?p1:p2, rP=(srv===1)?p2:p1;
+        let gRes=(w===srv)?(rP===0?{txt:'E',c:COL.E,h:'h-5'}:(rP===1?{txt:'V',c:COL.V,h:'h-4'}:{txt:'B',c:COL.B,h:'h-3'}))
+                         :(sP>=2?{txt:'M',c:COL.M,h:'h-2'}:{txt:'X',c:COL.X,h:'h-1'});
+        
+        stats[srv].push({type:'G',data:gRes});
+        stats[srv].push({type:'I',data:{tower:{...currentDeuces},none:!(currentDeuces[15]||currentDeuces[30]||currentDeuces[40])}});
+        for(let i=1;i<=4;i++) if(tempBallLog[srv][i]) stats[srv].push({type:i,data:tempBallLog[srv][i]});
+        
+        tempBallLog={1:{},2:{}}; currentDeuces={15:false,30:false,40:false};
         p1=0; p2=0; w===1?g1++:g2++;
-        if (isTB) { w===1?s1++:s2++; g1=0; g2=0; isTB=false; }
-        else if (g1 >= 6 && g1-g2 >= 2 || g2 >= 6 && g2-g1 >= 2) { w===1?s1++:s2++; g1=0; g2=0; }
-        else if (g1 === 6 && g2 === 6) isTB = true;
-        server = (server === 1) ? 2 : 1;
+        if(isTB){ w===1?s1++:s2++; g1=0; g2=0; isTB=false; }
+        else if(g1>=6&&g1-g2>=2 || g2>=6&&g2-g1>=2){ w===1?s1++:s2++; g1=0; g2=0; }
+        else if(g1===6&&g2===6) isTB=true;
+        server=(server===1)?2:1;
         renderStreams();
     }
+
     function renderStreams() {
-        [1, 2].forEach(p => {
-            const el = document.getElementById('stream' + p); el.innerHTML = '';
-            const filtered = stats[p].filter(s => s.type === currentView);
-            const counts = {};
-            filtered.forEach(entry => {
-                if (currentView === 'I') {
-                    let html = '<div class="deuce-stack">';
-                    if (entry.data.none) { html += `<div class="dot" style="background:var(--col-draw)">-</div>`; counts['-']=(counts['-']||0)+1; }
-                    else {
-                        if (entry.data.tower[15]) { html += `<div class="dot" style="background:${COL.D}">15</div>`; counts['15']=(counts['15']||0)+1; }
-                        if (entry.data.tower[30]) { html += `<div class="dot" style="background:${COL.D}">30</div>`; counts['30']=(counts['30']||0)+1; }
-                        if (entry.data.tower[40]) { html += `<div class="dot" style="background:${COL.D}">40</div>`; counts['40']=(counts['40']||0)+1; }
-                    }
-                    el.innerHTML += html + '</div>';
-                } else {
-                    el.innerHTML += `<div class="dot ${entry.data.h}" style="background:${entry.data.c}">${entry.data.txt}</div>`;
-                    counts[entry.data.txt] = (counts[entry.data.txt] || 0) + 1;
-                }
+        [1,2].forEach(p => {
+            const el=document.getElementById('stream'+p); el.innerHTML='';
+            const filtered=stats[p].filter(s=>s.type===currentView); const counts={};
+            filtered.forEach(e => {
+                if(currentView==='I'){
+                    let h='<div style="display:flex;flex-direction:column-reverse;gap:1px;min-width:20px">';
+                    if(e.data.none){ h+=`<div class="dot" style="background:${COL.D}">-</div>`; counts['-']=(counts['-']||0)+1; }
+                    else { ['15','30','40'].forEach(v => { if(e.data.tower[v]){ h+=`<div class="dot" style="background:${COL.D}">${v}</div>`; counts[v]=(counts[v]||0)+1; }}); }
+                    el.innerHTML += h+'</div>';
+                } else { el.innerHTML+=`<div class="dot ${e.data.h}" style="background:${e.data.c}">${e.data.txt}</div>`; counts[e.data.txt]=(counts[e.data.txt]||0)+1; }
             });
-            el.scrollLeft = el.scrollWidth;
-            const cEl = document.getElementById(`p${p}-counts`); cEl.innerHTML = '';
-            let labels = (currentView==='G')?['E','V','B','M','X']:(currentView==='I'?['40','30','15','-']:(currentView===4?['G','40','30','15','0']:['40','30','15','0']));
-            labels.forEach(l => {
-                let color = COL.D;
-                if(currentView === 'G') color = COL[l];
-                else if(currentView !== 'I') {
+            el.scrollLeft=el.scrollWidth;
+            
+            const cEl=document.getElementById(`p${p}-counts`); cEl.innerHTML='';
+            let lbls=(currentView==='G')?['E','V','B','M','X']:(currentView==='I'?['40','30','15','-']:(currentView===4?['G','40','30','15','0']:['40','30','15','0']));
+            lbls.forEach(l => {
+                let color=COL.D;
+                if(currentView==='G') color=COL[l];
+                else if(currentView!=='I'){
                     if(l==='G'||(l==='40'&&currentView!==4)||(l==='30'&&currentView<3)||(l==='15'&&currentView===1)) color=COL.E;
                     else if((l==='40'&&currentView===4)||(l==='30'&&currentView===3)) color=COL.V;
                     else if((l==='30'&&currentView===4)||(l==='15'&&currentView===2)) color=COL.D;
                     else if(l==='15'&&currentView>=3) color=COL.M;
                     else if(l==='0') color=COL.X;
                 }
-                cEl.innerHTML += `<div class="counter-item"><span class="c-val">${counts[l] || 0}</span><span class="c-tag" style="background:${color}">${l}</span></div>`;
+                cEl.innerHTML += `<div class="c-item"><span class="c-val">${counts[l]||0}</span><span class="c-tag" style="background:${color}">${l}</span></div>`;
             });
+        });
+
+        [1, 2].forEach(p => {
+            for (let b = 1; b <= 4; b++) {
+                const bStats = stats[p].filter(s => s.type === b); const counts = {};
+                bStats.forEach(s => counts[s.data.txt] = (counts[s.data.txt] || 0) + 1);
+                let maxVal = 0, dominant = "-", dominantColor = "#ccc", ties = false;
+                for (let k in counts) { if (counts[k] > maxVal) { maxVal = counts[k]; dominant = k; ties = false; dominantColor = bStats.find(s=>s.data.txt===k).data.c; } else if (counts[k] === maxVal && maxVal > 0) ties = true; }
+                const cell = document.getElementById(`p${p}-b${b}`);
+                if (ties || maxVal === 0) { cell.innerText = "-"; cell.style.color = "#ccc"; }
+                else {
+                    let dTxt = "";
+                    if(b===1) dTxt = (dominant==='15') ? "15-0" : "0-15";
+                    else if(b===2) dTxt = (dominant==='30') ? "30-0" : (dominant==='15' ? "15-15" : "0-30");
+                    else if(b===3) dTxt = (dominant==='40') ? "40-0" : (dominant==='30' ? "30-15" : (dominant==='15'?"15-30":"0-40"));
+                    else if(b===4) dTxt = (dominant==='G') ? "GAME" : (dominant==='40' ? "40-15" : (dominant==='30'?"30-30":"15-40"));
+                    cell.innerText = `${dTxt} (${maxVal})`; cell.style.color = dominantColor;
+                }
+            }
         });
         updateUI();
     }
-    function undo() { if(history.length === 0) return; const s = JSON.parse(history.pop()); p1=s.p1; p2=s.p2; g1=s.g1; g2=s.g2; s1=s.s1; s2=s.s2; server=s.server; isTB=s.isTB; stats=s.stats; tempBallLog=s.tempBallLog; currentDeuces=s.currentDeuces; updateUI(); renderStreams(); }
-    function updateUI() {
-        const lb = ["0", "15", "30", "40", "AD"];
-        document.getElementById('pts1').innerText = isTB ? p1 : (lb[p1] || "0");
-        document.getElementById('pts2').innerText = isTB ? p2 : (lb[p2] || "0");
-        document.getElementById('g1').innerText = g1; document.getElementById('g2').innerText = g2;
-        document.getElementById('s1').innerText = s1; document.getElementById('s2').innerText = s2;
-        document.getElementById('zone1').className = "player-zone " + (server === 1 ? "serving-now" : "");
-        document.getElementById('zone2').className = "player-zone " + (server === 2 ? "serving-now" : "");
-        updateNames();
+
+    function setView(v) { currentView = v; document.querySelectorAll('.sel-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(v==='G'?'GAME':(v==='I'?'IGUAL':v+'°B')))); renderStreams(); }
+
+    function undo(){ if(history.length===0) return; const s=JSON.parse(history.pop()); p1=s.p1; p2=s.p2; g1=s.g1; g2=s.g2; s1=s.s1; s2=s.s2; server=s.server; isTB=s.isTB; stats=s.stats; tempBallLog=s.tempBallLog; currentDeuces=s.currentDeuces; srvPoints=s.srvPoints; updateUI(); renderStreams(); }
+
+    function updateUI(){
+        const lb=["0","15","30","40","AD"]; 
+        document.getElementById('pts1').innerText=isTB?p1:(lb[p1]||"0"); document.getElementById('pts2').innerText=isTB?p2:(lb[p2]||"0");
+        document.getElementById('g1').innerText=g1; document.getElementById('g2').innerText=g2;
+        document.getElementById('s1').innerText=s1; document.getElementById('s2').innerText=s2;
+        document.getElementById('sw1').innerText=srvPoints[1].w; document.getElementById('sl1').innerText=srvPoints[1].l;
+        document.getElementById('sw2').innerText=srvPoints[2].w; document.getElementById('sl2').innerText=srvPoints[2].l;
+        document.getElementById('zone1').className="p-box "+(server===1?"serving-now":""); document.getElementById('zone2').className="p-box "+(server===2?"serving-now":"");
     }
     renderStreams();
 </script>
