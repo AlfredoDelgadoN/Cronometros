@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tennis Stats Pro - Shot Tracker</title>
+    <title>Tennis Stats Pro - Fullscreen Mode</title>
     <style>
         :root {
             --col-E: #1b5e20; --col-V: #2e7d32; --col-B: #66bb6a;
@@ -17,13 +17,22 @@
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
+        /* BOTÓN PANTALLA COMPLETA DISCRETO */
+        .fullscreen-btn {
+            position: absolute; top: 5px; right: 5px;
+            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+            color: white; border-radius: 4px; padding: 5px;
+            z-index: 100; cursor: pointer; font-size: 0.8rem;
+            display: flex; align-items: center; justify-content: center;
+        }
+
         /* CABECERA ULTRA COMPACTA */
-        .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; z-index: 10; border-bottom: 2px solid #444; }
+        .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; z-index: 10; border-bottom: 2px solid #444; position: relative; }
         .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
         .p-box { text-align: center; padding: 2px 4px; border-bottom: 3px solid transparent; }
         .serving-now { background: rgba(255,255,255,0.1); border-bottom-color: var(--tennis-yellow); }
         .pts { font-size: 2.2rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 2px 0; }
-        .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 100%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 85%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
         
         .line-info { font-size: 0.65rem; color: #fff; display: flex; justify-content: center; gap: 8px; font-family: monospace; opacity: 0.9; }
         .srv-highlight { color: var(--tennis-yellow); font-weight: bold; }
@@ -59,21 +68,27 @@
 <body>
 
 <div class="header-fixed">
+    <div class="fullscreen-btn" onclick="toggleFullscreen()" title="Pantalla Completa">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+            <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
+        </svg>
+    </div>
+
     <div class="score-row">
         <div id="zone1" class="p-box serving-now" onclick="addPoint(1)">
-            <input type="text" id="name1" class="p-name" value="JUGADOR 1" oninput="updateNames()">
+            <input type="text" id="name1" class="p-name" value="JUGADOR 1">
             <div id="pts1" class="pts">0</div>
             <div class="line-info">
                 <span>S:<b id="s1">0</b> G:<b id="g1">0</b></span>
-                <span class="srv-highlight"><span id="sw1">0</span>W / <span id="sl1">0</span>L</span>
+                <span class="srv-highlight"><span id="sw1">0</span>W/<span id="sl1">0</span>L</span>
             </div>
         </div>
         <div id="zone2" class="p-box" onclick="addPoint(2)">
-            <input type="text" id="name2" class="p-name" value="JUGADOR 2" oninput="updateNames()">
+            <input type="text" id="name2" class="p-name" value="JUGADOR 2">
             <div id="pts2" class="pts">0</div>
             <div class="line-info">
                 <span>S:<b id="s2">0</b> G:<b id="g2">0</b></span>
-                <span class="srv-highlight"><span id="sw2">0</span>W / <span id="sl2">0</span>L</span>
+                <span class="srv-highlight"><span id="sw2">0</span>W/<span id="sl2">0</span>L</span>
             </div>
         </div>
     </div>
@@ -112,39 +127,38 @@
 
 <script>
     let p1=0, p2=0, g1=0, g2=0, s1=0, s2=0, server=1, isTB=false;
-    let srvPoints = { 1: {w:0, l:0}, 2: {w:0, l:0} }; // W: Ganados al saque, L: Perdidos al saque
+    let srvPoints = { 1: {w:0, l:0}, 2: {w:0, l:0} };
     let currentView = 'G';
     let history = [], stats = { 1: [], 2: [] }, tempBallLog = { 1: {}, 2: {} }, currentDeuces = { 15: false, 30: false, 40: false };
     const COL = { E: '#1b5e20', V: '#2e7d32', B: '#66bb6a', D: '#78909c', M: '#ef6c00', X: '#c62828' };
 
-    function updateNames() {}
+    // FUNCIÓN PANTALLA COMPLETA
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch(err => {
+                alert(`Error: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    }
 
     function addPoint(w) {
         history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, currentDeuces, srvPoints}));
-        
-        // Lógica de puntos al saque (Punto por Punto)
         if (w === server) srvPoints[server].w++; else srvPoints[server].l++;
-
         if (!isTB) {
             let nP1=(w===1)?p1+1:p1, nP2=(w===2)?p2+1:p2;
             if (nP1===1 && nP2===1) currentDeuces[15]=true;
             if (nP1===2 && nP2===2) currentDeuces[30]=true;
             if (nP1===3 && nP2===3) currentDeuces[40]=true;
-            
             let sP=(server===1)?p1:p2, rP=(server===1)?p2:p1;
             if ((sP+rP)<4) {
                 let bNum=(sP+rP)+1;
                 tempBallLog[server][bNum] = calcBallData(bNum, (w===server?sP+1:sP), (w===server?rP:rP+1));
             }
         }
-
-        if(isTB) { 
-            w===1?p1++:p2++; 
-            if((p1>=7||p2>=7)&&Math.abs(p1-p2)>=2) finishGame(w); 
-        } else { 
-            w===1?(p1===3&&p2===4?p2=3:p1++):(p2===3&&p1===4?p1=3:p2++);
-            if((p1>=4||p2>=4)&&Math.abs(p1-p2)>=2) finishGame(w); 
-        }
+        if(isTB) { w===1?p1++:p2++; if((p1>=7||p2>=7)&&Math.abs(p1-p2)>=2) finishGame(w); } 
+        else { w===1?(p1===3&&p2===4?p2=3:p1++):(p2===3&&p1===4?p1=3:p2++); if((p1>=4||p2>=4)&&Math.abs(p1-p2)>=2) finishGame(w); }
         updateUI();
     }
 
@@ -156,14 +170,10 @@
     }
 
     function finishGame(w) {
-        let srv=server, sP=(srv===1)?p1:p2, rP=(srv===1)?p2:p1;
-        let gRes=(w===srv)?(rP===0?{txt:'E',c:COL.E,h:'h-5'}:(rP===1?{txt:'V',c:COL.V,h:'h-4'}:{txt:'B',c:COL.B,h:'h-3'}))
-                         :(sP>=2?{txt:'M',c:COL.M,h:'h-2'}:{txt:'X',c:COL.X,h:'h-1'});
-        
-        stats[srv].push({type:'G',data:gRes});
+        let srv=server;
+        stats[srv].push({type:'G',data:(w===srv)?(p2===0?{txt:'E',c:COL.E,h:'h-5'}:(p2===1?{txt:'V',c:COL.V,h:'h-4'}:{txt:'B',c:COL.B,h:'h-3'})):(p1>=2?{txt:'M',c:COL.M,h:'h-2'}:{txt:'X',c:COL.X,h:'h-1'})});
         stats[srv].push({type:'I',data:{tower:{...currentDeuces},none:!(currentDeuces[15]||currentDeuces[30]||currentDeuces[40])}});
         for(let i=1;i<=4;i++) if(tempBallLog[srv][i]) stats[srv].push({type:i,data:tempBallLog[srv][i]});
-        
         tempBallLog={1:{},2:{}}; currentDeuces={15:false,30:false,40:false};
         p1=0; p2=0; w===1?g1++:g2++;
         if(isTB){ w===1?s1++:s2++; g1=0; g2=0; isTB=false; }
@@ -186,12 +196,11 @@
                 } else { el.innerHTML+=`<div class="dot ${e.data.h}" style="background:${e.data.c}">${e.data.txt}</div>`; counts[e.data.txt]=(counts[e.data.txt]||0)+1; }
             });
             el.scrollLeft=el.scrollWidth;
-            
             const cEl=document.getElementById(`p${p}-counts`); cEl.innerHTML='';
             let lbls=(currentView==='G')?['E','V','B','M','X']:(currentView==='I'?['40','30','15','-']:(currentView===4?['G','40','30','15','0']:['40','30','15','0']));
             lbls.forEach(l => {
                 let color=COL.D;
-                if(currentView==='G') color=COL[l];
+                if(currentView==='G') color=COL[l] || COL.D;
                 else if(currentView!=='I'){
                     if(l==='G'||(l==='40'&&currentView!==4)||(l==='30'&&currentView<3)||(l==='15'&&currentView===1)) color=COL.E;
                     else if((l==='40'&&currentView===4)||(l==='30'&&currentView===3)) color=COL.V;
