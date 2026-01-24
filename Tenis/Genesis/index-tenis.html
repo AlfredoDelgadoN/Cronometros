@@ -3,12 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tennis Stats Pro - Fullscreen Mode</title>
+    <title>Tennis Stats Pro - Choke Tracker</title>
     <style>
         :root {
             --col-E: #1b5e20; --col-V: #2e7d32; --col-B: #66bb6a;
             --col-draw: #78909c; --col-M: #ef6c00; --col-X: #c62828;
             --court-blue: #2c3e50; --tennis-yellow: #dff115;
+            --col-choke: #ff1744;
         }
         * { box-sizing: border-box; touch-action: manipulation; }
         body { 
@@ -17,7 +18,6 @@
             display: flex; flex-direction: column; overflow: hidden; 
         }
         
-        /* BOTÓN PANTALLA COMPLETA DISCRETO */
         .fullscreen-btn {
             position: absolute; top: 5px; right: 5px;
             background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
@@ -26,23 +26,21 @@
             display: flex; align-items: center; justify-content: center;
         }
 
-        /* CABECERA ULTRA COMPACTA */
         .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; z-index: 10; border-bottom: 2px solid #444; position: relative; }
         .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
         .p-box { text-align: center; padding: 2px 4px; border-bottom: 3px solid transparent; }
         .serving-now { background: rgba(255,255,255,0.1); border-bottom-color: var(--tennis-yellow); }
-        .pts { font-size: 2.2rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 2px 0; }
-        .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 85%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .pts { font-size: 2.1rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 2px 0; }
+        .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 80%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
         
-        .line-info { font-size: 0.65rem; color: #fff; display: flex; justify-content: center; gap: 8px; font-family: monospace; opacity: 0.9; }
+        .line-info { font-size: 0.62rem; color: #fff; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-family: monospace; }
         .srv-highlight { color: var(--tennis-yellow); font-weight: bold; }
+        .choke-highlight { color: var(--col-choke); font-weight: bold; background: rgba(255,23,68,0.1); padding: 0 2px; border-radius: 2px; }
 
-        /* TABLA TENDENCIAS */
         .trend-table { width: 100%; background: #fff; border-collapse: collapse; font-size: 0.55rem; color: #333; }
         .trend-table td { border: 1px solid #eee; padding: 2px; text-align: center; font-weight: bold; }
         .row-label { background: #f5f5f5; width: 20%; color: #888; }
 
-        /* AREA CENTRAL SCROLLABLE */
         .main-scroll { flex: 1; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
         .stream-container { background: white; border-radius: 4px; padding: 2px; border: 1px solid #ddd; }
         .stream { height: 60px; display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 4px; }
@@ -54,7 +52,6 @@
         .c-val { font-size: 0.75rem; font-weight: 900; }
         .c-tag { font-size: 0.45rem; color: #fff; width: 95%; text-align: center; border-radius: 1px; }
 
-        /* PIE FIJO */
         .footer-fixed { background: var(--court-blue); padding: 4px; flex-shrink: 0; }
         .analysis-selector { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
         .sel-btn { background: #455a64; color: white; border: none; padding: 12px 0; border-radius: 4px; font-size: 0.5rem; font-weight: bold; }
@@ -68,10 +65,8 @@
 <body>
 
 <div class="header-fixed">
-    <div class="fullscreen-btn" onclick="toggleFullscreen()" title="Pantalla Completa">
-        <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/>
-        </svg>
+    <div class="fullscreen-btn" onclick="toggleFullscreen()">
+        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/></svg>
     </div>
 
     <div class="score-row">
@@ -81,6 +76,7 @@
             <div class="line-info">
                 <span>S:<b id="s1">0</b> G:<b id="g1">0</b></span>
                 <span class="srv-highlight"><span id="sw1">0</span>W/<span id="sl1">0</span>L</span>
+                <span class="choke-highlight">CH:<span id="ch1">0</span></span>
             </div>
         </div>
         <div id="zone2" class="p-box" onclick="addPoint(2)">
@@ -89,6 +85,7 @@
             <div class="line-info">
                 <span>S:<b id="s2">0</b> G:<b id="g2">0</b></span>
                 <span class="srv-highlight"><span id="sw2">0</span>W/<span id="sl2">0</span>L</span>
+                <span class="choke-highlight">CH:<span id="ch2">0</span></span>
             </div>
         </div>
     </div>
@@ -127,53 +124,67 @@
 
 <script>
     let p1=0, p2=0, g1=0, g2=0, s1=0, s2=0, server=1, isTB=false;
-    let srvPoints = { 1: {w:0, l:0}, 2: {w:0, l:0} };
+    let srvPoints = { 1: {w:0, l:0, ch:0}, 2: {w:0, l:0, ch:0} };
+    let advantageReached = false; // Flag para detectar 40-0 o 40-15
     let currentView = 'G';
     let history = [], stats = { 1: [], 2: [] }, tempBallLog = { 1: {}, 2: {} }, currentDeuces = { 15: false, 30: false, 40: false };
     const COL = { E: '#1b5e20', V: '#2e7d32', B: '#66bb6a', D: '#78909c', M: '#ef6c00', X: '#c62828' };
 
-    // FUNCIÓN PANTALLA COMPLETA
     function toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch(err => {
-                alert(`Error: ${err.message}`);
-            });
-        } else {
-            document.exitFullscreen();
-        }
+        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+        else document.exitFullscreen();
     }
 
     function addPoint(w) {
-        history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, currentDeuces, srvPoints}));
+        history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, currentDeuces, srvPoints, advantageReached}));
+        
+        // Registrar punto al saque
         if (w === server) srvPoints[server].w++; else srvPoints[server].l++;
+
+        // Detectar si el sacador llega a 40-0 o 40-15
         if (!isTB) {
+            let sP = (server === 1) ? p1 : p2;
+            let rP = (server === 1) ? p2 : p1;
+            if (sP === 3 && rP <= 1) advantageReached = true;
+
             let nP1=(w===1)?p1+1:p1, nP2=(w===2)?p2+1:p2;
             if (nP1===1 && nP2===1) currentDeuces[15]=true;
             if (nP1===2 && nP2===2) currentDeuces[30]=true;
             if (nP1===3 && nP2===3) currentDeuces[40]=true;
-            let sP=(server===1)?p1:p2, rP=(server===1)?p2:p1;
-            if ((sP+rP)<4) {
-                let bNum=(sP+rP)+1;
-                tempBallLog[server][bNum] = calcBallData(bNum, (w===server?sP+1:sP), (w===server?rP:rP+1));
+            
+            let bS=(server===1)?p1:p2, bR=(server===1)?p2:p1;
+            if ((bS+bR)<4) {
+                let bNum=(bS+bR)+1;
+                tempBallLog[server][bNum] = calcBallData(bNum, (w===server?bS+1:bS), (w===server?bR:bR+1));
             }
         }
-        if(isTB) { w===1?p1++:p2++; if((p1>=7||p2>=7)&&Math.abs(p1-p2)>=2) finishGame(w); } 
-        else { w===1?(p1===3&&p2===4?p2=3:p1++):(p2===3&&p1===4?p1=3:p2++); if((p1>=4||p2>=4)&&Math.abs(p1-p2)>=2) finishGame(w); }
+
+        if(isTB) { 
+            w===1?p1++:p2++; 
+            if((p1>=7||p2>=7)&&Math.abs(p1-p2)>=2) finishGame(w); 
+        } else { 
+            w===1?(p1===3&&p2===4?p2=3:p1++):(p2===3&&p1===4?p1=3:p2++);
+            if((p1>=4||p2>=4)&&Math.abs(p1-p2)>=2) finishGame(w); 
+        }
         updateUI();
     }
 
-    function calcBallData(b, s, r) {
-        const labels=["0","15","30","40","G"]; let txt=labels[s]||"G";
-        if(s>r) return (r===0)?{txt,c:COL.E,h:'h-5'}:{txt,c:COL.V,h:'h-4'};
-        if(s===r) return {txt,c:COL.D,h:'h-3'};
-        return (r-s===1)?{txt,c:COL.M,h:'h-2'}:{txt,c:COL.X,h:'h-1'};
-    }
-
     function finishGame(w) {
+        // Lógica de CHOKE: si el sacador tenía ventaja clara y perdió el game
+        if (advantageReached && w !== server) {
+            srvPoints[server].ch++;
+        }
+        advantageReached = false; // Reset flag para el próximo game
+
         let srv=server;
-        stats[srv].push({type:'G',data:(w===srv)?(p2===0?{txt:'E',c:COL.E,h:'h-5'}:(p2===1?{txt:'V',c:COL.V,h:'h-4'}:{txt:'B',c:COL.B,h:'h-3'})):(p1>=2?{txt:'M',c:COL.M,h:'h-2'}:{txt:'X',c:COL.X,h:'h-1'})});
+        let sP=(srv===1)?p1:p2, rP=(srv===1)?p2:p1;
+        let gRes=(w===srv)?(rP===0?{txt:'E',c:COL.E,h:'h-5'}:(rP===1?{txt:'V',c:COL.V,h:'h-4'}:{txt:'B',c:COL.B,h:'h-3'}))
+                         :(sP>=2?{txt:'M',c:COL.M,h:'h-2'}:{txt:'X',c:COL.X,h:'h-1'});
+        
+        stats[srv].push({type:'G',data:gRes});
         stats[srv].push({type:'I',data:{tower:{...currentDeuces},none:!(currentDeuces[15]||currentDeuces[30]||currentDeuces[40])}});
         for(let i=1;i<=4;i++) if(tempBallLog[srv][i]) stats[srv].push({type:i,data:tempBallLog[srv][i]});
+        
         tempBallLog={1:{},2:{}}; currentDeuces={15:false,30:false,40:false};
         p1=0; p2=0; w===1?g1++:g2++;
         if(isTB){ w===1?s1++:s2++; g1=0; g2=0; isTB=false; }
@@ -181,6 +192,13 @@
         else if(g1===6&&g2===6) isTB=true;
         server=(server===1)?2:1;
         renderStreams();
+    }
+
+    function calcBallData(b, s, r) {
+        const labels=["0","15","30","40","G"]; let txt=labels[s]||"G";
+        if(s>r) return (r===0)?{txt,c:COL.E,h:'h-5'}:{txt,c:COL.V,h:'h-4'};
+        if(s===r) return {txt,c:COL.D,h:'h-3'};
+        return (r-s===1)?{txt,c:COL.M,h:'h-2'}:{txt,c:COL.X,h:'h-1'};
     }
 
     function renderStreams() {
@@ -235,7 +253,7 @@
 
     function setView(v) { currentView = v; document.querySelectorAll('.sel-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(v==='G'?'GAME':(v==='I'?'IGUAL':v+'°B')))); renderStreams(); }
 
-    function undo(){ if(history.length===0) return; const s=JSON.parse(history.pop()); p1=s.p1; p2=s.p2; g1=s.g1; g2=s.g2; s1=s.s1; s2=s.s2; server=s.server; isTB=s.isTB; stats=s.stats; tempBallLog=s.tempBallLog; currentDeuces=s.currentDeuces; srvPoints=s.srvPoints; updateUI(); renderStreams(); }
+    function undo(){ if(history.length===0) return; const s=JSON.parse(history.pop()); p1=s.p1; p2=s.p2; g1=s.g1; g2=s.g2; s1=s.s1; s2=s.s2; server=s.server; isTB=s.isTB; stats=s.stats; tempBallLog=s.tempBallLog; currentDeuces=s.currentDeuces; srvPoints=s.srvPoints; advantageReached=s.advantageReached; updateUI(); renderStreams(); }
 
     function updateUI(){
         const lb=["0","15","30","40","AD"]; 
@@ -244,6 +262,7 @@
         document.getElementById('s1').innerText=s1; document.getElementById('s2').innerText=s2;
         document.getElementById('sw1').innerText=srvPoints[1].w; document.getElementById('sl1').innerText=srvPoints[1].l;
         document.getElementById('sw2').innerText=srvPoints[2].w; document.getElementById('sl2').innerText=srvPoints[2].l;
+        document.getElementById('ch1').innerText=srvPoints[1].ch; document.getElementById('ch2').innerText=srvPoints[2].ch;
         document.getElementById('zone1').className="p-box "+(server===1?"serving-now":""); document.getElementById('zone2').className="p-box "+(server===2?"serving-now":"");
     }
     renderStreams();
