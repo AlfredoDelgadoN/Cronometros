@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tennis Stats Pro - Choke Tracker</title>
+    <title>Tennis Stats Pro - Choke Visual Marker</title>
     <style>
         :root {
             --col-E: #1b5e20; --col-V: #2e7d32; --col-B: #66bb6a;
@@ -44,7 +44,24 @@
         .main-scroll { flex: 1; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
         .stream-container { background: white; border-radius: 4px; padding: 2px; border: 1px solid #ddd; }
         .stream { height: 60px; display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 4px; }
-        .dot { width: 20px; height: 18px; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.55rem; font-weight: bold; flex-shrink: 0; }
+        
+        /* ESTILO DEL PUNTO EN EL HISTORIAL */
+        .dot { width: 22px; height: 18px; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.55rem; font-weight: bold; flex-shrink: 0; }
+        
+        /* MARCA ESPECIAL CHOKE EN HISTORIAL */
+        .dot-choke {
+            background: var(--col-M) !important;
+            border: 1px solid white;
+            box-shadow: 0 0 5px var(--col-choke);
+            font-size: 0.5rem !important;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); box-shadow: 0 0 10px var(--col-choke); }
+            100% { transform: scale(1); }
+        }
 
         .counters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .player-card { background: white; padding: 3px; border-radius: 4px; border: 1px solid #ccc; }
@@ -125,7 +142,7 @@
 <script>
     let p1=0, p2=0, g1=0, g2=0, s1=0, s2=0, server=1, isTB=false;
     let srvPoints = { 1: {w:0, l:0, ch:0}, 2: {w:0, l:0, ch:0} };
-    let advantageReached = false; // Flag para detectar 40-0 o 40-15
+    let advantageReached = false; 
     let currentView = 'G';
     let history = [], stats = { 1: [], 2: [] }, tempBallLog = { 1: {}, 2: {} }, currentDeuces = { 15: false, 30: false, 40: false };
     const COL = { E: '#1b5e20', V: '#2e7d32', B: '#66bb6a', D: '#78909c', M: '#ef6c00', X: '#c62828' };
@@ -137,49 +154,37 @@
 
     function addPoint(w) {
         history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, currentDeuces, srvPoints, advantageReached}));
-        
-        // Registrar punto al saque
         if (w === server) srvPoints[server].w++; else srvPoints[server].l++;
-
-        // Detectar si el sacador llega a 40-0 o 40-15
         if (!isTB) {
             let sP = (server === 1) ? p1 : p2;
             let rP = (server === 1) ? p2 : p1;
             if (sP === 3 && rP <= 1) advantageReached = true;
-
             let nP1=(w===1)?p1+1:p1, nP2=(w===2)?p2+1:p2;
             if (nP1===1 && nP2===1) currentDeuces[15]=true;
             if (nP1===2 && nP2===2) currentDeuces[30]=true;
             if (nP1===3 && nP2===3) currentDeuces[40]=true;
-            
             let bS=(server===1)?p1:p2, bR=(server===1)?p2:p1;
             if ((bS+bR)<4) {
                 let bNum=(bS+bR)+1;
                 tempBallLog[server][bNum] = calcBallData(bNum, (w===server?bS+1:bS), (w===server?bR:bR+1));
             }
         }
-
-        if(isTB) { 
-            w===1?p1++:p2++; 
-            if((p1>=7||p2>=7)&&Math.abs(p1-p2)>=2) finishGame(w); 
-        } else { 
-            w===1?(p1===3&&p2===4?p2=3:p1++):(p2===3&&p1===4?p1=3:p2++);
-            if((p1>=4||p2>=4)&&Math.abs(p1-p2)>=2) finishGame(w); 
-        }
+        if(isTB) { w===1?p1++:p2++; if((p1>=7||p2>=7)&&Math.abs(p1-p2)>=2) finishGame(w); } 
+        else { w===1?(p1===3&&p2===4?p2=3:p1++):(p2===3&&p1===4?p1=3:p2++); if((p1>=4||p2>=4)&&Math.abs(p1-p2)>=2) finishGame(w); }
         updateUI();
     }
 
     function finishGame(w) {
-        // Lógica de CHOKE: si el sacador tenía ventaja clara y perdió el game
+        let isChoke = false;
         if (advantageReached && w !== server) {
             srvPoints[server].ch++;
+            isChoke = true;
         }
-        advantageReached = false; // Reset flag para el próximo game
+        advantageReached = false; 
 
-        let srv=server;
-        let sP=(srv===1)?p1:p2, rP=(srv===1)?p2:p1;
+        let srv=server, sP=(srv===1)?p1:p2, rP=(srv===1)?p2:p1;
         let gRes=(w===srv)?(rP===0?{txt:'E',c:COL.E,h:'h-5'}:(rP===1?{txt:'V',c:COL.V,h:'h-4'}:{txt:'B',c:COL.B,h:'h-3'}))
-                         :(sP>=2?{txt:'M',c:COL.M,h:'h-2'}:{txt:'X',c:COL.X,h:'h-1'});
+                         :(sP>=2?{txt:isChoke?'CH':'M',c:COL.M,h:'h-2',isChoke}:{txt:'X',c:COL.X,h:'h-1'});
         
         stats[srv].push({type:'G',data:gRes});
         stats[srv].push({type:'I',data:{tower:{...currentDeuces},none:!(currentDeuces[15]||currentDeuces[30]||currentDeuces[40])}});
@@ -211,7 +216,11 @@
                     if(e.data.none){ h+=`<div class="dot" style="background:${COL.D}">-</div>`; counts['-']=(counts['-']||0)+1; }
                     else { ['15','30','40'].forEach(v => { if(e.data.tower[v]){ h+=`<div class="dot" style="background:${COL.D}">${v}</div>`; counts[v]=(counts[v]||0)+1; }}); }
                     el.innerHTML += h+'</div>';
-                } else { el.innerHTML+=`<div class="dot ${e.data.h}" style="background:${e.data.c}">${e.data.txt}</div>`; counts[e.data.txt]=(counts[e.data.txt]||0)+1; }
+                } else { 
+                    let chokeClass = e.data.isChoke ? 'dot-choke' : '';
+                    el.innerHTML+=`<div class="dot ${e.data.h} ${chokeClass}" style="background:${e.data.c}">${e.data.txt}</div>`; 
+                    counts[e.data.txt === 'CH' ? 'M' : e.data.txt]=(counts[e.data.txt === 'CH' ? 'M' : e.data.txt]||0)+1; 
+                }
             });
             el.scrollLeft=el.scrollWidth;
             const cEl=document.getElementById(`p${p}-counts`); cEl.innerHTML='';
