@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tennis Stats Pro - Choke Visual Marker</title>
+    <title>Tennis Stats Pro - Momentum Tracker</title>
     <style>
         :root {
             --col-E: #1b5e20; --col-V: #2e7d32; --col-B: #66bb6a;
             --col-draw: #78909c; --col-M: #ef6c00; --col-X: #c62828;
             --court-blue: #2c3e50; --tennis-yellow: #dff115;
-            --col-choke: #ff1744;
+            --col-choke: #ff1744; --col-streak: #00e5ff;
         }
         * { box-sizing: border-box; touch-action: manipulation; }
         body { 
@@ -22,8 +22,7 @@
             position: absolute; top: 5px; right: 5px;
             background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
             color: white; border-radius: 4px; padding: 5px;
-            z-index: 100; cursor: pointer; font-size: 0.8rem;
-            display: flex; align-items: center; justify-content: center;
+            z-index: 100; cursor: pointer; display: flex; align-items: center;
         }
 
         .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; z-index: 10; border-bottom: 2px solid #444; position: relative; }
@@ -31,52 +30,39 @@
         .p-box { text-align: center; padding: 2px 4px; border-bottom: 3px solid transparent; }
         .serving-now { background: rgba(255,255,255,0.1); border-bottom-color: var(--tennis-yellow); }
         .pts { font-size: 2.1rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 2px 0; }
-        .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 80%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); }
+        .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 80%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
         
-        .line-info { font-size: 0.62rem; color: #fff; display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; font-family: monospace; }
+        .line-info { font-size: 0.58rem; color: #fff; display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; font-family: monospace; }
         .srv-highlight { color: var(--tennis-yellow); font-weight: bold; }
-        .choke-highlight { color: var(--col-choke); font-weight: bold; background: rgba(255,23,68,0.1); padding: 0 2px; border-radius: 2px; }
+        .choke-highlight { color: var(--col-choke); font-weight: bold; }
+        .streak-highlight { color: var(--col-streak); font-weight: bold; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 3px; }
 
-        .trend-table { width: 100%; background: #fff; border-collapse: collapse; font-size: 0.55rem; color: #333; }
-        .trend-table td { border: 1px solid #eee; padding: 2px; text-align: center; font-weight: bold; }
-        .row-label { background: #f5f5f5; width: 20%; color: #888; }
+        .trend-table { width: 100%; background: #fff; border-collapse: collapse; font-size: 0.52rem; color: #333; }
+        .trend-table td { border: 1px solid #eee; padding: 1px; text-align: center; font-weight: bold; }
+        .row-label { background: #f5f5f5; width: 18%; color: #888; }
 
         .main-scroll { flex: 1; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
         .stream-container { background: white; border-radius: 4px; padding: 2px; border: 1px solid #ddd; }
-        .stream { height: 60px; display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 4px; }
-        
-        /* ESTILO DEL PUNTO EN EL HISTORIAL */
+        .stream { height: 55px; display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 4px; }
         .dot { width: 22px; height: 18px; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.55rem; font-weight: bold; flex-shrink: 0; }
         
-        /* MARCA ESPECIAL CHOKE EN HISTORIAL */
-        .dot-choke {
-            background: var(--col-M) !important;
-            border: 1px solid white;
-            box-shadow: 0 0 5px var(--col-choke);
-            font-size: 0.5rem !important;
-            animation: pulse 1.5s infinite;
-        }
-
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); box-shadow: 0 0 10px var(--col-choke); }
-            100% { transform: scale(1); }
-        }
+        .dot-choke { background: var(--col-M) !important; border: 1px solid white; box-shadow: 0 0 5px var(--col-choke); font-size: 0.5rem !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
         .counters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .player-card { background: white; padding: 3px; border-radius: 4px; border: 1px solid #ccc; }
         .c-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
-        .c-val { font-size: 0.75rem; font-weight: 900; }
-        .c-tag { font-size: 0.45rem; color: #fff; width: 95%; text-align: center; border-radius: 1px; }
+        .c-val { font-size: 0.7rem; font-weight: 900; }
+        .c-tag { font-size: 0.42rem; color: #fff; width: 95%; text-align: center; border-radius: 1px; }
 
         .footer-fixed { background: var(--court-blue); padding: 4px; flex-shrink: 0; }
         .analysis-selector { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
         .sel-btn { background: #455a64; color: white; border: none; padding: 12px 0; border-radius: 4px; font-size: 0.5rem; font-weight: bold; }
         .sel-btn.active { background: var(--tennis-yellow); color: #2c3e50; }
         .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
-        .btn-act { padding: 6px; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 0.65rem; }
+        .btn-act { padding: 8px; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 0.65rem; }
 
-        .h-5 { margin-bottom: 35px; } .h-4 { margin-bottom: 25px; } .h-3 { margin-bottom: 15px; } .h-2 { margin-bottom: 5px; } .h-1 { margin-bottom: 0px; }
+        .h-5 { margin-bottom: 30px; } .h-4 { margin-bottom: 22px; } .h-3 { margin-bottom: 14px; } .h-2 { margin-bottom: 6px; } .h-1 { margin-bottom: 0px; }
     </style>
 </head>
 <body>
@@ -94,6 +80,7 @@
                 <span>S:<b id="s1">0</b> G:<b id="g1">0</b></span>
                 <span class="srv-highlight"><span id="sw1">0</span>W/<span id="sl1">0</span>L</span>
                 <span class="choke-highlight">CH:<span id="ch1">0</span></span>
+                <span class="streak-highlight">M:<span id="st1">0</span></span>
             </div>
         </div>
         <div id="zone2" class="p-box" onclick="addPoint(2)">
@@ -103,11 +90,12 @@
                 <span>S:<b id="s2">0</b> G:<b id="g2">0</b></span>
                 <span class="srv-highlight"><span id="sw2">0</span>W/<span id="sl2">0</span>L</span>
                 <span class="choke-highlight">CH:<span id="ch2">0</span></span>
+                <span class="streak-highlight">M:<span id="st2">0</span></span>
             </div>
         </div>
     </div>
     <table class="trend-table">
-        <tr><td id="p1-b1" style="width:40%">-</td><td class="row-label">1°B</td><td id="p2-b1" style="width:40%">-</td></tr>
+        <tr><td id="p1-b1" style="width:41%">-</td><td class="row-label">1°B</td><td id="p2-b1" style="width:41%">-</td></tr>
         <tr><td id="p1-b2">-</td><td class="row-label">2°B</td><td id="p2-b2">-</td></tr>
         <tr><td id="p1-b3">-</td><td class="row-label">3°B</td><td id="p2-b3">-</td></tr>
         <tr><td id="p1-b4">-</td><td class="row-label">4°B</td><td id="p2-b4">-</td></tr>
@@ -134,14 +122,17 @@
         <button class="sel-btn" onclick="setView(4)">4°B</button>
     </div>
     <div class="action-btns">
-        <button class="btn-act" style="background:#e74c3c" onclick="undo()">⬅ DESHACER</button>
-        <button class="btn-act" style="background:#7f8c8d" onclick="if(confirm('¿Reiniciar?')) location.reload()">RESET</button>
+        <button class="btn-act" style="background:#e74c3c" onclick="undo()">⬅ UNDO</button>
+        <button class="btn-act" style="background:#7f8c8d" onclick="if(confirm('Reset?')) location.reload()">RESET</button>
     </div>
 </div>
 
 <script>
     let p1=0, p2=0, g1=0, g2=0, s1=0, s2=0, server=1, isTB=false;
-    let srvPoints = { 1: {w:0, l:0, ch:0}, 2: {w:0, l:0, ch:0} };
+    let srvPoints = { 
+        1: {w:0, l:0, ch:0, currentStreak: 0, maxStreak: 0}, 
+        2: {w:0, l:0, ch:0, currentStreak: 0, maxStreak: 0} 
+    };
     let advantageReached = false; 
     let currentView = 'G';
     let history = [], stats = { 1: [], 2: [] }, tempBallLog = { 1: {}, 2: {} }, currentDeuces = { 15: false, 30: false, 40: false };
@@ -154,7 +145,21 @@
 
     function addPoint(w) {
         history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, currentDeuces, srvPoints, advantageReached}));
+        
+        // Lógica de Saque (W/L)
         if (w === server) srvPoints[server].w++; else srvPoints[server].l++;
+
+        // Lógica de Momentum (Racha)
+        if (w === 1) {
+            srvPoints[1].currentStreak++;
+            srvPoints[2].currentStreak = 0;
+            if (srvPoints[1].currentStreak > srvPoints[1].maxStreak) srvPoints[1].maxStreak = srvPoints[1].currentStreak;
+        } else {
+            srvPoints[2].currentStreak++;
+            srvPoints[1].currentStreak = 0;
+            if (srvPoints[2].currentStreak > srvPoints[2].maxStreak) srvPoints[2].maxStreak = srvPoints[2].currentStreak;
+        }
+
         if (!isTB) {
             let sP = (server === 1) ? p1 : p2;
             let rP = (server === 1) ? p2 : p1;
@@ -176,10 +181,7 @@
 
     function finishGame(w) {
         let isChoke = false;
-        if (advantageReached && w !== server) {
-            srvPoints[server].ch++;
-            isChoke = true;
-        }
+        if (advantageReached && w !== server) { srvPoints[server].ch++; isChoke = true; }
         advantageReached = false; 
 
         let srv=server, sP=(srv===1)?p1:p2, rP=(srv===1)?p2:p1;
@@ -192,9 +194,17 @@
         
         tempBallLog={1:{},2:{}}; currentDeuces={15:false,30:false,40:false};
         p1=0; p2=0; w===1?g1++:g2++;
-        if(isTB){ w===1?s1++:s2++; g1=0; g2=0; isTB=false; }
-        else if(g1>=6&&g1-g2>=2 || g2>=6&&g2-g1>=2){ w===1?s1++:s2++; g1=0; g2=0; }
+        
+        let setFinished = false;
+        if(isTB){ w===1?s1++:s2++; g1=0; g2=0; isTB=false; setFinished=true; }
+        else if(g1>=6&&g1-g2>=2 || g2>=6&&g2-g1>=2){ w===1?s1++:s2++; g1=0; g2=0; setFinished=true; }
         else if(g1===6&&g2===6) isTB=true;
+
+        if(setFinished) {
+            srvPoints[1].maxStreak = 0; srvPoints[1].currentStreak = 0;
+            srvPoints[2].maxStreak = 0; srvPoints[2].currentStreak = 0;
+        }
+
         server=(server===1)?2:1;
         renderStreams();
     }
@@ -272,6 +282,7 @@
         document.getElementById('sw1').innerText=srvPoints[1].w; document.getElementById('sl1').innerText=srvPoints[1].l;
         document.getElementById('sw2').innerText=srvPoints[2].w; document.getElementById('sl2').innerText=srvPoints[2].l;
         document.getElementById('ch1').innerText=srvPoints[1].ch; document.getElementById('ch2').innerText=srvPoints[2].ch;
+        document.getElementById('st1').innerText=srvPoints[1].maxStreak; document.getElementById('st2').innerText=srvPoints[2].maxStreak;
         document.getElementById('zone1').className="p-box "+(server===1?"serving-now":""); document.getElementById('zone2').className="p-box "+(server===2?"serving-now":"");
     }
     renderStreams();
