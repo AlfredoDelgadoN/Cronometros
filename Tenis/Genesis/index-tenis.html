@@ -3,27 +3,45 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tennis Stats Pro - Full Context</title>
+    <title>Tennis Stats Pro - Matrix 4x4 Fixed</title>
     <style>
         :root {
             --col-E: #1b5e20; --col-V: #2e7d32; --col-B: #66bb6a;
             --col-draw: #78909c; --col-M: #ef6c00; --col-X: #c62828;
             --court-blue: #2c3e50; --tennis-yellow: #dff115;
-            --col-choke: #ff1744;
+            --col-choke: #ff1744; --col-streak: #00e5ff;
         }
         * { box-sizing: border-box; touch-action: manipulation; }
         body { margin: 0; padding: 0; font-family: sans-serif; background: #f0f3f5; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; padding-bottom: 2px; }
+        .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; border-bottom: 2px solid #444; }
         .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
         .p-box { text-align: center; padding: 2px; border-bottom: 3px solid transparent; }
         .serving-now { background: rgba(255,255,255,0.1); border-bottom-color: var(--tennis-yellow); }
-        .pts { font-size: 2.1rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 1px 0; }
+        .pts { font-size: 2rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 1px 0; }
         .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 80%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .line-info { font-size: 0.52rem; color: #fff; display: flex; justify-content: center; gap: 4px; font-family: monospace; margin-bottom: 2px;}
-
-        .matrix-table { width: 90%; margin: 1px auto; border-collapse: collapse; background: rgba(0,0,0,0.2); font-size: 0.45rem; }
-        .matrix-table td { width: 25%; height: 12px; border: 0.5px solid rgba(255,255,255,0.1); text-align: center; }
+        
+        .line-info { font-size: 0.52rem; color: #fff; display: flex; justify-content: center; gap: 4px; font-family: monospace; margin-bottom: 2px; }
+        .stat-group { display: flex; gap: 3px; }
+        
+        /* MATRIZ 5x4 CON DIFERENCIA W-L */
+        .matrix-table { width: 95%; margin: 2px auto; border-collapse: collapse; background: rgba(0,0,0,0.3); table-layout: fixed; }
+        .matrix-table td { 
+            height: 14px; 
+            border: 1px solid rgba(255,255,255,0.2); 
+            text-align: center; 
+            font-size: 0.55rem; 
+            padding: 1px;
+        }
+        .m-win { color: #66bb6a; font-weight: bold; }
+        .m-loss { color: #ff5252; font-weight: bold; }
+        .diff-cell { 
+            border-left: 2px solid rgba(255,255,255,0.5) !important;
+            font-weight: bold;
+            font-size: 0.6rem;
+        }
+        .diff-positive { color: #66bb6a; }
+        .diff-negative { color: #ff5252; }
 
         .trend-table { width: 100%; background: #fff; border-collapse: collapse; font-size: 0.52rem; color: #333; }
         .trend-table td { border: 1px solid #eee; padding: 1px; text-align: center; font-weight: bold; height: 16px; }
@@ -59,26 +77,30 @@
             <input type="text" id="name1" class="p-name" value="JUGADOR 1">
             <div id="pts1" class="pts">0</div>
             <div class="line-info">
-                <span>S:<b id="s1">0</b> G:<b id="g1">0</b></span>
-                <span style="color:var(--tennis-yellow)">W:<span id="sw1">0</span> L:<span id="sl1">0</span></span>
-                <span style="color:var(--col-choke)">CH:<span id="ch1">0</span></span>
+                <div class="stat-group">S:<b id="s1">0</b> G:<b id="g1">0</b></div>
+                <div class="stat-group" style="color:var(--tennis-yellow)">W:<span id="sw1">0</span> L:<span id="sl1">0</span></div>
+                <div class="stat-group"><span style="color:var(--col-choke)">CH:<span id="ch1">0</span></span> <span style="color:var(--col-streak)">M:<span id="m1">0</span></span></div>
             </div>
             <table class="matrix-table" id="matrix1">
-                <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
-                <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td class="diff-cell"></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td class="diff-cell"></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td class="diff-cell"></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td class="diff-cell"></td></tr>
             </table>
         </div>
         <div id="zone2" class="p-box" onclick="addPoint(2)">
             <input type="text" id="name2" class="p-name" value="JUGADOR 2">
             <div id="pts2" class="pts">0</div>
             <div class="line-info">
-                <span>S:<b id="s2">0</b> G:<b id="g2">0</b></span>
-                <span style="color:var(--tennis-yellow)">W:<span id="sw2">0</span> L:<span id="sl2">0</span></span>
-                <span style="color:var(--col-choke)">CH:<span id="ch2">0</span></span>
+                <div class="stat-group">S:<b id="s2">0</b> G:<b id="g2">0</b></div>
+                <div class="stat-group" style="color:var(--tennis-yellow)">W:<span id="sw2">0</span> L:<span id="sl2">0</span></div>
+                <div class="stat-group"><span style="color:var(--col-choke)">CH:<span id="ch2">0</span></span> <span style="color:var(--col-streak)">M:<span id="m2">0</span></span></div>
             </div>
             <table class="matrix-table" id="matrix2">
-                <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
-                <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td class="diff-cell"></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td class="diff-cell"></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td class="diff-cell"></td></tr>
+                <tr><td></td><td></td><td></td><td></td><td class="diff-cell"></td></tr>
             </table>
         </div>
     </div>
@@ -117,19 +139,32 @@
 <script>
     const COL = { E: '#1b5e20', V: '#2e7d32', B: '#66bb6a', D: '#78909c', M: '#ef6c00', X: '#c62828' };
     let p1=0, p2=0, g1=0, g2=0, s1=0, s2=0, server=1, isTB=false;
-    let srvPoints = { 1: {w:0, l:0, ch:0, matrix: []}, 2: {w:0, l:0, ch:0, matrix: []} };
+    let srvPoints = { 
+        1: {w:0, l:0, ch:0, curStreak:0, maxStreak:0, matrix: [], diffHistory: []}, 
+        2: {w:0, l:0, ch:0, curStreak:0, maxStreak:0, matrix: [], diffHistory: []} 
+    };
     let advRch = false, currentView = 'G', history = [], stats = { 1: [], 2: [] }, tempBallLog = { 1: {}, 2: {} }, deuces = { 15: false, 30: false, 40: false };
+
+    function saveHistory() {
+        history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, deuces, srvPoints, advRch}));
+    }
 
     function addPoint(w) {
         saveHistory();
-        if (w === server) srvPoints[server].w++; else srvPoints[server].l++;
+        if (w === server) {
+            srvPoints[server].w++;
+            srvPoints[server].curStreak++;
+            if (srvPoints[server].curStreak > srvPoints[server].maxStreak) srvPoints[server].maxStreak = srvPoints[server].curStreak;
+        } else {
+            srvPoints[server].l++;
+            srvPoints[server].curStreak = 0;
+        }
 
         if (isTB) {
             w === 1 ? p1++ : p2++;
             if ((p1 + p2) % 2 !== 0) server = (server === 1) ? 2 : 1;
             if ((p1 >= 7 || p2 >= 7) && Math.abs(p1 - p2) >= 2) finishGame(w);
         } else {
-            // Check Advantage/Choke Potential
             if (server === 1 && p1 === 3 && p2 <= 1) advRch = true;
             if (server === 2 && p2 === 3 && p1 <= 1) advRch = true;
             
@@ -168,11 +203,20 @@
             else gRes = {txt:'M', c:COL.M, h:'h-2'};
         }
 
+        // GUARDAR MATRIZ CON NUEVOS SÍMBOLOS Y DIFERENCIA W-L
         if(!isTB) {
-            let curMat = [];
-            for(let i=1; i<=4; i++) curMat.push(tempBallLog[srv][i] ? (tempBallLog[srv][i].won ? '✅' : '❌') : '');
-            srvPoints[srv].matrix.push(curMat);
-            if(srvPoints[srv].matrix.length > 4) srvPoints[srv].matrix.shift();
+            let row = [];
+            for(let i=1; i<=4; i++) row.push(tempBallLog[srv][i] ? (tempBallLog[srv][i].won ? '✓' : '✗') : '-');
+            srvPoints[srv].matrix.push(row);
+            
+            // CALCULAR Y GUARDAR DIFERENCIA W-L DESPUÉS DE ESTE GAME
+            let diff = srvPoints[srv].w - srvPoints[srv].l;
+            srvPoints[srv].diffHistory.push(diff);
+            
+            if(srvPoints[srv].matrix.length > 4) {
+                srvPoints[srv].matrix.shift();
+                srvPoints[srv].diffHistory.shift();
+            }
         }
 
         stats[srv].push({type:'G', data:gRes});
@@ -181,9 +225,13 @@
         
         tempBallLog={1:{}, 2:{}}; deuces={15:false, 30:false, 40:false}; advRch=false;
         p1=0; p2=0; w===1?g1++:g2++;
+        
         if (g1===6 && g2===6 && !isTB) isTB=true;
         else if ((g1>=6 && Math.abs(g1-g2)>=2) || (g2>=6 && Math.abs(g1-g2)>=2) || isTB) {
-            if(isTB || (g1>=6 || g2>=6)) { s1+=(g1>g2?1:0); s2+=(g2>g1?1:0); g1=0; g2=0; isTB=false; }
+            if(isTB || (g1>=6 || g2>=6)) { 
+                s1+=(g1>g2?1:0); s2+=(g2>g1?1:0); g1=0; g2=0; isTB=false; 
+                srvPoints[1].maxStreak = 0; srvPoints[2].maxStreak = 0;
+            }
         }
         server=(server===1)?2:1;
         renderStreams();
@@ -200,12 +248,54 @@
 
     function renderStreams() {
         [1,2].forEach(p => {
-            const tableCells = document.getElementById(`matrix${p}`).getElementsByTagName('td');
-            for(let i=0; i<16; i++) {
-                let r = Math.floor(i/4), c = i%4;
-                tableCells[i].innerText = srvPoints[p].matrix[r] ? srvPoints[p].matrix[r][c] : '';
-                tableCells[i].style.background = srvPoints[p].matrix[r] && srvPoints[p].matrix[r][c] === '❌' ? 'rgba(198,40,40,0.1)' : 'transparent';
+            // RENDER MATRIZ 5x4 (4 saques + diferencia W-L)
+            const cells = document.getElementById(`matrix${p}`).getElementsByTagName('td');
+            
+            // Limpiar todas las celdas primero
+            for(let i=0; i<cells.length; i++) {
+                cells[i].innerText = '';
+                cells[i].className = '';
             }
+            
+            // Procesar cada fila (4 filas)
+            for(let row = 0; row < 4; row++) {
+                // Procesar las primeras 4 columnas (los saques)
+                for(let col = 0; col < 4; col++) {
+                    let cellIndex = row * 5 + col;
+                    let val = srvPoints[p].matrix[row] ? srvPoints[p].matrix[row][col] : '';
+                    cells[cellIndex].innerText = val;
+                    
+                    // Aplicar clases según el símbolo
+                    if(val === '✓') {
+                        cells[cellIndex].className = 'm-win';
+                    } else if(val === '✗') {
+                        cells[cellIndex].className = 'm-loss';
+                    } else {
+                        cells[cellIndex].className = '';
+                    }
+                }
+                
+                // Mostrar diferencia W-L en la quinta columna
+                let diffCellIndex = row * 5 + 4;
+                let diff = srvPoints[p].diffHistory[row] !== undefined ? srvPoints[p].diffHistory[row] : null;
+                
+                if(diff !== null) {
+                    let diffText = diff > 0 ? `+${diff}` : diff.toString();
+                    cells[diffCellIndex].innerText = diffText;
+                    
+                    // Aplicar color según si es positivo o negativo
+                    if(diff > 0) {
+                        cells[diffCellIndex].className = 'diff-cell diff-positive';
+                    } else if(diff < 0) {
+                        cells[diffCellIndex].className = 'diff-cell diff-negative';
+                    } else {
+                        cells[diffCellIndex].className = 'diff-cell';
+                    }
+                } else {
+                    cells[diffCellIndex].className = 'diff-cell';
+                }
+            }
+
             const el=document.getElementById('stream'+p); el.innerHTML='';
             const filtered=stats[p].filter(s=>s.type===currentView);
             const counts = {};
@@ -221,6 +311,7 @@
                 }
             });
             el.scrollLeft = el.scrollWidth;
+
             const cEl = document.getElementById(`p${p}-counts`); cEl.innerHTML = '';
             let keys = (currentView==='G')?['E','V','B','M','CH','X']:(currentView==='I'?['40','30','15','-']:(currentView===4?['G','40','30','15','0']:['40','30','15','0']));
             keys.forEach(k => {
@@ -258,8 +349,6 @@
 
     function setView(v) { currentView = v; document.querySelectorAll('.sel-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(v==='G'?'GAME':(v==='I'?'IGUAL':v+'°B')))); renderStreams(); }
     
-    function saveHistory() { history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, deuces, srvPoints, advRch})); }
-    
     function undo() {
         if (history.length === 0) return;
         const s = JSON.parse(history.pop());
@@ -274,6 +363,7 @@
         document.getElementById('g1').innerText=g1; document.getElementById('g2').innerText=g2; document.getElementById('s1').innerText=s1; document.getElementById('s2').innerText=s2;
         document.getElementById('sw1').innerText=srvPoints[1].w; document.getElementById('sl1').innerText=srvPoints[1].l; document.getElementById('ch1').innerText=srvPoints[1].ch;
         document.getElementById('sw2').innerText=srvPoints[2].w; document.getElementById('sl2').innerText=srvPoints[2].l; document.getElementById('ch2').innerText=srvPoints[2].ch;
+        document.getElementById('m1').innerText=srvPoints[1].maxStreak; document.getElementById('m2').innerText=srvPoints[2].maxStreak;
         document.getElementById('zone1').className="p-box "+(server===1?"serving-now":""); document.getElementById('zone2').className="p-box "+(server===2?"serving-now":"");
     }
     renderStreams();
