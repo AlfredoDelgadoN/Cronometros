@@ -3,99 +3,87 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Tennis Stats Pro - Momentum Tracker</title>
+    <title>Tennis Stats Pro - Full Context</title>
     <style>
         :root {
             --col-E: #1b5e20; --col-V: #2e7d32; --col-B: #66bb6a;
             --col-draw: #78909c; --col-M: #ef6c00; --col-X: #c62828;
             --court-blue: #2c3e50; --tennis-yellow: #dff115;
-            --col-choke: #ff1744; --col-streak: #00e5ff;
+            --col-choke: #ff1744;
         }
         * { box-sizing: border-box; touch-action: manipulation; }
-        body { 
-            margin: 0; padding: 0; font-family: sans-serif; 
-            background: #f0f3f5; height: 100vh; 
-            display: flex; flex-direction: column; overflow: hidden; 
-        }
+        body { margin: 0; padding: 0; font-family: sans-serif; background: #f0f3f5; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .fullscreen-btn {
-            position: absolute; top: 5px; right: 5px;
-            background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
-            color: white; border-radius: 4px; padding: 5px;
-            z-index: 100; cursor: pointer; display: flex; align-items: center;
-        }
-
-        .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; z-index: 10; border-bottom: 2px solid #444; position: relative; }
+        .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; padding-bottom: 2px; }
         .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
-        .p-box { text-align: center; padding: 2px 4px; border-bottom: 3px solid transparent; }
+        .p-box { text-align: center; padding: 2px; border-bottom: 3px solid transparent; }
         .serving-now { background: rgba(255,255,255,0.1); border-bottom-color: var(--tennis-yellow); }
-        .pts { font-size: 2.1rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 2px 0; }
+        .pts { font-size: 2.1rem; font-weight: 900; color: var(--tennis-yellow); line-height: 1; margin: 1px 0; }
         .p-name { background: transparent; color: white; border: none; font-weight: bold; font-size: 0.75rem; width: 80%; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        
-        .line-info { font-size: 0.58rem; color: #fff; display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; font-family: monospace; }
-        .srv-highlight { color: var(--tennis-yellow); font-weight: bold; }
-        .choke-highlight { color: var(--col-choke); font-weight: bold; }
-        .streak-highlight { color: var(--col-streak); font-weight: bold; border-left: 1px solid rgba(255,255,255,0.3); padding-left: 3px; }
+        .line-info { font-size: 0.52rem; color: #fff; display: flex; justify-content: center; gap: 4px; font-family: monospace; margin-bottom: 2px;}
+
+        .matrix-table { width: 90%; margin: 1px auto; border-collapse: collapse; background: rgba(0,0,0,0.2); font-size: 0.45rem; }
+        .matrix-table td { width: 25%; height: 12px; border: 0.5px solid rgba(255,255,255,0.1); text-align: center; }
 
         .trend-table { width: 100%; background: #fff; border-collapse: collapse; font-size: 0.52rem; color: #333; }
-        .trend-table td { border: 1px solid #eee; padding: 1px; text-align: center; font-weight: bold; }
-        .row-label { background: #f5f5f5; width: 18%; color: #888; }
+        .trend-table td { border: 1px solid #eee; padding: 1px; text-align: center; font-weight: bold; height: 16px; }
+        .row-label { background: #f5f5f5; width: 14%; color: #888; }
 
-        .main-scroll { flex: 1; overflow-y: auto; padding: 4px; display: flex; flex-direction: column; gap: 4px; }
+        .main-scroll { flex: 1; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; gap: 2px; }
         .stream-container { background: white; border-radius: 4px; padding: 2px; border: 1px solid #ddd; }
-        .stream { height: 55px; display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 4px; }
-        .dot { width: 22px; height: 18px; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.55rem; font-weight: bold; flex-shrink: 0; }
+        .stream { height: 48px; display: flex; align-items: flex-end; gap: 2px; overflow-x: auto; padding: 4px; }
+        .dot { width: 22px; height: 16px; border-radius: 2px; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.48rem; font-weight: bold; flex-shrink: 0; }
         
-        .dot-choke { background: var(--col-M) !important; border: 1px solid white; box-shadow: 0 0 5px var(--col-choke); font-size: 0.5rem !important; animation: pulse 1.5s infinite; }
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
-
         .counters-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
-        .player-card { background: white; padding: 3px; border-radius: 4px; border: 1px solid #ccc; }
+        .player-card { background: white; padding: 4px; border-radius: 4px; border: 1px solid #ccc; }
+        .count-row { display: flex; gap: 1px; justify-content: space-between; }
         .c-item { display: flex; flex-direction: column; align-items: center; flex: 1; }
-        .c-val { font-size: 0.7rem; font-weight: 900; }
-        .c-tag { font-size: 0.42rem; color: #fff; width: 95%; text-align: center; border-radius: 1px; }
+        .c-val { font-size: 0.75rem; font-weight: 900; }
+        .c-tag { font-size: 0.42rem; color: #fff; width: 95%; text-align: center; border-radius: 1px; font-weight: bold; padding: 1px 0; }
 
         .footer-fixed { background: var(--court-blue); padding: 4px; flex-shrink: 0; }
         .analysis-selector { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; }
         .sel-btn { background: #455a64; color: white; border: none; padding: 12px 0; border-radius: 4px; font-size: 0.5rem; font-weight: bold; }
         .sel-btn.active { background: var(--tennis-yellow); color: #2c3e50; }
         .action-btns { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; margin-top: 4px; }
-        .btn-act { padding: 8px; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 0.65rem; }
-
-        .h-5 { margin-bottom: 30px; } .h-4 { margin-bottom: 22px; } .h-3 { margin-bottom: 14px; } .h-2 { margin-bottom: 6px; } .h-1 { margin-bottom: 0px; }
+        .btn-act { padding: 12px; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 0.7rem; }
+        
+        .h-5 { margin-bottom: 22px; } .h-4 { margin-bottom: 16px; } .h-3 { margin-bottom: 10px; } .h-2 { margin-bottom: 5px; } .h-1 { margin-bottom: 0px; }
     </style>
 </head>
 <body>
 
 <div class="header-fixed">
-    <div class="fullscreen-btn" onclick="toggleFullscreen()">
-        <svg width="14" height="14" fill="currentColor" viewBox="0 0 16 16"><path d="M1.5 1a.5.5 0 0 0-.5.5v4a.5.5 0 0 1-1 0v-4A1.5 1.5 0 0 1 1.5 0h4a.5.5 0 0 1 0 1h-4zM10 .5a.5.5 0 0 1 .5-.5h4A1.5 1.5 0 0 1 16 1.5v4a.5.5 0 0 1-1 0v-4a.5.5 0 0 0-.5-.5h-4a.5.5 0 0 1-.5-.5zM.5 10a.5.5 0 0 1 .5.5v4a.5.5 0 0 0 .5.5h4a.5.5 0 0 1 0 1h-4A1.5 1.5 0 0 1 0 14.5v-4a.5.5 0 0 1 .5-.5zm15 0a.5.5 0 0 1 .5.5v4a1.5 1.5 0 0 1-1.5 1.5h-4a.5.5 0 0 1 0-1h4a.5.5 0 0 0 .5-.5v-4a.5.5 0 0 1 .5-.5z"/></svg>
-    </div>
-
     <div class="score-row">
         <div id="zone1" class="p-box serving-now" onclick="addPoint(1)">
             <input type="text" id="name1" class="p-name" value="JUGADOR 1">
             <div id="pts1" class="pts">0</div>
             <div class="line-info">
                 <span>S:<b id="s1">0</b> G:<b id="g1">0</b></span>
-                <span class="srv-highlight"><span id="sw1">0</span>W/<span id="sl1">0</span>L</span>
-                <span class="choke-highlight">CH:<span id="ch1">0</span></span>
-                <span class="streak-highlight">M:<span id="st1">0</span></span>
+                <span style="color:var(--tennis-yellow)">W:<span id="sw1">0</span> L:<span id="sl1">0</span></span>
+                <span style="color:var(--col-choke)">CH:<span id="ch1">0</span></span>
             </div>
+            <table class="matrix-table" id="matrix1">
+                <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+            </table>
         </div>
         <div id="zone2" class="p-box" onclick="addPoint(2)">
             <input type="text" id="name2" class="p-name" value="JUGADOR 2">
             <div id="pts2" class="pts">0</div>
             <div class="line-info">
                 <span>S:<b id="s2">0</b> G:<b id="g2">0</b></span>
-                <span class="srv-highlight"><span id="sw2">0</span>W/<span id="sl2">0</span>L</span>
-                <span class="choke-highlight">CH:<span id="ch2">0</span></span>
-                <span class="streak-highlight">M:<span id="st2">0</span></span>
+                <span style="color:var(--tennis-yellow)">W:<span id="sw2">0</span> L:<span id="sl2">0</span></span>
+                <span style="color:var(--col-choke)">CH:<span id="ch2">0</span></span>
             </div>
+            <table class="matrix-table" id="matrix2">
+                <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+                <tr><td></td><td></td><td></td><td></td></tr><tr><td></td><td></td><td></td><td></td></tr>
+            </table>
         </div>
     </div>
     <table class="trend-table">
-        <tr><td id="p1-b1" style="width:41%">-</td><td class="row-label">1°B</td><td id="p2-b1" style="width:41%">-</td></tr>
+        <tr><td id="p1-b1">-</td><td class="row-label">1°B</td><td id="p2-b1">-</td></tr>
         <tr><td id="p1-b2">-</td><td class="row-label">2°B</td><td id="p2-b2">-</td></tr>
         <tr><td id="p1-b3">-</td><td class="row-label">3°B</td><td id="p2-b3">-</td></tr>
         <tr><td id="p1-b4">-</td><td class="row-label">4°B</td><td id="p2-b4">-</td></tr>
@@ -105,10 +93,9 @@
 <div class="main-scroll">
     <div class="stream-container" style="background:#e3f2fd"><div id="stream1" class="stream"></div></div>
     <div class="stream-container" style="background:#fff9c4"><div id="stream2" class="stream"></div></div>
-    
     <div class="counters-grid">
-        <div class="player-card"><div id="p1-counts" style="display:flex; gap:1px"></div></div>
-        <div class="player-card"><div id="p2-counts" style="display:flex; gap:1px"></div></div>
+        <div class="player-card"><div id="p1-counts" class="count-row"></div></div>
+        <div class="player-card"><div id="p2-counts" class="count-row"></div></div>
     </div>
 </div>
 
@@ -128,161 +115,165 @@
 </div>
 
 <script>
-    let p1=0, p2=0, g1=0, g2=0, s1=0, s2=0, server=1, isTB=false;
-    let srvPoints = { 
-        1: {w:0, l:0, ch:0, currentStreak: 0, maxStreak: 0}, 
-        2: {w:0, l:0, ch:0, currentStreak: 0, maxStreak: 0} 
-    };
-    let advantageReached = false; 
-    let currentView = 'G';
-    let history = [], stats = { 1: [], 2: [] }, tempBallLog = { 1: {}, 2: {} }, currentDeuces = { 15: false, 30: false, 40: false };
     const COL = { E: '#1b5e20', V: '#2e7d32', B: '#66bb6a', D: '#78909c', M: '#ef6c00', X: '#c62828' };
-
-    function toggleFullscreen() {
-        if (!document.fullscreenElement) document.documentElement.requestFullscreen();
-        else document.exitFullscreen();
-    }
+    let p1=0, p2=0, g1=0, g2=0, s1=0, s2=0, server=1, isTB=false;
+    let srvPoints = { 1: {w:0, l:0, ch:0, matrix: []}, 2: {w:0, l:0, ch:0, matrix: []} };
+    let advRch = false, currentView = 'G', history = [], stats = { 1: [], 2: [] }, tempBallLog = { 1: {}, 2: {} }, deuces = { 15: false, 30: false, 40: false };
 
     function addPoint(w) {
-        history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, currentDeuces, srvPoints, advantageReached}));
-        
-        // Lógica de Saque (W/L)
+        saveHistory();
         if (w === server) srvPoints[server].w++; else srvPoints[server].l++;
 
-        // Lógica de Momentum (Racha)
-        if (w === 1) {
-            srvPoints[1].currentStreak++;
-            srvPoints[2].currentStreak = 0;
-            if (srvPoints[1].currentStreak > srvPoints[1].maxStreak) srvPoints[1].maxStreak = srvPoints[1].currentStreak;
+        if (isTB) {
+            w === 1 ? p1++ : p2++;
+            if ((p1 + p2) % 2 !== 0) server = (server === 1) ? 2 : 1;
+            if ((p1 >= 7 || p2 >= 7) && Math.abs(p1 - p2) >= 2) finishGame(w);
         } else {
-            srvPoints[2].currentStreak++;
-            srvPoints[1].currentStreak = 0;
-            if (srvPoints[2].currentStreak > srvPoints[2].maxStreak) srvPoints[2].maxStreak = srvPoints[2].currentStreak;
-        }
-
-        if (!isTB) {
-            let sP = (server === 1) ? p1 : p2;
-            let rP = (server === 1) ? p2 : p1;
-            if (sP === 3 && rP <= 1) advantageReached = true;
+            // Check Advantage/Choke Potential
+            if (server === 1 && p1 === 3 && p2 <= 1) advRch = true;
+            if (server === 2 && p2 === 3 && p1 <= 1) advRch = true;
+            
             let nP1=(w===1)?p1+1:p1, nP2=(w===2)?p2+1:p2;
-            if (nP1===1 && nP2===1) currentDeuces[15]=true;
-            if (nP1===2 && nP2===2) currentDeuces[30]=true;
-            if (nP1===3 && nP2===3) currentDeuces[40]=true;
-            let bS=(server===1)?p1:p2, bR=(server===1)?p2:p1;
-            if ((bS+bR)<4) {
-                let bNum=(bS+bR)+1;
-                tempBallLog[server][bNum] = calcBallData(bNum, (w===server?bS+1:bS), (w===server?bR:bR+1));
+            if (nP1===1 && nP2===1) deuces[15]=true;
+            if (nP1===2 && nP2===2) deuces[30]=true;
+            if (nP1===3 && nP2===3) deuces[40]=true;
+
+            let bNum = (p1 + p2) + 1;
+            if (bNum <= 4) {
+                tempBallLog[server][bNum] = calcBallData(bNum, (w===1?p1+1:p1), (w===2?p2+1:p2));
+                tempBallLog[server][bNum].won = (w === server);
             }
+            w===1 ? (p1===3&&p2===4 ? p2=3 : p1++) : (p2===3&&p1===4 ? p1=3 : p2++);
+            if ((p1>=4 || p2>=4) && Math.abs(p1-p2)>=2) finishGame(w);
         }
-        if(isTB) { w===1?p1++:p2++; if((p1>=7||p2>=7)&&Math.abs(p1-p2)>=2) finishGame(w); } 
-        else { w===1?(p1===3&&p2===4?p2=3:p1++):(p2===3&&p1===4?p1=3:p2++); if((p1>=4||p2>=4)&&Math.abs(p1-p2)>=2) finishGame(w); }
         updateUI();
     }
 
     function finishGame(w) {
-        let isChoke = false;
-        if (advantageReached && w !== server) { srvPoints[server].ch++; isChoke = true; }
-        advantageReached = false; 
+        let srv = server;
+        let sP = (srv === 1) ? p1 : p2;
+        let rP = (srv === 1) ? p2 : p1;
+        let isChoke = (advRch && w !== srv);
+        if (isChoke) srvPoints[srv].ch++;
 
-        let srv=server, sP=(srv===1)?p1:p2, rP=(srv===1)?p2:p1;
-        let gRes=(w===srv)?(rP===0?{txt:'E',c:COL.E,h:'h-5'}:(rP===1?{txt:'V',c:COL.V,h:'h-4'}:{txt:'B',c:COL.B,h:'h-3'}))
-                         :(sP>=2?{txt:isChoke?'CH':'M',c:COL.M,h:'h-2',isChoke}:{txt:'X',c:COL.X,h:'h-1'});
-        
-        stats[srv].push({type:'G',data:gRes});
-        stats[srv].push({type:'I',data:{tower:{...currentDeuces},none:!(currentDeuces[15]||currentDeuces[30]||currentDeuces[40])}});
-        for(let i=1;i<=4;i++) if(tempBallLog[srv][i]) stats[srv].push({type:i,data:tempBallLog[srv][i]});
-        
-        tempBallLog={1:{},2:{}}; currentDeuces={15:false,30:false,40:false};
-        p1=0; p2=0; w===1?g1++:g2++;
-        
-        let setFinished = false;
-        if(isTB){ w===1?s1++:s2++; g1=0; g2=0; isTB=false; setFinished=true; }
-        else if(g1>=6&&g1-g2>=2 || g2>=6&&g2-g1>=2){ w===1?s1++:s2++; g1=0; g2=0; setFinished=true; }
-        else if(g1===6&&g2===6) isTB=true;
-
-        if(setFinished) {
-            srvPoints[1].maxStreak = 0; srvPoints[1].currentStreak = 0;
-            srvPoints[2].maxStreak = 0; srvPoints[2].currentStreak = 0;
+        let gRes;
+        if (isTB) { gRes = {txt:'TB', c:COL.V, h:'h-3'}; }
+        else if (w === srv) {
+            if (rP === 0) gRes = {txt:'E', c:COL.E, h:'h-5'};
+            else if (rP === 1) gRes = {txt:'V', c:COL.V, h:'h-4'};
+            else gRes = {txt:'B', c:COL.B, h:'h-3'};
+        } else {
+            if (isChoke) gRes = {txt:'CH', c:COL.M, h:'h-2'};
+            else if (sP === 0) gRes = {txt:'X', c:COL.X, h:'h-1'};
+            else gRes = {txt:'M', c:COL.M, h:'h-2'};
         }
 
+        if(!isTB) {
+            let curMat = [];
+            for(let i=1; i<=4; i++) curMat.push(tempBallLog[srv][i] ? (tempBallLog[srv][i].won ? '✅' : '❌') : '');
+            srvPoints[srv].matrix.push(curMat);
+            if(srvPoints[srv].matrix.length > 4) srvPoints[srv].matrix.shift();
+        }
+
+        stats[srv].push({type:'G', data:gRes});
+        stats[srv].push({type:'I', data:{tower:{...deuces}, none:!(deuces[15]||deuces[30]||deuces[40])}});
+        for(let i=1;i<=4;i++) if(tempBallLog[srv][i]) stats[srv].push({type:i, data:tempBallLog[srv][i]});
+        
+        tempBallLog={1:{}, 2:{}}; deuces={15:false, 30:false, 40:false}; advRch=false;
+        p1=0; p2=0; w===1?g1++:g2++;
+        if (g1===6 && g2===6 && !isTB) isTB=true;
+        else if ((g1>=6 && Math.abs(g1-g2)>=2) || (g2>=6 && Math.abs(g1-g2)>=2) || isTB) {
+            if(isTB || (g1>=6 || g2>=6)) { s1+=(g1>g2?1:0); s2+=(g2>g1?1:0); g1=0; g2=0; isTB=false; }
+        }
         server=(server===1)?2:1;
         renderStreams();
     }
 
-    function calcBallData(b, s, r) {
-        const labels=["0","15","30","40","G"]; let txt=labels[s]||"G";
-        if(s>r) return (r===0)?{txt,c:COL.E,h:'h-5'}:{txt,c:COL.V,h:'h-4'};
-        if(s===r) return {txt,c:COL.D,h:'h-3'};
-        return (r-s===1)?{txt,c:COL.M,h:'h-2'}:{txt,c:COL.X,h:'h-1'};
+    function calcBallData(bNum, sp1, sp2) {
+        const labels = ["0", "15", "30", "40", "G"];
+        let myS = (server === 1) ? sp1 : sp2; let opS = (server === 1) ? sp2 : sp1;
+        let color = COL.D;
+        if (myS > opS) color = (opS === 0) ? COL.E : COL.V;
+        else if (myS < opS) color = (myS === 0) ? COL.X : COL.M;
+        return { txt: labels[myS]||"G", c: color, h: (color===COL.E?'h-5':(color===COL.V?'h-4':(color===COL.X?'h-1':(color===COL.M?'h-2':'h-3')))) };
     }
 
     function renderStreams() {
         [1,2].forEach(p => {
+            const tableCells = document.getElementById(`matrix${p}`).getElementsByTagName('td');
+            for(let i=0; i<16; i++) {
+                let r = Math.floor(i/4), c = i%4;
+                tableCells[i].innerText = srvPoints[p].matrix[r] ? srvPoints[p].matrix[r][c] : '';
+                tableCells[i].style.background = srvPoints[p].matrix[r] && srvPoints[p].matrix[r][c] === '❌' ? 'rgba(198,40,40,0.1)' : 'transparent';
+            }
             const el=document.getElementById('stream'+p); el.innerHTML='';
-            const filtered=stats[p].filter(s=>s.type===currentView); const counts={};
+            const filtered=stats[p].filter(s=>s.type===currentView);
+            const counts = {};
             filtered.forEach(e => {
                 if(currentView==='I'){
-                    let h='<div style="display:flex;flex-direction:column-reverse;gap:1px;min-width:20px">';
-                    if(e.data.none){ h+=`<div class="dot" style="background:${COL.D}">-</div>`; counts['-']=(counts['-']||0)+1; }
-                    else { ['15','30','40'].forEach(v => { if(e.data.tower[v]){ h+=`<div class="dot" style="background:${COL.D}">${v}</div>`; counts[v]=(counts[v]||0)+1; }}); }
+                    let h='<div style="display:flex;flex-direction:column-reverse;gap:1px;min-width:22px">';
+                    if(e.data.none) { h+=`<div class="dot" style="background:${COL.D}">-</div>`; counts['-']=(counts['-']||0)+1; }
+                    else { ['15','30','40'].forEach(v => { if(e.data.tower[v]) { h+=`<div class="dot" style="background:${COL.D}">${v}</div>`; counts[v]=(counts[v]||0)+1; }}); }
                     el.innerHTML += h+'</div>';
                 } else { 
-                    let chokeClass = e.data.isChoke ? 'dot-choke' : '';
-                    el.innerHTML+=`<div class="dot ${e.data.h} ${chokeClass}" style="background:${e.data.c}">${e.data.txt}</div>`; 
-                    counts[e.data.txt === 'CH' ? 'M' : e.data.txt]=(counts[e.data.txt === 'CH' ? 'M' : e.data.txt]||0)+1; 
+                    el.innerHTML+=`<div class="dot ${e.data.h}" style="background:${e.data.c}">${e.data.txt}</div>`; 
+                    counts[e.data.txt]=(counts[e.data.txt]||0)+1;
                 }
             });
-            el.scrollLeft=el.scrollWidth;
-            const cEl=document.getElementById(`p${p}-counts`); cEl.innerHTML='';
-            let lbls=(currentView==='G')?['E','V','B','M','X']:(currentView==='I'?['40','30','15','-']:(currentView===4?['G','40','30','15','0']:['40','30','15','0']));
-            lbls.forEach(l => {
-                let color=COL.D;
-                if(currentView==='G') color=COL[l] || COL.D;
+            el.scrollLeft = el.scrollWidth;
+            const cEl = document.getElementById(`p${p}-counts`); cEl.innerHTML = '';
+            let keys = (currentView==='G')?['E','V','B','M','CH','X']:(currentView==='I'?['40','30','15','-']:(currentView===4?['G','40','30','15','0']:['40','30','15','0']));
+            keys.forEach(k => {
+                let color = COL.D;
+                if(currentView==='G') color = COL[k] || COL.M;
                 else if(currentView!=='I'){
-                    if(l==='G'||(l==='40'&&currentView!==4)||(l==='30'&&currentView<3)||(l==='15'&&currentView===1)) color=COL.E;
-                    else if((l==='40'&&currentView===4)||(l==='30'&&currentView===3)) color=COL.V;
-                    else if((l==='30'&&currentView===4)||(l==='15'&&currentView===2)) color=COL.D;
-                    else if(l==='15'&&currentView>=3) color=COL.M;
-                    else if(l==='0') color=COL.X;
+                    if(k==='G'||(k==='40'&&currentView<4)) color=COL.E; else if(k==='0') color=COL.X; else color=COL.V;
                 }
-                cEl.innerHTML += `<div class="c-item"><span class="c-val">${counts[l]||0}</span><span class="c-tag" style="background:${color}">${l}</span></div>`;
+                cEl.innerHTML += `<div class="c-item"><span class="c-val">${counts[k]||0}</span><span class="c-tag" style="background:${color}">${k}</span></div>`;
             });
         });
+        updateTrends(); updateUI();
+    }
 
+    function updateTrends() {
         [1, 2].forEach(p => {
             for (let b = 1; b <= 4; b++) {
-                const bStats = stats[p].filter(s => s.type === b); const counts = {};
-                bStats.forEach(s => counts[s.data.txt] = (counts[s.data.txt] || 0) + 1);
-                let maxVal = 0, dominant = "-", dominantColor = "#ccc", ties = false;
-                for (let k in counts) { if (counts[k] > maxVal) { maxVal = counts[k]; dominant = k; ties = false; dominantColor = bStats.find(s=>s.data.txt===k).data.c; } else if (counts[k] === maxVal && maxVal > 0) ties = true; }
+                const bStats = stats[p].filter(s => s.type === b);
+                const cnt = {}; bStats.forEach(s => cnt[s.data.txt] = (cnt[s.data.txt] || 0) + 1);
+                let maxV = 0, dom = "-", domC = "#ccc";
+                for (let k in cnt) { if (cnt[k] > maxV) { maxV = cnt[k]; dom = k; domC = bStats.find(s=>s.data.txt===k).data.c; } }
                 const cell = document.getElementById(`p${p}-b${b}`);
-                if (ties || maxVal === 0) { cell.innerText = "-"; cell.style.color = "#ccc"; }
+                if (maxV === 0) { cell.innerText = "-"; cell.style.color = "#ccc"; }
                 else {
-                    let dTxt = "";
-                    if(b===1) dTxt = (dominant==='15') ? "15-0" : "0-15";
-                    else if(b===2) dTxt = (dominant==='30') ? "30-0" : (dominant==='15' ? "15-15" : "0-30");
-                    else if(b===3) dTxt = (dominant==='40') ? "40-0" : (dominant==='30' ? "30-15" : (dominant==='15'?"15-30":"0-40"));
-                    else if(b===4) dTxt = (dominant==='G') ? "GAME" : (dominant==='40' ? "40-15" : (dominant==='30'?"30-30":"15-40"));
-                    cell.innerText = `${dTxt} (${maxVal})`; cell.style.color = dominantColor;
+                    let d = "";
+                    if(b===1) d = (dom==='15') ? "15-0" : "0-15";
+                    else if(b===2) d = (dom==='30') ? "30-0" : (dom==='15' ? "15-15" : "0-30");
+                    else if(b===3) d = (dom==='40') ? "40-0" : (dom==='30' ? "30-15" : (dom==='15'?"15-30":"0-40"));
+                    else if(b===4) d = (dom==='G') ? "GAME" : (dom==='40' ? "40-15" : (dom==='30'?"30-30":"15-40"));
+                    cell.innerText = `${d} (${maxV})`; cell.style.color = domC;
                 }
             }
         });
-        updateUI();
     }
 
     function setView(v) { currentView = v; document.querySelectorAll('.sel-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(v==='G'?'GAME':(v==='I'?'IGUAL':v+'°B')))); renderStreams(); }
-
-    function undo(){ if(history.length===0) return; const s=JSON.parse(history.pop()); p1=s.p1; p2=s.p2; g1=s.g1; g2=s.g2; s1=s.s1; s2=s.s2; server=s.server; isTB=s.isTB; stats=s.stats; tempBallLog=s.tempBallLog; currentDeuces=s.currentDeuces; srvPoints=s.srvPoints; advantageReached=s.advantageReached; updateUI(); renderStreams(); }
+    
+    function saveHistory() { history.push(JSON.stringify({p1, p2, g1, g2, s1, s2, server, isTB, stats, tempBallLog, deuces, srvPoints, advRch})); }
+    
+    function undo() {
+        if (history.length === 0) return;
+        const s = JSON.parse(history.pop());
+        p1=s.p1; p2=s.p2; g1=s.g1; g2=s.g2; s1=s.s1; s2=s.s2; server=s.server; isTB=s.isTB;
+        stats=s.stats; tempBallLog=s.tempBallLog; deuces=s.deuces; srvPoints=s.srvPoints; advRch=s.advRch;
+        renderStreams();
+    }
 
     function updateUI(){
         const lb=["0","15","30","40","AD"]; 
-        document.getElementById('pts1').innerText=isTB?p1:(lb[p1]||"0"); document.getElementById('pts2').innerText=isTB?p2:(lb[p2]||"0");
-        document.getElementById('g1').innerText=g1; document.getElementById('g2').innerText=g2;
-        document.getElementById('s1').innerText=s1; document.getElementById('s2').innerText=s2;
-        document.getElementById('sw1').innerText=srvPoints[1].w; document.getElementById('sl1').innerText=srvPoints[1].l;
-        document.getElementById('sw2').innerText=srvPoints[2].w; document.getElementById('sl2').innerText=srvPoints[2].l;
-        document.getElementById('ch1').innerText=srvPoints[1].ch; document.getElementById('ch2').innerText=srvPoints[2].ch;
-        document.getElementById('st1').innerText=srvPoints[1].maxStreak; document.getElementById('st2').innerText=srvPoints[2].maxStreak;
+        document.getElementById('pts1').innerText=isTB ? p1 : (lb[p1]||"0"); document.getElementById('pts2').innerText=isTB ? p2 : (lb[p2]||"0");
+        document.getElementById('g1').innerText=g1; document.getElementById('g2').innerText=g2; document.getElementById('s1').innerText=s1; document.getElementById('s2').innerText=s2;
+        document.getElementById('sw1').innerText=srvPoints[1].w; document.getElementById('sl1').innerText=srvPoints[1].l; document.getElementById('ch1').innerText=srvPoints[1].ch;
+        document.getElementById('sw2').innerText=srvPoints[2].w; document.getElementById('sl2').innerText=srvPoints[2].l; document.getElementById('ch2').innerText=srvPoints[2].ch;
         document.getElementById('zone1').className="p-box "+(server===1?"serving-now":""); document.getElementById('zone2').className="p-box "+(server===2?"serving-now":"");
     }
     renderStreams();
