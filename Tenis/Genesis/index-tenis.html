@@ -14,7 +14,13 @@
         * { box-sizing: border-box; touch-action: manipulation; }
         body { margin: 0; padding: 0; font-family: sans-serif; background: #f0f3f5; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         
-        .header-fixed { background: var(--court-blue); color: white; flex-shrink: 0; border-bottom: 2px solid #444; }
+        .header-fixed { 
+            background: var(--court-blue); 
+            color: white; 
+            flex-shrink: 0; 
+            border-bottom: 2px solid #444; 
+            position: relative; /* Para posicionar el botón */
+        }
         .score-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
         .p-box { text-align: center; padding: 2px; border-bottom: 3px solid transparent; }
         .serving-now { background: rgba(255,255,255,0.1); border-bottom-color: var(--tennis-yellow); }
@@ -67,11 +73,49 @@
         .btn-act { padding: 12px; border: none; border-radius: 4px; color: white; font-weight: bold; font-size: 0.7rem; }
         
         .h-5 { margin-bottom: 22px; } .h-4 { margin-bottom: 16px; } .h-3 { margin-bottom: 10px; } .h-2 { margin-bottom: 5px; } .h-1 { margin-bottom: 0px; }
+        
+        /* Botón de pantalla completa discreto */
+        .fullscreen-btn { 
+            position: absolute; 
+            top: 2px; 
+            right: 2px; 
+            z-index: 1000; 
+            background: rgba(255,255,255,0.15); 
+            color: rgba(255,255,255,0.7); 
+            border: 1px solid rgba(255,255,255,0.3); 
+            border-radius: 3px; 
+            padding: 2px 6px; 
+            font-size: 0.5rem; 
+            cursor: pointer;
+            transition: all 0.2s ease;
+            backdrop-filter: blur(2px);
+        }
+        .fullscreen-btn:hover { 
+            background: rgba(255,255,255,0.25); 
+            color: white; 
+            border-color: rgba(255,255,255,0.5);
+        }
+        
+        /* Estilos para pantalla completa */
+        body:fullscreen { padding: 0; background: #f0f3f5; }
+        body:fullscreen .header-fixed { border-radius: 0; }
+        body:fullscreen .footer-fixed { border-radius: 0; }
+        body:fullscreen .fullscreen-btn { 
+            top: 10px; 
+            right: 10px; 
+            background: rgba(0,0,0,0.3); 
+            color: rgba(255,255,255,0.9); 
+            border: 1px solid rgba(255,255,255,0.4); 
+            padding: 4px 8px;
+        }
     </style>
 </head>
 <body>
 
 <div class="header-fixed">
+    <!-- Botón de pantalla completa en la esquina superior derecha -->
+    <button class="fullscreen-btn" id="fullscreen-btn" onclick="toggleFullScreen()" title="Pantalla completa">⛶</button>
+    
     <div class="score-row">
         <div id="zone1" class="p-box serving-now" onclick="addPoint(1)">
             <input type="text" id="name1" class="p-name" value="JUGADOR 1">
@@ -313,14 +357,56 @@
             el.scrollLeft = el.scrollWidth;
 
             const cEl = document.getElementById(`p${p}-counts`); cEl.innerHTML = '';
-            let keys = (currentView==='G')?['E','V','B','M','CH','X']:(currentView==='I'?['40','30','15','-']:(currentView===4?['G','40','30','15','0']:['40','30','15','0']));
+            
+            // DEFINIR LAS CLAVES Y COLORES SEGÚN LA VISTA ACTUAL
+            let keys = [];
+            let colorMap = {};
+            
+            if (currentView === 'G') {
+                keys = ['E','V','B','M','CH','X'];
+                colorMap = {
+                    'E': COL.E, 'V': COL.V, 'B': COL.B, 
+                    'M': COL.M, 'CH': '#ff1744', 'X': COL.X
+                };
+            } else if (currentView === 'I') {
+                keys = ['40','30','15','-'];
+                colorMap = {
+                    '40': COL.D, '30': COL.D, '15': COL.D, '-': COL.D
+                };
+            } else if (currentView === 1) {
+                keys = ['15','0'];
+                colorMap = {
+                    '15': COL.E, // Verde oscuro
+                    '0': COL.X   // Rojo
+                };
+            } else if (currentView === 2) {
+                keys = ['30','15','0'];
+                colorMap = {
+                    '30': COL.E, // Verde oscuro
+                    '15': COL.D, // Gris
+                    '0': COL.X   // Rojo
+                };
+            } else if (currentView === 3) {
+                keys = ['40','30','15','0'];
+                colorMap = {
+                    '40': COL.E, // Verde oscuro
+                    '30': COL.V, // Verde claro
+                    '15': COL.M, // Naranja
+                    '0': COL.X   // Rojo
+                };
+            } else if (currentView === 4) {
+                keys = ['G','40','30','15','0'];
+                colorMap = {
+                    'G': COL.E,  // Verde oscuro
+                    '40': COL.V, // Verde claro
+                    '30': COL.D, // Gris
+                    '15': COL.M, // Naranja
+                    '0': COL.X   // Rojo
+                };
+            }
+            
             keys.forEach(k => {
-                let color = COL.D;
-                if(currentView==='G') color = COL[k] || COL.M;
-                else if(currentView!=='I'){
-                    if(k==='G'||(k==='40'&&currentView<4)) color=COL.E; else if(k==='0') color=COL.X; else color=COL.V;
-                }
-                cEl.innerHTML += `<div class="c-item"><span class="c-val">${counts[k]||0}</span><span class="c-tag" style="background:${color}">${k}</span></div>`;
+                cEl.innerHTML += `<div class="c-item"><span class="c-val">${counts[k]||0}</span><span class="c-tag" style="background:${colorMap[k]}">${k}</span></div>`;
             });
         });
         updateTrends(); updateUI();
@@ -330,24 +416,120 @@
         [1, 2].forEach(p => {
             for (let b = 1; b <= 4; b++) {
                 const bStats = stats[p].filter(s => s.type === b);
-                const cnt = {}; bStats.forEach(s => cnt[s.data.txt] = (cnt[s.data.txt] || 0) + 1);
-                let maxV = 0, dom = "-", domC = "#ccc";
-                for (let k in cnt) { if (cnt[k] > maxV) { maxV = cnt[k]; dom = k; domC = bStats.find(s=>s.data.txt===k).data.c; } }
-                const cell = document.getElementById(`p${p}-b${b}`);
-                if (maxV === 0) { cell.innerText = "-"; cell.style.color = "#ccc"; }
-                else {
-                    let d = "";
-                    if(b===1) d = (dom==='15') ? "15-0" : "0-15";
-                    else if(b===2) d = (dom==='30') ? "30-0" : (dom==='15' ? "15-15" : "0-30");
-                    else if(b===3) d = (dom==='40') ? "40-0" : (dom==='30' ? "30-15" : (dom==='15'?"15-30":"0-40"));
-                    else if(b===4) d = (dom==='G') ? "GAME" : (dom==='40' ? "40-15" : (dom==='30'?"30-30":"15-40"));
-                    cell.innerText = `${d} (${maxV})`; cell.style.color = domC;
+                const cnt = {}; 
+                bStats.forEach(s => {
+                    const txt = s.data.txt;
+                    // Filtrar solo los valores posibles según la bola
+                    if (b === 1) {
+                        // 1°B: solo puede ser 15 (15-0) o 0 (0-15)
+                        if (txt === '15' || txt === '0') {
+                            cnt[txt] = (cnt[txt] || 0) + 1;
+                        }
+                    } else if (b === 2) {
+                        // 2°B: solo puede ser 30 (30-0), 15 (15-15), 0 (0-30)
+                        if (txt === '30' || txt === '15' || txt === '0') {
+                            cnt[txt] = (cnt[txt] || 0) + 1;
+                        }
+                    } else if (b === 3) {
+                        // 3°B: puede ser 40 (40-0), 30 (30-15), 15 (15-30), 0 (0-40)
+                        if (txt === '40' || txt === '30' || txt === '15' || txt === '0') {
+                            cnt[txt] = (cnt[txt] || 0) + 1;
+                        }
+                    } else if (b === 4) {
+                        // 4°B: puede ser G (GAME), 40 (40-15), 30 (30-30), 15 (15-40), 0 (0-40)
+                        if (txt === 'G' || txt === '40' || txt === '30' || txt === '15' || txt === '0') {
+                            cnt[txt] = (cnt[txt] || 0) + 1;
+                        }
+                    }
+                });
+
+                let maxV = 0, dom = "-", domC = "#ccc", displayText = "-";
+                
+                // Encontrar el valor más frecuente (dom)
+                for (let k in cnt) { 
+                    if (cnt[k] > maxV) { 
+                        maxV = cnt[k]; 
+                        dom = k; 
+                    } 
                 }
+                
+                // Asignar texto y color según la bola y el valor dominante
+                if (maxV > 0) {
+                    if (b === 1) {
+                        if (dom === '15') {
+                            displayText = "15-0";
+                            domC = COL.E; // Verde oscuro
+                        } else if (dom === '0') {
+                            displayText = "0-15";
+                            domC = COL.X; // Rojo
+                        }
+                    } else if (b === 2) {
+                        if (dom === '30') {
+                            displayText = "30-0";
+                            domC = COL.E; // Verde oscuro
+                        } else if (dom === '15') {
+                            displayText = "15-15";
+                            domC = COL.D; // Gris
+                        } else if (dom === '0') {
+                            displayText = "0-30";
+                            domC = COL.X; // Rojo
+                        }
+                    } else if (b === 3) {
+                        if (dom === '40') {
+                            displayText = "40-0";
+                            domC = COL.E; // Verde oscuro
+                        } else if (dom === '30') {
+                            displayText = "30-15";
+                            domC = COL.V; // Verde claro
+                        } else if (dom === '15') {
+                            displayText = "15-30";
+                            domC = COL.M; // Naranja
+                        } else if (dom === '0') {
+                            displayText = "0-40";
+                            domC = COL.X; // Rojo
+                        }
+                    } else if (b === 4) {
+                        if (dom === 'G') {
+                            displayText = "GAME";
+                            domC = COL.E; // Verde oscuro
+                        } else if (dom === '40') {
+                            displayText = "40-15";
+                            domC = COL.V; // Verde claro
+                        } else if (dom === '30') {
+                            displayText = "30-30";
+                            domC = COL.D; // Gris
+                        } else if (dom === '15') {
+                            displayText = "15-40";
+                            domC = COL.M; // Naranja
+                        } else if (dom === '0') {
+                            displayText = "0-40";
+                            domC = COL.X; // Rojo
+                        }
+                    }
+                    
+                    displayText = `${displayText} (${maxV})`;
+                }
+                
+                const cell = document.getElementById(`p${p}-b${b}`);
+                cell.innerText = displayText;
+                cell.style.color = domC;
             }
         });
     }
 
-    function setView(v) { currentView = v; document.querySelectorAll('.sel-btn').forEach(b => b.classList.toggle('active', b.innerText.includes(v==='G'?'GAME':(v==='I'?'IGUAL':v+'°B')))); renderStreams(); }
+    function setView(v) { 
+        currentView = v; 
+        document.querySelectorAll('.sel-btn').forEach(b => {
+            let btnText = b.innerText;
+            let viewText = '';
+            if (v === 'G') viewText = 'GAME';
+            else if (v === 'I') viewText = 'IGUAL';
+            else viewText = v + '°B';
+            
+            b.classList.toggle('active', btnText.includes(viewText));
+        }); 
+        renderStreams(); 
+    }
     
     function undo() {
         if (history.length === 0) return;
@@ -355,6 +537,45 @@
         p1=s.p1; p2=s.p2; g1=s.g1; g2=s.g2; s1=s.s1; s2=s.s2; server=s.server; isTB=s.isTB;
         stats=s.stats; tempBallLog=s.tempBallLog; deuces=s.deuces; srvPoints=s.srvPoints; advRch=s.advRch;
         renderStreams();
+    }
+
+    // FUNCIÓN PARA PANTALLA COMPLETA
+    function toggleFullScreen() {
+        if (!document.fullscreenElement) {
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            } else if (document.documentElement.webkitRequestFullscreen) {
+                document.documentElement.webkitRequestFullscreen();
+            } else if (document.documentElement.msRequestFullscreen) {
+                document.documentElement.msRequestFullscreen();
+            }
+        } else {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+        }
+    }
+
+    // ESCUCHAR CAMBIOS EN EL MODO PANTALLA COMPLETA
+    document.addEventListener('fullscreenchange', updateFullscreenButton);
+    document.addEventListener('webkitfullscreenchange', updateFullscreenButton);
+    document.addEventListener('msfullscreenchange', updateFullscreenButton);
+    
+    function updateFullscreenButton() {
+        const fullBtn = document.getElementById('fullscreen-btn');
+        if (document.fullscreenElement || 
+            document.webkitFullscreenElement || 
+            document.msFullscreenElement) {
+            fullBtn.textContent = '⛶'; // Icono para salir de pantalla completa
+            fullBtn.title = 'Salir de pantalla completa';
+        } else {
+            fullBtn.textContent = '⛶'; // Mismo icono, pero se ve diferente por los estilos
+            fullBtn.title = 'Pantalla completa';
+        }
     }
 
     function updateUI(){
